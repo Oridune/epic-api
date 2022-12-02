@@ -55,7 +55,7 @@ export const addPlugin = async (options: {
 
         for await (const Entry of Deno.readDir(join(PluginsDir, Options.name!)))
           if (
-            !/controllers|middlewares|jobs|public|resources|templates|\.sample\.env/.test(
+            !/controllers|middlewares|jobs|public|resources|templates|\.sample\.env|\.git/.test(
               Entry.name
             )
           )
