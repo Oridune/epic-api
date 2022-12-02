@@ -3,7 +3,7 @@ import { join } from "deno:path";
 import e from "deno:validator";
 
 import { ModuleType } from "@Core/scripts/createModule.ts";
-import { Select } from "deno:cliffy:prompt";
+import { Select, Confirm } from "deno:cliffy:prompt";
 import { plural } from "deno:pluralize";
 import { Manager } from "@Core/common/manager.ts";
 
@@ -28,12 +28,12 @@ export const deleteModule = async (options: {
             ),
           name: e.optional(e.string()).default(async (ctx) =>
             ctx.parent!.input.prompt
-              ? ((await Select.prompt({
+              ? await Select.prompt({
                   message: "Choose the module to be deleted",
                   options: Array.from(
                     await Manager.getSequence(plural(ctx.parent!.output.type))
                   ),
-                })) as ModuleType)
+                })
               : undefined
           ),
           moduleDir: e.any().custom((ctx) => plural(ctx.parent!.output.type)),
@@ -51,15 +51,26 @@ export const deleteModule = async (options: {
       )
       .validate(options);
 
-    await Deno.remove(Options.modulePath);
-    await Manager.setSequence(Options.moduleDir, (seq) => {
-      seq.delete(Options.name ?? "");
-      return seq;
-    });
+    if (Options.name) {
+      if (
+        options.prompt &&
+        !(await Confirm.prompt({
+          message: `Do you really want to delete the module '${Options.name}'?`,
+        }))
+      )
+        return;
+
+      await Deno.remove(Options.modulePath);
+
+      await Manager.setSequence(Options.moduleDir, (seq) => {
+        seq.delete(Options.name!);
+        return seq;
+      });
+    }
 
     console.info("Module has been deleted successfully!");
   } catch (error) {
-    console.log(error, error.issues);
+    console.error(error, error.issues);
   }
 };
 

@@ -9,6 +9,8 @@
     "test": "ENV_TYPE=test deno run --allow-read --allow-env --allow-net ./core/server.ts",
 
     "create:module": "deno run -A ./core/scripts/createModule.ts",
-    "delete:module": "deno run -A ./core/scripts/deleteModule.ts"
+    "delete:module": "deno run -A ./core/scripts/deleteModule.ts",
+    "add:plugin": "deno run -A ./core/scripts/addPlugin.ts",
+    "remove:plugin": "deno run -A ./core/scripts/removePlugin.ts"
   }
 }

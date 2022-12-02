@@ -145,7 +145,7 @@ export const createModule = async (options: {
 
     console.info("Module has been created successfully!");
   } catch (error) {
-    console.log(error, error.issues);
+    console.error(error, error.issues);
   }
 };
 
