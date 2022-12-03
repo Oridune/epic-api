@@ -137,8 +137,8 @@ export const createModule = async (options: {
         "$_Name",
         ResolvedName.charAt(0).toUpperCase() + ResolvedName.slice(1)
       )
-      .replaceAll("$_name", ResolvedName)
-      .replaceAll("$_name_s", plural(ResolvedName));
+      .replaceAll("$_name_s", plural(ResolvedName))
+      .replaceAll("$_name", ResolvedName);
 
     await Deno.writeTextFile(Options.modulePath, Content);
     await Manager.setSequence(Options.moduleDir, (seq) =>
