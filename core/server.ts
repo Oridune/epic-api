@@ -1,4 +1,4 @@
-import { Response, ApiServer } from "@Core/common/mod.ts";
+import { Response, ApiServer, Manager } from "@Core/common/mod.ts";
 import { Env } from "@Core/env.ts";
 import { MainController } from "@Core/controller.ts";
 import {
@@ -12,7 +12,6 @@ import { RateLimiter } from "deno:oak:limiter";
 import { CORS } from "deno:oak:cors";
 import { gzip } from "deno:oak:compress";
 import { requestIdMiddleware, getRequestIdKey } from "deno:oak:requestId";
-import { Manager } from "@Core/common/manager.ts";
 
 export const Port = parseInt(Env.get("PORT") || "8080");
 export const App = new AppServer();

@@ -7,6 +7,7 @@
     "deno:path": "https://deno.land/std@0.165.0/path/mod.ts",
     "deno:fs": "https://deno.land/std@0.165.0/fs/mod.ts",
     "deno:reflect": "https://deno.land/x/reflect_metadata@v0.1.12/mod.ts",
+    "deno:db": "https://deno.land/x/denodb@v1.1.0/mod.ts",
     "deno:validator": "https://deno.land/x/oridune_validator@v0.1.1/mod.ts",
     "deno:flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "deno:pluralize": "https://deno.land/x/deno_plural@2.0.0/mod.ts",
