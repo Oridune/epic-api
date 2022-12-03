@@ -8,6 +8,7 @@ import { Manager } from "@Core/common/manager.ts";
 
 export enum ModuleType {
   CONTROLLER = "controller",
+  MODEL = "model",
   JOB = "job",
   MIDDLEWARE = "middleware",
 }
