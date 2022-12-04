@@ -31,7 +31,7 @@ if (import.meta.main) {
     } catch (e) {
       ctx.response.status = isHttpError(e) ? e.status : 500;
       ctx.response.body = Response.statusCode(ctx.response.status)
-        .message(e.message)
+        .messages(e.issues ?? [{ message: e.message }])
         .toObject();
     }
   });

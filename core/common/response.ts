@@ -55,6 +55,11 @@ export class Response {
     return this;
   }
 
+  public messages(messages: ResponseMessage[]) {
+    this.Messages = messages;
+    return this;
+  }
+
   public data(data: Record<string, any>, metadata?: Record<string, any>) {
     if (typeof data === "object") this.Data = data;
     if (typeof metadata === "object") this.Metadata = metadata;
