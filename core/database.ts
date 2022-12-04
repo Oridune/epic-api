@@ -1,10 +1,4 @@
-import { Database, MongoDBConnector } from "db";
-import { Env } from "@Core/env.ts";
-import { Manager } from "@Core/common/mod.ts";
+import mongoose from "mongoose";
+import { Env } from "@Core/common/env.ts";
 
-export default new Database(
-  new MongoDBConnector({
-    uri: Env.get("DATABASE_CONNECTION_STRING"),
-    database: Env.get("DATABASE_NAME"),
-  })
-).link(await Manager.load("models"));
+await mongoose.connect(Env.get("DATABASE_CONNECTION_STRING"));
