@@ -1,8 +1,9 @@
 import { parse } from "flags";
 import { join } from "path";
+import { exists } from "fs";
 import e from "validator";
 
-import { Input, Select } from "cliffy:prompt";
+import { Input, Select, Confirm } from "cliffy:prompt";
 import { plural } from "pluralize";
 import { Manager } from "@Core/common/manager.ts";
 
@@ -131,19 +132,29 @@ export const createModule = async (options: {
       )
       .validate(options);
 
-    const ResolvedName = Options.name ?? "unknown";
-    const Content = (await Deno.readTextFile(Options.templatePath))
-      .replaceAll(
-        "$_Name",
-        ResolvedName.charAt(0).toUpperCase() + ResolvedName.slice(1)
+    if (Options.name) {
+      if (
+        options.prompt &&
+        (await exists(Options.modulePath)) &&
+        !(await Confirm.prompt({
+          message: `Are you sure you want to re-create the module '${Options.name}'?`,
+        }))
       )
-      .replaceAll("$_name_s", plural(ResolvedName))
-      .replaceAll("$_name", ResolvedName);
+        return;
 
-    await Deno.writeTextFile(Options.modulePath, Content);
-    await Manager.setSequence(Options.moduleDir, (seq) =>
-      seq.add(Options.module)
-    );
+      const Content = (await Deno.readTextFile(Options.templatePath))
+        .replaceAll(
+          "$_Name",
+          Options.name.charAt(0).toUpperCase() + Options.name.slice(1)
+        )
+        .replaceAll("$_name_s", plural(Options.name))
+        .replaceAll("$_name", Options.name);
+
+      await Deno.writeTextFile(Options.modulePath, Content);
+      await Manager.setSequence(Options.moduleDir, (seq) =>
+        seq.add(Options.module)
+      );
+    }
 
     console.info("Module has been created successfully!");
   } catch (error) {
