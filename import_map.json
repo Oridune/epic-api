@@ -2,6 +2,7 @@
   "imports": {
     "@Core/": "./core/",
     "@Controllers/": "./controllers/",
+    "@Models/": "./models/",
 
     "config": "https://deno.land/x/dotenv@v3.2.0/mod.ts",
     "path": "https://deno.land/std@0.165.0/path/mod.ts",

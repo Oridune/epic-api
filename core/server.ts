@@ -1,5 +1,6 @@
 import { Response, ApiServer, Manager, Env } from "@Core/common/mod.ts";
 import { MainController } from "@Core/controller.ts";
+import { connectDatabase } from "@Core/database.ts";
 import {
   Application as AppServer,
   Router as AppRouter,
@@ -84,5 +85,6 @@ if (import.meta.main) {
     })
   );
 
+  await connectDatabase();
   await App.listen({ port: Port });
 }
