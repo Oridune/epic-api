@@ -1,10 +1,8 @@
-import { Model } from "deno:db";
+import mongoose from "mongoose";
 
-export default class $_NameModel extends Model {
-  static table = "$_name_s";
-  static timestamps = true;
+export interface I$_NameModel {}
 
-  static fields = {
-    _id: { primaryKey: true },
-  };
-}
+export const $_NameModel = mongoose.model<I$_NameModel>(
+  "$_Name",
+  new mongoose.Schema({})
+);

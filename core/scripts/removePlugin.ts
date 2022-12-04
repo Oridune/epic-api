@@ -1,8 +1,8 @@
-import { parse } from "deno:flags";
-import { join } from "deno:path";
-import e from "deno:validator";
+import { parse } from "flags";
+import { join } from "path";
+import e from "validator";
 
-import { Select, Confirm } from "deno:cliffy:prompt";
+import { Select, Confirm } from "cliffy:prompt";
 import { Manager } from "@Core/common/manager.ts";
 
 export const removePlugin = async (options: {

@@ -6,12 +6,12 @@ import {
   Router as AppRouter,
   RouterContext,
   isHttpError,
-} from "deno:oak";
-import Logger from "deno:oak:logger";
-import { RateLimiter } from "deno:oak:limiter";
-import { CORS } from "deno:oak:cors";
-import { gzip } from "deno:oak:compress";
-import { requestIdMiddleware, getRequestIdKey } from "deno:oak:requestId";
+} from "oak";
+import Logger from "oak:logger";
+import { RateLimiter } from "oak:limiter";
+import { CORS } from "oak:cors";
+import { gzip } from "oak:compress";
+import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
 
 export const Port = parseInt(Env.get("PORT") || "8080");
 export const App = new AppServer();

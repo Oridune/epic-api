@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { join } from "deno:path";
-import { exists } from "deno:fs";
+import { join } from "path";
+import { exists } from "fs";
 
 export class Manager {
   static readonly LoadableExtensions = ["ts", "js"];

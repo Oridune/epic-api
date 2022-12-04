@@ -1,5 +1,5 @@
-import e from "deno:validator";
-import { type RouterContext } from "deno:oak";
+import e from "validator";
+import { type RouterContext } from "oak";
 
 export default () =>
   async (ctx: RouterContext<string>, next: () => Promise<unknown>) => {

@@ -1,10 +1,10 @@
-import { parse } from "deno:flags";
-import { join } from "deno:path";
-import e from "deno:validator";
+import { parse } from "flags";
+import { join } from "path";
+import e from "validator";
 
 import { ModuleType } from "@Core/scripts/createModule.ts";
-import { Select, Confirm } from "deno:cliffy:prompt";
-import { plural } from "deno:pluralize";
+import { Select, Confirm } from "cliffy:prompt";
+import { plural } from "pluralize";
 import { Manager } from "@Core/common/manager.ts";
 
 export const deleteModule = async (options: {

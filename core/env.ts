@@ -1,5 +1,5 @@
-import { config } from "deno:config";
-import { join } from "deno:path";
+import { config } from "config";
+import { join } from "path";
 
 export enum EnvType {
   DEVELOPMENT = "development",

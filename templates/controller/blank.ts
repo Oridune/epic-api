@@ -1,4 +1,4 @@
-import { basename } from "deno:path";
+import { basename } from "path";
 import {
   Controller,
   BaseController,
@@ -8,8 +8,8 @@ import {
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
-import { Status, type RouterContext } from "deno:oak";
-import e from "deno:validator";
+import { Status, type RouterContext } from "oak";
+import e from "validator";
 
 @Controller("/$_name/", {
   /** Do not edit this code */

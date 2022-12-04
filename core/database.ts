@@ -1,4 +1,4 @@
-import { Database, MongoDBConnector } from "deno:db";
+import { Database, MongoDBConnector } from "db";
 import { Env } from "@Core/env.ts";
 import { Manager } from "@Core/common/mod.ts";
 

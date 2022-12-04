@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { Reflect } from "deno:reflect";
+import { Reflect } from "reflect";
 import { RequestMethod } from "../route/decorator.ts";
 import { Response } from "../response.ts";
 

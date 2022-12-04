@@ -1,9 +1,9 @@
-import { parse } from "deno:flags";
-import { join } from "deno:path";
-import e from "deno:validator";
+import { parse } from "flags";
+import { join } from "path";
+import e from "validator";
 
-import { Input, Select } from "deno:cliffy:prompt";
-import { plural } from "deno:pluralize";
+import { Input, Select } from "cliffy:prompt";
+import { plural } from "pluralize";
 import { Manager } from "@Core/common/manager.ts";
 
 export enum ModuleType {

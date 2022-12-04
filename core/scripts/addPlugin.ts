@@ -1,8 +1,8 @@
-import { parse } from "deno:flags";
-import { join } from "deno:path";
-import e from "deno:validator";
+import { parse } from "flags";
+import { join } from "path";
+import e from "validator";
 
-import { Input } from "deno:cliffy:prompt";
+import { Input } from "cliffy:prompt";
 import { Manager } from "@Core/common/manager.ts";
 
 export enum PluginSource {
