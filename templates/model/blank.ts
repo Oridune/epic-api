@@ -7,5 +7,5 @@ export interface I$_NameModel {
 
 export const $_NameModel = mongoose.model<I$_NameModel>(
   "$_Name",
-  new mongoose.Schema({}, { timestamps: true })
+  new mongoose.Schema({}, { timestamps: true, versionKey: false })
 );
