@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 
-export interface I$_NameModel {}
+export interface I$_NameModel {
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export const $_NameModel = mongoose.model<I$_NameModel>(
   "$_Name",
