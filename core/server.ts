@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Response, ApiServer, Env } from "@Core/common/mod.ts";
 import { MainController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
@@ -38,9 +39,18 @@ if (import.meta.main) {
   });
 
   await Promise.all(
-    (
-      await Manager.getModules("middlewares")
-    ).map(async (middleware) => {
+    [
+      ...(await (
+        await Manager.getPlugins()
+      ).reduce<Promise<any[]>>(
+        async (list, manager) => [
+          ...(await list),
+          ...(await manager.getModules("middlewares")),
+        ],
+        Promise.resolve([])
+      )),
+      ...(await Manager.getModules("middlewares")),
+    ].map(async (middleware) => {
       if (typeof middleware === "function") App.use(await middleware());
     })
   );
@@ -79,9 +89,18 @@ if (import.meta.main) {
   });
 
   await Promise.all(
-    (
-      await Manager.getModules("jobs")
-    ).map(async (job) => {
+    [
+      ...(await (
+        await Manager.getPlugins()
+      ).reduce<Promise<any[]>>(
+        async (list, manager) => [
+          ...(await list),
+          ...(await manager.getModules("jobs")),
+        ],
+        Promise.resolve([])
+      )),
+      ...(await Manager.getModules("jobs")),
+    ].map(async (job) => {
       if (typeof job === "function") await job();
     })
   );

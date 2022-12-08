@@ -7,10 +7,10 @@
     "start": "ENV_TYPE=production deno run --allow-read --allow-env --allow-net --allow-sys ./core/server.ts",
     "dev": "ENV_TYPE=development denon run --allow-read --allow-env --allow-net --allow-sys ./core/server.ts",
     "test": "ENV_TYPE=test deno run --allow-read --allow-env --allow-net ./core/server.ts",
-
     "create:module": "deno run -A ./core/scripts/createModule.ts",
     "delete:module": "deno run -A ./core/scripts/deleteModule.ts",
     "add:plugin": "deno run -A ./core/scripts/addPlugin.ts",
-    "remove:plugin": "deno run -A ./core/scripts/removePlugin.ts"
+    "remove:plugin": "deno run -A ./core/scripts/removePlugin.ts",
+    "update:core": "deno run -A ./core/scripts/updateCore.ts"
   }
 }
