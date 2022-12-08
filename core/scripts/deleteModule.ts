@@ -5,7 +5,7 @@ import e from "validator";
 import { ModuleType } from "@Core/scripts/createModule.ts";
 import { Select, Confirm } from "cliffy:prompt";
 import { plural } from "pluralize";
-import { Manager } from "@Core/common/manager.ts";
+import Manager from "@Core/common/manager.ts";
 
 export const deleteModule = async (options: {
   type: ModuleType;
@@ -71,6 +71,7 @@ export const deleteModule = async (options: {
     console.info("Module has been deleted successfully!");
   } catch (error) {
     console.error(error, error.issues);
+    throw error;
   }
 };
 

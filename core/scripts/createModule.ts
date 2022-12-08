@@ -5,7 +5,7 @@ import e from "validator";
 
 import { Input, Select, Confirm } from "cliffy:prompt";
 import { plural } from "pluralize";
-import { Manager } from "@Core/common/manager.ts";
+import Manager from "@Core/common/manager.ts";
 
 export enum ModuleType {
   CONTROLLER = "controller",
@@ -74,7 +74,7 @@ export const createModule = async (options: {
             .optional(
               e.in(
                 async (ctx) =>
-                  await Manager.getList(
+                  await Manager.getFilesList(
                     join(
                       ctx.parent!.output.templateDir,
                       ctx.parent!.output.type
@@ -86,7 +86,7 @@ export const createModule = async (options: {
               ctx.parent!.input.prompt
                 ? await Select.prompt({
                     message: "Choose a template",
-                    options: await Manager.getList(
+                    options: await Manager.getFilesList(
                       join(
                         ctx.parent!.output.templateDir,
                         ctx.parent!.output.type
@@ -159,6 +159,7 @@ export const createModule = async (options: {
     console.info("Module has been created successfully!");
   } catch (error) {
     console.error(error, error.issues);
+    throw error;
   }
 };
 

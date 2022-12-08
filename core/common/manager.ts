@@ -3,10 +3,12 @@ import { join } from "path";
 import { exists } from "fs";
 
 export class Manager {
-  static readonly LoadableExtensions = ["ts", "js"];
+  protected LoadableExtensions = ["ts", "js"];
 
-  static async getSequence(path: string): Promise<Set<string>> {
-    const TargetDir = join(Deno.cwd(), path);
+  constructor(public CWD = Deno.cwd()) {}
+
+  public async getSequence(path: string): Promise<Set<string>> {
+    const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
     if (await exists(SequencePath)) {
@@ -20,28 +22,28 @@ export class Manager {
     return new Set();
   }
 
-  static async setSequence(
+  public async setSequence(
     path: string,
     sequence: Set<string> | ((sequence: Set<string>) => Set<string>)
   ) {
-    const TargetDir = join(Deno.cwd(), path);
+    const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
     const Sequence =
       typeof sequence === "function"
-        ? sequence(await Manager.getSequence(path))
+        ? sequence(await this.getSequence(path))
         : sequence instanceof Array
         ? sequence
         : [];
 
-    await Deno.writeFile(
+    await Deno.writeTextFile(
       SequencePath,
-      new TextEncoder().encode(JSON.stringify(Array.from(new Set(Sequence))))
+      JSON.stringify(Array.from(new Set(Sequence)))
     );
   }
 
-  static async getList(path: string): Promise<string[]> {
-    const TargetDir = join(Deno.cwd(), path);
+  public async getFilesList(path: string): Promise<string[]> {
+    const TargetDir = join(this.CWD, path);
     const Items: string[] = [];
 
     if (await exists(TargetDir))
@@ -51,8 +53,8 @@ export class Manager {
     return Items;
   }
 
-  static async load(path: string, parent?: string) {
-    const Sequence = await Manager.getSequence(path);
+  public async getModules(path: string, parent?: string) {
+    const Sequence = await this.getSequence(path);
 
     return (
       await Promise.all(
@@ -61,7 +63,7 @@ export class Manager {
             const Parent = parent?.split(".");
             Parent?.pop();
 
-            const Pattern = `(-?[a-zA-Z0-9]+)+\\.(${Manager.LoadableExtensions.join(
+            const Pattern = `(-?[a-zA-Z0-9]+)+\\.(${this.LoadableExtensions.join(
               "|"
             )})$`;
 
@@ -72,7 +74,7 @@ export class Manager {
             ).test(name);
           })
           .map(async (name: string) => {
-            const FilePath = join(join(Deno.cwd(), path), name);
+            const FilePath = join(join(this.CWD, path), name);
 
             if (await exists(FilePath))
               return (await import(`file:///${FilePath}`)).default;
@@ -80,4 +82,12 @@ export class Manager {
       )
     ).filter(Boolean) as any[];
   }
+
+  public async getPlugins() {
+    return Array.from(await this.getSequence("plugins")).map(
+      (path) => new Manager(join(this.CWD, "plugins", path))
+    );
+  }
 }
+
+export default new Manager(Deno.cwd());

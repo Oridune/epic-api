@@ -3,7 +3,8 @@
     "@Core/": "./core/",
     "@Controllers/": "./controllers/",
     "@Models/": "./models/",
-
+    "@Jobs/": "./jobs/",
+    "@Middlewares/": "./middlewares/",
     "config": "https://deno.land/x/dotenv@v3.2.0/mod.ts",
     "path": "https://deno.land/std@0.165.0/path/mod.ts",
     "fs": "https://deno.land/std@0.165.0/fs/mod.ts",
@@ -19,5 +20,6 @@
     "oak:limiter": "https://deno.land/x/oak_rate_limit@v0.1.1/mod.ts",
     "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
     "oak:requestId": "https://deno.land/x/oak_middleware_request_id@0.0.1/mod.ts"
-  }
+  },
+  "scopes": {}
 }

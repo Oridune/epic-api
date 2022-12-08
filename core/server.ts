@@ -1,6 +1,7 @@
-import { Response, ApiServer, Manager, Env } from "@Core/common/mod.ts";
+import { Response, ApiServer, Env } from "@Core/common/mod.ts";
 import { MainController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
+import Manager from "@Core/common/manager.ts";
 import {
   Application as AppServer,
   Router as AppRouter,
@@ -38,7 +39,7 @@ if (import.meta.main) {
 
   await Promise.all(
     (
-      await Manager.load("middlewares")
+      await Manager.getModules("middlewares")
     ).map(async (middleware) => {
       if (typeof middleware === "function") App.use(await middleware());
     })
@@ -79,7 +80,7 @@ if (import.meta.main) {
 
   await Promise.all(
     (
-      await Manager.load("jobs")
+      await Manager.getModules("jobs")
     ).map(async (job) => {
       if (typeof job === "function") await job();
     })
