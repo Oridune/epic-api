@@ -36,6 +36,7 @@ if (import.meta.main) {
 
       if (ctx.request.url.pathname.startsWith(Pathname)) {
         await ctx.send({
+          path: ctx.request.url.pathname.replace(Pathname, ""),
           root: join(Deno.cwd(), "public", Folder, "www"),
           index: "index.html",
         });
