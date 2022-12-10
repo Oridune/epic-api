@@ -30,21 +30,17 @@ if (import.meta.main) {
   App.use(requestIdMiddleware);
 
   const StaticFoldersList = await Manager.getFoldersList("public");
+
+  console.info("Serving Static Content:", StaticFoldersList);
+
   App.use(async (ctx, next) => {
     for (const Folder of StaticFoldersList) {
       const Pathname = "/" + Folder;
 
       if (ctx.request.url.pathname.startsWith(Pathname)) {
-        await send(
-          ctx,
-          join(
-            Deno.cwd(),
-            "public",
-            Folder,
-            "www",
-            ctx.request.url.pathname.replace(Pathname, "")
-          )
-        );
+        await send(ctx, ctx.request.url.pathname.replace(Pathname, ""), {
+          root: join(Deno.cwd(), "public", Folder, "www"),
+        });
 
         return;
       }
