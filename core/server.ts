@@ -11,40 +11,42 @@ import {
   isHttpError,
 } from "oak";
 import Logger from "oak:logger";
-import { RateLimiter } from "oak:limiter";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
+import { RateLimiter } from "oak:limiter";
 import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
 
 export const Port = parseInt(Env.get("PORT") || "8080");
 export const App = new AppServer();
-export const StaticRouter = new AppRouter();
-export const DynamicRouter = new AppRouter({ prefix: "/api" });
+export const Router = new AppRouter();
 
 if (import.meta.main) {
+  App.use(Logger.logger);
+  App.use(Logger.responseTime);
+  App.use(CORS());
+  App.use(gzip());
+
   const StaticFoldersList = await Manager.getFoldersList("public");
 
   console.info("Serving Static Content:", StaticFoldersList);
 
-  StaticRouter.use(async (ctx, next) => {
+  App.use(async (ctx, next) => {
     for (const Folder of StaticFoldersList) {
       const Pathname = "/" + Folder;
 
-      if (ctx.request.url.pathname.startsWith(Pathname))
+      if (ctx.request.url.pathname.startsWith(Pathname)) {
         await ctx.send({
           root: join(Deno.cwd(), "public", Folder, "www"),
           index: "index.html",
         });
+
+        return;
+      }
     }
 
     await next();
   });
 
-  App.use(Logger.logger);
-  App.use(Logger.responseTime);
-  App.use(CORS());
-  App.use(gzip());
-  App.use(StaticRouter.routes());
   App.use(await RateLimiter());
   App.use(requestIdMiddleware);
 
@@ -85,7 +87,7 @@ if (import.meta.main) {
         route.endpoint
       );
 
-      DynamicRouter[route.options.method as "get"](
+      Router[route.options.method as "get"](
         route.endpoint,
         async (ctx: RouterContext<string>) => {
           const Result = await route.options.requestHandler({
@@ -102,8 +104,8 @@ if (import.meta.main) {
     })
   );
 
-  App.use(DynamicRouter.routes());
-  App.use(DynamicRouter.allowedMethods());
+  App.use(Router.routes());
+  App.use(Router.allowedMethods());
 
   App.addEventListener("listen", () => {
     console.info(`Server is listening on Port: ${Port}`);
