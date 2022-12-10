@@ -9,7 +9,6 @@ import {
   Router as AppRouter,
   RouterContext,
   isHttpError,
-  send,
 } from "oak";
 import Logger from "oak:logger";
 import { RateLimiter } from "oak:limiter";
@@ -19,35 +18,35 @@ import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
 
 export const Port = parseInt(Env.get("PORT") || "8080");
 export const App = new AppServer();
-export const Router = new AppRouter();
+export const StaticRouter = new AppRouter();
+export const DynamicRouter = new AppRouter({ prefix: "/api" });
 
 if (import.meta.main) {
-  App.use(Logger.logger);
-  App.use(Logger.responseTime);
-  App.use(await RateLimiter());
-  App.use(CORS());
-  App.use(gzip());
-  App.use(requestIdMiddleware);
-
   const StaticFoldersList = await Manager.getFoldersList("public");
 
   console.info("Serving Static Content:", StaticFoldersList);
 
-  App.use(async (ctx, next) => {
+  StaticRouter.use(async (ctx, next) => {
     for (const Folder of StaticFoldersList) {
       const Pathname = "/" + Folder;
 
-      if (ctx.request.url.pathname.startsWith(Pathname)) {
-        await send(ctx, ctx.request.url.pathname.replace(Pathname, ""), {
+      if (ctx.request.url.pathname.startsWith(Pathname))
+        await ctx.send({
           root: join(Deno.cwd(), "public", Folder, "www"),
+          index: "index.html",
         });
-
-        return;
-      }
     }
 
     await next();
   });
+
+  App.use(Logger.logger);
+  App.use(Logger.responseTime);
+  App.use(CORS());
+  App.use(gzip());
+  App.use(StaticRouter.routes());
+  App.use(await RateLimiter());
+  App.use(requestIdMiddleware);
 
   App.use(async (ctx, next) => {
     try {
@@ -86,7 +85,7 @@ if (import.meta.main) {
         route.endpoint
       );
 
-      Router[route.options.method as "get"](
+      DynamicRouter[route.options.method as "get"](
         route.endpoint,
         async (ctx: RouterContext<string>) => {
           const Result = await route.options.requestHandler({
@@ -103,8 +102,8 @@ if (import.meta.main) {
     })
   );
 
-  App.use(Router.routes());
-  App.use(Router.allowedMethods());
+  App.use(DynamicRouter.routes());
+  App.use(DynamicRouter.allowedMethods());
 
   App.addEventListener("listen", () => {
     console.info(`Server is listening on Port: ${Port}`);
