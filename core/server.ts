@@ -10,6 +10,7 @@ import {
   RouterContext,
   isHttpError,
 } from "oak";
+import StaticFiles from "oak:static";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
@@ -21,33 +22,15 @@ export const App = new AppServer();
 export const Router = new AppRouter();
 
 if (import.meta.main) {
+  for (const Folder of await Manager.getFoldersList("public"))
+    App.use(
+      StaticFiles(join("public", Folder, "www"), { prefix: `/${Folder}/` })
+    );
+
   App.use(Logger.logger);
   App.use(Logger.responseTime);
   App.use(CORS());
   App.use(gzip());
-
-  const StaticFoldersList = await Manager.getFoldersList("public");
-
-  console.info("Serving Static Content:", StaticFoldersList);
-
-  App.use(async (ctx, next) => {
-    for (const Folder of StaticFoldersList) {
-      const Pathname = "/" + Folder;
-
-      if (ctx.request.url.pathname.startsWith(Pathname)) {
-        await ctx.send({
-          root: join(Deno.cwd(), "public", Folder, "www"),
-          path: ctx.request.url.pathname.replace(Pathname, ""),
-          index: "index.html",
-        });
-
-        return;
-      }
-    }
-
-    await next();
-  });
-
   App.use(await RateLimiter());
   App.use(requestIdMiddleware);
 

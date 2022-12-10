@@ -16,6 +16,7 @@
     "pluralize": "https://deno.land/x/deno_plural@2.0.0/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
     "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
+    "oak:static": "https://deno.land/x/static_files@1.1.6/mod.ts",
     "oak:logger": "https://deno.land/x/oak_logger@1.0.0/mod.ts",
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "oak:limiter": "https://deno.land/x/oak_rate_limit@v0.1.1/mod.ts",
