@@ -24,7 +24,10 @@ export const Router = new AppRouter();
 if (import.meta.main) {
   for (const Folder of await Manager.getFoldersList("public"))
     App.use(
-      StaticFiles(join("public", Folder, "www"), { prefix: "/" + Folder })
+      StaticFiles(join(Deno.cwd(), "public", Folder, "www"), {
+        prefix: "/" + Folder,
+        errorFile: true,
+      })
     );
 
   App.use(Logger.logger);
