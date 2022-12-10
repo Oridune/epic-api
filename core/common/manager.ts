@@ -53,6 +53,17 @@ export class Manager {
     return Items;
   }
 
+  public async getFoldersList(path: string): Promise<string[]> {
+    const TargetDir = join(this.CWD, path);
+    const Items: string[] = [];
+
+    if (await exists(TargetDir))
+      for await (const Entry of Deno.readDir(TargetDir))
+        if (Entry.isDirectory) Items.push(Entry.name);
+
+    return Items;
+  }
+
   public async getModules(path: string, parent?: string) {
     const Sequence = await this.getSequence(path);
 

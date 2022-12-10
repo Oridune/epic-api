@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
+import { join } from "path";
 import { Response, ApiServer, Env } from "@Core/common/mod.ts";
 import { MainController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
@@ -8,6 +9,7 @@ import {
   Router as AppRouter,
   RouterContext,
   isHttpError,
+  send,
 } from "oak";
 import Logger from "oak:logger";
 import { RateLimiter } from "oak:limiter";
@@ -26,6 +28,30 @@ if (import.meta.main) {
   App.use(CORS());
   App.use(gzip());
   App.use(requestIdMiddleware);
+
+  const StaticFoldersList = await Manager.getFoldersList("public");
+  App.use(async (ctx, next) => {
+    for (const Folder of StaticFoldersList) {
+      const Pathname = "/" + Folder;
+
+      if (ctx.request.url.pathname.startsWith(Pathname)) {
+        await send(
+          ctx,
+          join(
+            Deno.cwd(),
+            "public",
+            Folder,
+            "www",
+            ctx.request.url.pathname.replace(Pathname, "")
+          )
+        );
+
+        return;
+      }
+    }
+
+    await next();
+  });
 
   App.use(async (ctx, next) => {
     try {
