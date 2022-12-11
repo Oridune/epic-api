@@ -22,6 +22,15 @@ export const App = new AppServer();
 export const Router = new AppRouter();
 
 if (import.meta.main) {
+  for (const Plugin of await Manager.getPlugins())
+    for (const Folder of await Plugin.getFoldersList("public"))
+      App.use(
+        StaticFiles(join(Plugin.CWD, "public", Folder, "www"), {
+          prefix: "/" + Folder,
+          errorFile: true,
+        })
+      );
+
   for (const Folder of await Manager.getFoldersList("public"))
     App.use(
       StaticFiles(join(Deno.cwd(), "public", Folder, "www"), {
