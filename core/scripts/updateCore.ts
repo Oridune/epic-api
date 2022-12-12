@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { join } from "path";
-import { deepMerge } from "collections";
+import { deepMerge } from "collections/deep_merge.ts";
 import { expandGlob } from "fs";
 import e from "validator";
 
