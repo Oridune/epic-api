@@ -4,7 +4,14 @@ import { exists } from "fs";
 import e from "validator";
 
 import { Input, Select, Confirm } from "cliffy:prompt";
-import { plural } from "pluralize";
+import { plural, singular } from "pluralize";
+import {
+  pascalCase,
+  camelCase,
+  snakeCase,
+  paramCase,
+  pathCase,
+} from "stringcase/mod.ts";
 import Manager from "@Core/common/manager.ts";
 
 export enum ModuleType {
@@ -143,11 +150,13 @@ export const createModule = async (options: {
         return;
 
       const Content = (await Deno.readTextFile(Options.templatePath))
-        .replaceAll(
-          "$_Name",
-          Options.name.charAt(0).toUpperCase() + Options.name.slice(1)
-        )
-        .replaceAll("$_name_s", plural(Options.name))
+        .replaceAll("$_namePascal", pascalCase(Options.name))
+        .replaceAll("$_nameCamel", camelCase(Options.name))
+        .replaceAll("$_nameSnake", snakeCase(Options.name))
+        .replaceAll("$_nameKebab", paramCase(Options.name))
+        .replaceAll("$_namePath", pathCase(Options.name))
+        .replaceAll("$_namePlural", plural(Options.name))
+        .replaceAll("$_nameSingular", singular(Options.name))
         .replaceAll("$_name", Options.name);
 
       await Deno.writeTextFile(Options.modulePath, Content);

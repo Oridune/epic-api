@@ -2,27 +2,29 @@ import { basename } from "path";
 import {
   Controller,
   BaseController,
-  Manager,
   Get,
   Post,
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
+import Manager from "@Core/common/manager.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/$_name/", {
+@Controller("/$_namePath/", {
   /** Do not edit this code */
-  childs: await Manager.load("controllers", basename(import.meta.url)),
+  childs: await Manager.getModules("controllers", basename(import.meta.url)),
   /** --------------------- */
 })
-export default class $_NameController extends BaseController {
+export default class $_namePascalController extends BaseController {
   @Post("/")
-  async Create$_Name(ctx: IRequestContext<RouterContext<string>>) {
+  async Create$_namePascal(ctx: IRequestContext<RouterContext<string>>) {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
-      .validate(ctx.router.request.url.searchParams, { name: "$_name.query" });
+      .validate(ctx.router.request.url.searchParams, {
+        name: "$_namePascal.query",
+      });
 
     /**
      * It is recommended to keep the following validators in place even if you don't want to validate any data.
@@ -33,13 +35,13 @@ export default class $_NameController extends BaseController {
     // Params Validation
     const Params = await e
       .object({})
-      .validate(ctx.router.params, { name: "$_name.params" });
+      .validate(ctx.router.params, { name: "$_namePascal.params" });
 
     // Body Validation
     const Body = await e
       .object({})
       .validate(await ctx.router.request.body({ type: "json" }).value, {
-        name: "$_name.body",
+        name: "$_namePascal.body",
       });
 
     // Start coding here...
@@ -48,11 +50,13 @@ export default class $_NameController extends BaseController {
   }
 
   @Get("/")
-  async Get$_Name(ctx: IRequestContext<RouterContext<string>>) {
+  async Get$_namePascal(ctx: IRequestContext<RouterContext<string>>) {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
-      .validate(ctx.router.request.url.searchParams, { name: "$_name.query" });
+      .validate(ctx.router.request.url.searchParams, {
+        name: "$_namePascal.query",
+      });
 
     /**
      * It is recommended to keep the following validators in place even if you don't want to validate any data.
@@ -63,7 +67,7 @@ export default class $_NameController extends BaseController {
     // Params Validation
     const Params = await e
       .object({})
-      .validate(ctx.router.params, { name: "$_name.params" });
+      .validate(ctx.router.params, { name: "$_namePascal.params" });
 
     // Start coding here...
 

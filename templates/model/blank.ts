@@ -1,13 +1,16 @@
 import mongoose from "mongoose";
 
-export interface I$_Name {
+export interface I$_namePascal {
   createdAt: Date;
   updatedAt: Date;
 }
 
-export const $_NameSchema = new mongoose.Schema(
+export const $_namePascalSchema = new mongoose.Schema(
   {},
   { timestamps: true, versionKey: false }
 );
 
-export const $_NameModel = mongoose.model<I$_Name>("$_Name", $_NameSchema);
+export const $_namePascalModel = mongoose.model<I$_namePascal>(
+  "$_namePascal",
+  $_namePascalSchema
+);
