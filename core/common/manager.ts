@@ -12,11 +12,8 @@ export class Manager {
     const SequencePath = join(TargetDir, "./.sequence.json");
 
     if (await exists(SequencePath)) {
-      const Sequence = await import(`file:///${SequencePath}`, {
-        assert: { type: "json" },
-      });
-
-      if (Sequence.default instanceof Array) return new Set(Sequence.default);
+      const Sequence = JSON.parse(await Deno.readTextFile(SequencePath));
+      if (Sequence instanceof Array) return new Set(Sequence);
     }
 
     return new Set();

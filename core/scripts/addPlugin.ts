@@ -64,7 +64,7 @@ export const addPluginToImportMap = async (name: string) => {
 
 export const addPlugin = async (options: {
   source?: PluginSource;
-  name: string;
+  name: string | string[];
   prompt?: boolean;
 }) => {
   try {
@@ -74,13 +74,17 @@ export const addPlugin = async (options: {
           source: e
             .optional(e.enum(Object.values(PluginSource)))
             .default(PluginSource.GIT),
-          name: e.optional(e.string()).default(async (ctx) =>
-            ctx.parent!.input.prompt
-              ? await Input.prompt({
-                  message: "Name of the Plugin",
-                })
-              : undefined
-          ),
+          name: e
+            .optional(e.array(e.string(), { cast: true, splitter: "," }))
+            .default(async (ctx) =>
+              ctx.parent!.input.prompt
+                ? [
+                    await Input.prompt({
+                      message: "Name of the Plugin",
+                    }),
+                  ]
+                : undefined
+            ),
         },
         { allowUnexpectedProps: true }
       )
@@ -89,55 +93,57 @@ export const addPlugin = async (options: {
     if (Options.name) {
       const PluginsDir = join(Deno.cwd(), "plugins");
 
-      let ResolvePluginName = Options.name;
-      let Process:
-        | Deno.Process<{
-            cmd: string[];
-            cwd: string;
-          }>
-        | undefined;
+      for (const PluginName of Options.name) {
+        let ResolvePluginName = PluginName;
+        let Process:
+          | Deno.Process<{
+              cmd: string[];
+              cwd: string;
+            }>
+          | undefined;
 
-      if (Options.source === PluginSource.GIT) {
-        const GitRepoUrl = new URL(Options.name, "https://github.com");
+        if (Options.source === PluginSource.GIT) {
+          const GitRepoUrl = new URL(ResolvePluginName, "https://github.com");
 
-        ResolvePluginName = resolvePluginName(GitRepoUrl.pathname);
+          ResolvePluginName = resolvePluginName(GitRepoUrl.pathname);
 
-        Process = Deno.run({
-          cmd: ["git", "clone", GitRepoUrl.toString(), ResolvePluginName],
-          cwd: PluginsDir,
-        });
-      }
+          Process = Deno.run({
+            cmd: ["git", "clone", GitRepoUrl.toString(), ResolvePluginName],
+            cwd: PluginsDir,
+          });
+        }
 
-      if (Process) {
-        const Status = await Process.status();
+        if (Process) {
+          const Status = await Process.status();
 
-        if (Status.success) {
-          await Manager.setSequence("plugins", (seq) =>
-            seq.add(ResolvePluginName)
-          );
+          if (Status.success) {
+            await Manager.setSequence("plugins", (seq) =>
+              seq.add(ResolvePluginName)
+            );
 
-          await addPluginToImportMap(ResolvePluginName);
+            await addPluginToImportMap(ResolvePluginName);
 
-          for await (const Entry of Deno.readDir(
-            join(PluginsDir, ResolvePluginName)
-          ))
-            if (
-              !/controllers|models|middlewares|jobs|public|resources|templates|\.sample\.env|\.git/.test(
-                Entry.name
+            for await (const Entry of Deno.readDir(
+              join(PluginsDir, ResolvePluginName)
+            ))
+              if (
+                !/controllers|models|middlewares|jobs|public|resources|templates|\.sample\.env|\.git/.test(
+                  Entry.name
+                )
               )
-            )
-              await Deno.remove(
-                join(PluginsDir, ResolvePluginName, Entry.name),
-                {
-                  recursive: true,
-                }
-              );
+                await Deno.remove(
+                  join(PluginsDir, ResolvePluginName, Entry.name),
+                  {
+                    recursive: true,
+                  }
+                );
 
-          console.info("Plugin has been added successfully!");
-        } else console.info("We were unable to add this plugin!");
+            console.info("Plugin has been added successfully!");
+          } else console.info("We were unable to add this plugin!");
 
-        Process.close();
-      } else throw new Error(`Oops! Something went wrong!`);
+          Process.close();
+        } else throw new Error(`Oops! Something went wrong!`);
+      }
     }
   } catch (error) {
     console.error(error, error.issues);

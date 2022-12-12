@@ -24,7 +24,7 @@ export const removePluginFromImportMap = async (name: string) => {
 };
 
 export const removePlugin = async (options: {
-  name: string;
+  name: string | string[];
   prompt?: boolean;
 }) => {
   try {
@@ -32,14 +32,18 @@ export const removePlugin = async (options: {
     const Options = await e
       .object(
         {
-          name: e.optional(e.in(PluginsList)).default(async (ctx) =>
-            ctx.parent!.input.prompt
-              ? await Select.prompt({
-                  message: "Choose the plugin to be deleted",
-                  options: PluginsList,
-                })
-              : undefined
-          ),
+          name: e
+            .optional(e.array(e.in(PluginsList), { cast: true, splitter: "," }))
+            .default(async (ctx) =>
+              ctx.parent!.input.prompt
+                ? [
+                    await Select.prompt({
+                      message: "Choose the plugin to be deleted",
+                      options: PluginsList,
+                    }),
+                  ]
+                : undefined
+            ),
         },
         { allowUnexpectedProps: true }
       )
@@ -49,21 +53,25 @@ export const removePlugin = async (options: {
       if (
         options.prompt &&
         !(await Confirm.prompt({
-          message: `Do you really want to delete the plugin '${Options.name}'?`,
+          message: `Do you really want to delete the plugin(s) '${Options.name.join(
+            ", "
+          )}'?`,
         }))
       )
         return;
 
-      const PluginPath = join(Deno.cwd(), "plugins", Options.name);
+      for (const PluginName of Options.name) {
+        const PluginPath = join(Deno.cwd(), "plugins", PluginName);
 
-      await Manager.setSequence("plugins", (seq) => {
-        seq.delete(Options.name!);
-        return seq;
-      });
+        await Manager.setSequence("plugins", (seq) => {
+          seq.delete(PluginName);
+          return seq;
+        });
 
-      await removePluginFromImportMap(Options.name);
+        await removePluginFromImportMap(PluginName);
 
-      await Deno.remove(PluginPath, { recursive: true });
+        await Deno.remove(PluginPath, { recursive: true });
+      }
     }
 
     console.info("Plugin has been removed successfully!");

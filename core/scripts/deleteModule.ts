@@ -55,7 +55,7 @@ export const deleteModule = async (options: {
       if (
         options.prompt &&
         !(await Confirm.prompt({
-          message: `Do you really want to delete the module '${Options.name}'?`,
+          message: `Do you really want to delete the ${Options.type} '${Options.name}'?`,
         }))
       )
         return;
