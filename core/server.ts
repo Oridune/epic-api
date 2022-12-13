@@ -74,22 +74,40 @@ if (import.meta.main) {
     })
   );
 
-  await new ApiServer(MainController).create((routes) =>
-    routes.forEach((route) => {
+  await new ApiServer(MainController).create(async (routes) => {
+    for (const Route of routes) {
       console.info(
-        "Route Added:",
-        route.options.method.toUpperCase(),
+        "Endpoint:",
+        Route.options.method.toUpperCase(),
         "\t",
-        route.endpoint
+        Route.endpoint
       );
 
-      Router[route.options.method as "get"](
-        route.endpoint,
+      const ControllerOptions = Route.options.controller.getOptions();
+      const Middlewares = [
+        ...(typeof ControllerOptions?.middlewares === "function"
+          ? await ControllerOptions.middlewares()
+          : ControllerOptions?.middlewares ?? []),
+
+        ...(typeof Route.options.middlewares === "function"
+          ? await Route.options.middlewares()
+          : Route.options.middlewares ?? []),
+      ];
+
+      Router[Route.options.method as "get"](
+        Route.endpoint,
+        async (ctx: RouterContext<string>, next: () => Promise<unknown>) => {
+          ctx.state.requestId = ctx.state[getRequestIdKey()];
+          ctx.state.requestName = Route.options.name;
+
+          await next();
+        },
+        ...Middlewares,
         async (ctx: RouterContext<string>) => {
-          const Result = await route.options.requestHandler({
-            id: ctx.state[getRequestIdKey()],
+          const Result = await Route.options.requestHandler({
+            id: ctx.state.requestId,
             router: ctx,
-            options: route.options,
+            options: Route.options,
           });
 
           ctx.response.body = (
@@ -97,8 +115,8 @@ if (import.meta.main) {
           ).toObject();
         }
       );
-    })
-  );
+    }
+  });
 
   App.use(Router.routes());
   App.use(Router.allowedMethods());

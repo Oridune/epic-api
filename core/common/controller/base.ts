@@ -8,6 +8,8 @@ export enum ControllerMetadataKey {
   ROUTES = "routes",
 }
 
+export type TMiddleware = (...args: any[]) => any;
+
 export interface IControllerOptions {
   name: string;
   description?: string;
@@ -15,6 +17,7 @@ export interface IControllerOptions {
   childs:
     | typeof BaseController[]
     | (() => typeof BaseController[] | Promise<typeof BaseController[]>);
+  middlewares: TMiddleware[] | (() => TMiddleware[] | Promise<TMiddleware[]>);
 }
 
 export interface IRouteOptions {
@@ -24,6 +27,7 @@ export interface IRouteOptions {
   path: string;
   requestHandler: TRequestHandler;
   controller: typeof BaseController;
+  middlewares: TMiddleware[] | (() => TMiddleware[] | Promise<TMiddleware[]>);
 }
 
 export interface IRequestContext<Router = any> {

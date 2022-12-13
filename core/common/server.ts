@@ -1,4 +1,8 @@
-import { BaseController, IRouteOptions } from "./controller/base.ts";
+import {
+  BaseController,
+  IControllerOptions,
+  IRouteOptions,
+} from "./controller/base.ts";
 
 export interface IRoute {
   endpoint: string;
@@ -50,8 +54,14 @@ export class ApiServer {
 
   constructor(protected MainController: typeof BaseController) {}
 
-  async create(callback: (routes: IRoute[]) => Promise<void> | void) {
-    await this.collectRoutes(this.MainController, this.Routes);
-    await callback(this.Routes);
+  async create(
+    callback: (
+      routes: IRoute[],
+      options: IControllerOptions | null
+    ) => Promise<void> | void
+  ) {
+    if (!this.Routes.length)
+      await this.collectRoutes(this.MainController, this.Routes);
+    await callback(this.Routes, this.MainController.getOptions());
   }
 }

@@ -46,6 +46,7 @@ export const Route =
             path,
             requestHandler: desc.value,
             controller: target,
+            middlewares: options?.middlewares ?? [],
           };
 
           ControllerConstructor.setRoutes(ControllerRoutes);

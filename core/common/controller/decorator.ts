@@ -11,4 +11,5 @@ export const Controller =
       description: options?.description,
       prefix,
       childs: options?.childs ?? [],
+      middlewares: options?.middlewares ?? [],
     });
