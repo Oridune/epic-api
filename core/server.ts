@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { join } from "path";
-import { Response, ApiServer, Env } from "@Core/common/mod.ts";
+import { Response, ApiServer, Env, EnvType } from "@Core/common/mod.ts";
 import { MainController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
 import Manager from "@Core/common/manager.ts";
@@ -76,12 +76,13 @@ if (import.meta.main) {
 
   await new ApiServer(MainController).create(async (routes) => {
     for (const Route of routes) {
-      console.info(
-        "Endpoint:",
-        Route.options.method.toUpperCase(),
-        "\t",
-        Route.endpoint
-      );
+      if (!Env.is(EnvType.PRODUCTION))
+        console.info(
+          "Endpoint:",
+          Route.options.method.toUpperCase(),
+          "\t",
+          Route.endpoint
+        );
 
       const ControllerOptions = Route.options.controller.getOptions();
       const Middlewares = [
