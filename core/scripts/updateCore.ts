@@ -89,6 +89,7 @@ export const updateCore = async (options: {
       // Core Files
       for await (const Entry of expandGlob("core/**/*", {
         root: TempPath,
+        globstar: true,
       }))
         if (!Entry.isDirectory)
           Deno.copyFile(Entry.path, Entry.path.replace(TempPath, Deno.cwd()));
@@ -96,6 +97,7 @@ export const updateCore = async (options: {
       // Template Files
       for await (const Entry of expandGlob("templates/**/*", {
         root: TempPath,
+        globstar: true,
       }))
         if (!Entry.isDirectory)
           Deno.copyFile(Entry.path, Entry.path.replace(TempPath, Deno.cwd()));
