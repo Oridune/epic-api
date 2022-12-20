@@ -23,21 +23,23 @@ export const Router = new AppRouter();
 
 if (import.meta.main) {
   for (const Plugin of await Manager.getPlugins())
-    for (const Folder of await Plugin.getFoldersList("public"))
+    for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
+      if (Entry.isDirectory)
+        App.use(
+          StaticFiles(join(Plugin.CWD, "public", Entry.name, "www"), {
+            prefix: "/" + Entry.name,
+            errorFile: true,
+          })
+        );
+
+  for await (const Entry of Deno.readDir("public"))
+    if (Entry.isDirectory)
       App.use(
-        StaticFiles(join(Plugin.CWD, "public", Folder, "www"), {
-          prefix: "/" + Folder,
+        StaticFiles(join(Deno.cwd(), "public", Entry.name, "www"), {
+          prefix: "/" + Entry.name,
           errorFile: true,
         })
       );
-
-  for (const Folder of await Manager.getFoldersList("public"))
-    App.use(
-      StaticFiles(join(Deno.cwd(), "public", Folder, "www"), {
-        prefix: "/" + Folder,
-        errorFile: true,
-      })
-    );
 
   App.use(Logger.logger);
   App.use(Logger.responseTime);
