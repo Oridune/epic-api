@@ -33,10 +33,16 @@ export const addPluginToImportMap = async (name: string) => {
     })
   ).default;
 
-  const TargetScope = `./plugins/${name}/`;
+  const PluginPath = `./plugins/${name}/`;
+
+  ImportMap.imports = {
+    ...ImportMap.imports,
+    [`@Plugin/${name}/`]: PluginPath,
+  };
+
   ImportMap.scopes = {
     ...ImportMap.scopes,
-    [TargetScope]: {
+    [PluginPath]: {
       "@Controllers/": `./plugins/${name}/controllers/`,
       "@Models/": `./plugins/${name}/models/`,
       "@Jobs/": `./plugins/${name}/jobs/`,
@@ -54,7 +60,8 @@ export const addPluginToImportMap = async (name: string) => {
   const PluginImportKeys = Object.keys(PluginImportMap.imports ?? {});
 
   for (const Key of PluginImportKeys.filter((key) => !ImportKeys.includes(key)))
-    ImportMap.scopes[TargetScope][Key] = PluginImportMap.imports?.[Key];
+    if (!/^@Plugin\/.*/.test(Key))
+      ImportMap.scopes[PluginPath][Key] = PluginImportMap.imports?.[Key];
 
   await Deno.writeTextFile(
     ImportMapPath,

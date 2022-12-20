@@ -15,6 +15,8 @@ export const removePluginFromImportMap = async (name: string) => {
   ).default;
 
   const TargetScope = `./plugins/${name}/`;
+
+  delete ImportMap.imports?.[`@Plugin/${name}/`];
   delete ImportMap.scopes?.[TargetScope];
 
   await Deno.writeTextFile(
