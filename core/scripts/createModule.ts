@@ -21,6 +21,11 @@ export enum ModuleType {
   MIDDLEWARE = "middleware",
 }
 
+export const listTemplates = async (path: string, type: string) =>
+  Array.from(await Manager.getSequence(path))
+    .filter((name) => new RegExp(`^${type}\\..+`).test(name))
+    .map((name) => name.replace(new RegExp(`^${type}\\.`), ""));
+
 export const createModule = async (options: {
   type: ModuleType;
   name: string;
@@ -79,25 +84,20 @@ export const createModule = async (options: {
           templateDir: e.optional(e.string()).default("templates"),
           template: e
             .optional(
-              e.in(
-                async (ctx) =>
-                  await Manager.getFilesList(
-                    join(
-                      ctx.parent!.output.templateDir,
-                      ctx.parent!.output.type
-                    )
-                  )
+              e.in((ctx) =>
+                listTemplates(
+                  ctx.parent!.output.templateDir,
+                  ctx.parent!.output.type
+                )
               )
             )
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? await Select.prompt({
                     message: "Choose a template",
-                    options: await Manager.getFilesList(
-                      join(
-                        ctx.parent!.output.templateDir,
-                        ctx.parent!.output.type
-                      )
+                    options: await listTemplates(
+                      ctx.parent!.output.templateDir,
+                      ctx.parent!.output.type
                     ),
                   })
                 : undefined

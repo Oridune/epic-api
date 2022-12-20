@@ -2,67 +2,84 @@
 import { join } from "path";
 import { exists } from "fs";
 
+export interface ISequenceData {
+  sequence?: string[];
+  excludes?: string[];
+}
+
 export class Manager {
   protected LoadableExtensions = ["ts", "js"];
 
   constructor(public CWD = Deno.cwd()) {}
 
-  public async getSequence(path: string): Promise<Set<string>> {
+  public async getSequenceData(path: string): Promise<ISequenceData> {
     const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
     if (await exists(SequencePath)) {
-      const Sequence = JSON.parse(await Deno.readTextFile(SequencePath));
-      if (Sequence instanceof Array) return new Set(Sequence);
+      try {
+        const Sequence = JSON.parse(await Deno.readTextFile(SequencePath));
+        if (Sequence instanceof Array) return { sequence: Sequence };
+        if (typeof Sequence === "object" && Sequence !== null) return Sequence;
+      } catch {
+        // Do nothing...
+      }
     }
 
-    return new Set();
+    return {};
   }
 
-  public async setSequence(
+  public async setSequenceData(
     path: string,
-    sequence: Set<string> | ((sequence: Set<string>) => Set<string>)
+    data:
+      | ISequenceData
+      | ((data: ISequenceData) => ISequenceData | Promise<ISequenceData>)
   ) {
     const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
-    const Sequence =
-      typeof sequence === "function"
-        ? sequence(await this.getSequence(path))
-        : sequence instanceof Array
-        ? sequence
-        : [];
+    const Data =
+      typeof data === "function"
+        ? await data(await this.getSequenceData(path))
+        : typeof data === "object" && data !== null
+        ? data
+        : {};
 
-    await Deno.writeTextFile(
-      SequencePath,
-      JSON.stringify(Array.from(new Set(Sequence)))
-    );
+    await Deno.writeTextFile(SequencePath, JSON.stringify(Data, undefined, 2));
   }
 
-  public async getFilesList(path: string): Promise<string[]> {
-    const TargetDir = join(this.CWD, path);
-    const Items: string[] = [];
+  public async getSequence(
+    path: string,
+    options?: { strict?: boolean }
+  ): Promise<Set<string>> {
+    const Data = await this.getSequenceData(path);
+    const Sequence = options?.strict
+      ? Data.sequence?.filter((name) => !Data.excludes?.includes(name))
+      : Data.sequence;
 
-    if (await exists(TargetDir))
-      for await (const Entry of Deno.readDir(TargetDir))
-        if (!Entry.isDirectory) Items.push(Entry.name);
-
-    return Items;
+    return new Set(Sequence);
   }
 
-  public async getFoldersList(path: string): Promise<string[]> {
-    const TargetDir = join(this.CWD, path);
-    const Items: string[] = [];
+  public async setSequence(
+    path: string,
+    sequence:
+      | Set<string>
+      | ((sequence: Set<string>) => Set<string> | Promise<Set<string>>)
+  ) {
+    await this.setSequenceData(path, async (data) => {
+      data.sequence =
+        typeof sequence === "function"
+          ? Array.from(await sequence(new Set<string>(data.sequence)))
+          : sequence instanceof Set
+          ? Array.from(sequence)
+          : [];
 
-    if (await exists(TargetDir))
-      for await (const Entry of Deno.readDir(TargetDir))
-        if (Entry.isDirectory) Items.push(Entry.name);
-
-    return Items;
+      return data;
+    });
   }
 
   public async getModules(path: string, parent?: string) {
-    const Sequence = await this.getSequence(path);
+    const Sequence = await this.getSequence(path, { strict: true });
 
     return (
       await Promise.all(
@@ -92,7 +109,7 @@ export class Manager {
   }
 
   public async getPlugins() {
-    return Array.from(await this.getSequence("plugins")).map(
+    return Array.from(await this.getSequence("plugins", { strict: true })).map(
       (path) => new Manager(join(this.CWD, "plugins", path))
     );
   }
