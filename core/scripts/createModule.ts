@@ -130,8 +130,7 @@ export const createModule = async (options: {
               join(
                 Deno.cwd(),
                 ctx.parent!.output.templateDir,
-                ctx.parent!.output.type,
-                ctx.parent!.output.template
+                `${ctx.parent!.output.type}.${ctx.parent!.output.template}`
               )
             ),
         },
