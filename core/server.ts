@@ -29,6 +29,7 @@ if (import.meta.main) {
           StaticFiles(join(Plugin.CWD, "public", Entry.name, "www"), {
             prefix: "/" + Entry.name,
             errorFile: true,
+            fallthrough: true,
           })
         );
 
@@ -38,6 +39,7 @@ if (import.meta.main) {
         StaticFiles(join(Deno.cwd(), "public", Entry.name, "www"), {
           prefix: "/" + Entry.name,
           errorFile: true,
+          fallthrough: true,
         })
       );
 
