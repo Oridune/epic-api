@@ -16,7 +16,7 @@ import { ModuleType } from "@Core/scripts/createModule.ts";
 
 export const renameModule = async (options: {
   type: ModuleType;
-  name: string;
+  module: string;
   rename?: string;
   prompt?: boolean;
 }) => {
@@ -34,7 +34,7 @@ export const renameModule = async (options: {
                   })) as ModuleType)
                 : undefined
             ),
-          name: e.optional(e.string()).default(async (ctx) =>
+          module: e.optional(e.string()).default(async (ctx) =>
             ctx.parent!.input.prompt
               ? await Select.prompt({
                   message: "Choose the module to be renamed",
@@ -44,6 +44,14 @@ export const renameModule = async (options: {
                 })
               : undefined
           ),
+          name: e
+            .any()
+            .custom(
+              (ctx) =>
+                ctx.parent?.output.module.match(
+                  /(-?[a-zA-Z0-9]+)+(\.(-?[a-zA-Z0-9]+)+)?$/
+                )[1]
+            ),
           rename: e
             .optional(e.string().matches(/^(-?[a-zA-Z0-9]+)+$/))
             .default(async (ctx) =>
@@ -54,6 +62,14 @@ export const renameModule = async (options: {
                   })) as string)
                 : undefined
             ),
+          newModule: e
+            .any()
+            .custom((ctx) =>
+              ctx.parent!.output.module.replace(
+                /(-?[a-zA-Z0-9]+)+(\.(-?[a-zA-Z0-9]+)+)?$/,
+                `${ctx.parent?.output.rename}$2`
+              )
+            ),
           moduleDir: e.any().custom((ctx) => plural(ctx.parent!.output.type)),
           modulePath: e
             .any()
@@ -61,7 +77,7 @@ export const renameModule = async (options: {
               join(
                 Deno.cwd(),
                 ctx.parent!.output.moduleDir,
-                ctx.parent!.output.name
+                ctx.parent!.output.module
               )
             ),
           newModulePath: e
@@ -70,10 +86,7 @@ export const renameModule = async (options: {
               join(
                 Deno.cwd(),
                 ctx.parent!.output.moduleDir,
-                ctx.parent!.output.name.replace(
-                  /(-?[a-zA-Z0-9]+)+(\.(-?[a-zA-Z0-9]+)+)?$/,
-                  `${ctx.parent?.output.rename}$2`
-                )
+                ctx.parent!.output.newModule
               )
             ),
         },
@@ -93,11 +106,15 @@ export const renameModule = async (options: {
         .replaceAll(pathCase(Options.name), pathCase(Options.rename));
 
       await Deno.writeTextFile(Options.newModulePath, Content);
-      await Deno.remove(Options.modulePath);
-      await Manager.setSequence(Options.moduleDir, (seq) => {
-        seq.delete(Options.name!);
-        return seq.add(Options.rename!);
-      });
+
+      if (Options.modulePath !== Options.newModulePath) {
+        await Manager.setSequence(Options.moduleDir, (seq) => {
+          seq.delete(Options.module!);
+          return seq.add(Options.newModule!);
+        });
+
+        await Deno.remove(Options.modulePath);
+      }
     }
 
     console.info("Module has been renamed successfully!");
@@ -108,11 +125,11 @@ export const renameModule = async (options: {
 };
 
 if (import.meta.main) {
-  const { type, t, name, n, rename } = parse(Deno.args);
+  const { type, t, module, m, rename } = parse(Deno.args);
 
   renameModule({
     type: type ?? t,
-    name: name ?? n,
+    module: module ?? m,
     rename,
     prompt: true,
   });
