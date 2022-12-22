@@ -107,16 +107,18 @@ if (import.meta.main) {
         },
         ...Middlewares,
         async (ctx: RouterContext<string>) => {
-          const Result = await Route.options.requestHandler({
+          const RequestContext = {
             id: ctx.state.requestId,
             router: ctx,
             options: Route.options,
-          });
+          };
+
+          const Result = await Route.options.requestHandler(RequestContext);
 
           dispatchEvent(
             new CustomEvent(ctx.state.requestName, {
               detail: {
-                ctx,
+                ctx: RequestContext,
                 res: Result,
               },
             })
