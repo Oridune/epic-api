@@ -113,6 +113,15 @@ if (import.meta.main) {
             options: Route.options,
           });
 
+          dispatchEvent(
+            new CustomEvent(ctx.state.requestName, {
+              detail: {
+                ctx,
+                res: Result,
+              },
+            })
+          );
+
           ctx.response.body = (
             Result instanceof Response ? Result : Response.status(true)
           ).toObject();
