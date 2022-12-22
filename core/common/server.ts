@@ -52,7 +52,7 @@ export class ApiServer {
     }
   }
 
-  constructor(protected MainController: typeof BaseController) {}
+  constructor(protected Controller: typeof BaseController) {}
 
   async create(
     callback: (
@@ -61,7 +61,7 @@ export class ApiServer {
     ) => Promise<void> | void
   ) {
     if (!this.Routes.length)
-      await this.collectRoutes(this.MainController, this.Routes);
-    await callback(this.Routes, this.MainController.getOptions());
+      await this.collectRoutes(this.Controller, this.Routes);
+    await callback(this.Routes, this.Controller.getOptions());
   }
 }

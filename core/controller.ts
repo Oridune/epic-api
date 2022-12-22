@@ -16,9 +16,9 @@ import Manager from "@Core/common/manager.ts";
     ...(await Manager.getModules("controllers")),
   ],
 })
-export class MainController extends BaseController {
+export class APIController extends BaseController {
   @Get()
   public Home() {
-    return Response.message("Hurry! the application is online!");
+    return Response.message("Hurry! the API is online!");
   }
 }

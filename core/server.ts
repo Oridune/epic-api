@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { join } from "path";
 import { Response, ApiServer, Env, EnvType } from "@Core/common/mod.ts";
-import { MainController } from "@Core/controller.ts";
+import { APIController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
 import Manager from "@Core/common/manager.ts";
 import {
@@ -29,7 +29,6 @@ if (import.meta.main) {
           StaticFiles(join(Plugin.CWD, "public", Entry.name, "www"), {
             prefix: "/" + Entry.name,
             errorFile: true,
-            fallthrough: true,
           })
         );
 
@@ -39,7 +38,6 @@ if (import.meta.main) {
         StaticFiles(join(Deno.cwd(), "public", Entry.name, "www"), {
           prefix: "/" + Entry.name,
           errorFile: true,
-          fallthrough: true,
         })
       );
 
@@ -78,7 +76,7 @@ if (import.meta.main) {
     })
   );
 
-  await new ApiServer(MainController).create(async (routes) => {
+  await new ApiServer(APIController).create(async (routes) => {
     for (const Route of routes) {
       if (!Env.is(EnvType.PRODUCTION))
         console.info(
