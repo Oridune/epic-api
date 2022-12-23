@@ -48,28 +48,30 @@ export const renameModule = async (options: {
             .any()
             .custom(
               (ctx) =>
-                ctx.parent?.output.module.match(
-                  /(-?[a-zA-Z0-9]+)+(\.(-?[a-zA-Z0-9]+)+)?$/
-                )[1]
+                ctx.parent?.output.module.split(".").slice(-2, -1)[0] ??
+                ctx.parent?.output.module
             ),
           rename: e
-            .optional(e.string().matches(/^(-?[a-zA-Z0-9]+)+$/))
+            .optional(e.string().matches(/^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/))
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Input.prompt({
                     message: "What is the new name of module?",
-                    validate: (value) => /^(-?([a-zA-Z0-9]+))+$/.test(value),
+                    validate: (value) =>
+                      /^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/.test(value),
                   })) as string)
                 : undefined
             ),
-          newModule: e
-            .any()
-            .custom((ctx) =>
-              ctx.parent!.output.module.replace(
-                /(-?[a-zA-Z0-9]+)+(\.(-?[a-zA-Z0-9]+)+)?$/,
-                `${ctx.parent?.output.rename}$2`
-              )
-            ),
+          newModule: e.any().custom((ctx) => {
+            const Parts: string[] = ctx.parent?.output.module.split(".");
+            return Parts.length > 1
+              ? [
+                  ...(Parts.length > 2 ? Parts.slice(0, -2) : []),
+                  ctx.parent?.output.rename,
+                  ...Parts.slice(-1),
+                ].join(".")
+              : ctx.parent?.output.rename;
+          }),
           moduleDir: e.any().custom((ctx) => plural(ctx.parent!.output.type)),
           modulePath: e
             .any()

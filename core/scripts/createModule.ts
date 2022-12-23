@@ -49,12 +49,13 @@ export const createModule = async (options: {
                 : undefined
             ),
           name: e
-            .optional(e.string().matches(/^(-?[a-zA-Z0-9]+)+$/))
+            .optional(e.string().matches(/^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/))
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Input.prompt({
                     message: "What is the name of module?",
-                    validate: (value) => /^(-?([a-zA-Z0-9]+))+$/.test(value),
+                    validate: (value) =>
+                      /^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/.test(value),
                   })) as string)
                 : undefined
             ),
