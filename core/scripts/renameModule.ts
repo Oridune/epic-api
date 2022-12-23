@@ -107,14 +107,14 @@ export const renameModule = async (options: {
         .replaceAll(paramCase(Options.name), "$_nameKebab")
         .replaceAll(pathCase(Options.name), "$_namePath")
 
-        .replaceAll("$_namePlural", plural(Options.rename))
-        .replaceAll("$_name", Options.rename)
-        .replaceAll("$_nameSingular", singular(Options.rename))
         .replaceAll("$_namePascal", pascalCase(Options.rename))
         .replaceAll("$_nameCamel", camelCase(Options.rename))
         .replaceAll("$_nameSnake", snakeCase(Options.rename))
         .replaceAll("$_nameKebab", paramCase(Options.rename))
-        .replaceAll("$_namePath", pathCase(Options.rename));
+        .replaceAll("$_namePath", pathCase(Options.rename))
+        .replaceAll("$_namePlural", plural(Options.rename))
+        .replaceAll("$_nameSingular", singular(Options.rename))
+        .replaceAll("$_name", Options.rename);
 
       await Deno.writeTextFile(Options.newModulePath, Content);
 

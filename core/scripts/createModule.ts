@@ -150,14 +150,14 @@ export const createModule = async (options: {
         return;
 
       const Content = (await Deno.readTextFile(Options.templatePath))
-        .replaceAll("$_namePlural", plural(Options.name))
-        .replaceAll("$_name", Options.name)
-        .replaceAll("$_nameSingular", singular(Options.name))
         .replaceAll("$_namePascal", pascalCase(Options.name))
         .replaceAll("$_nameCamel", camelCase(Options.name))
         .replaceAll("$_nameSnake", snakeCase(Options.name))
         .replaceAll("$_nameKebab", paramCase(Options.name))
-        .replaceAll("$_namePath", pathCase(Options.name));
+        .replaceAll("$_namePath", pathCase(Options.name))
+        .replaceAll("$_namePlural", plural(Options.name))
+        .replaceAll("$_nameSingular", singular(Options.name))
+        .replaceAll("$_name", Options.name);
 
       await Deno.writeTextFile(Options.modulePath, Content);
       await Manager.setSequence(Options.moduleDir, (seq) =>
