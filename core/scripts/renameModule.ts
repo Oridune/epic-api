@@ -98,14 +98,23 @@ export const renameModule = async (options: {
 
     if (Options.type && Options.name && Options.rename) {
       const Content = (await Deno.readTextFile(Options.modulePath))
-        .replaceAll(plural(Options.name), plural(Options.rename))
-        .replaceAll(Options.name, Options.rename)
-        .replaceAll(singular(Options.name), singular(Options.rename))
-        .replaceAll(pascalCase(Options.name), pascalCase(Options.rename))
-        .replaceAll(camelCase(Options.name), camelCase(Options.rename))
-        .replaceAll(snakeCase(Options.name), snakeCase(Options.rename))
-        .replaceAll(paramCase(Options.name), paramCase(Options.rename))
-        .replaceAll(pathCase(Options.name), pathCase(Options.rename));
+        .replaceAll(plural(Options.name), "$_namePlural")
+        .replaceAll(Options.name, "$_name")
+        .replaceAll(singular(Options.name), "$_nameSingular")
+        .replaceAll(pascalCase(Options.name), "$_namePascal")
+        .replaceAll(camelCase(Options.name), "$_nameCamel")
+        .replaceAll(snakeCase(Options.name), "$_nameSnake")
+        .replaceAll(paramCase(Options.name), "$_nameKebab")
+        .replaceAll(pathCase(Options.name), "$_namePath")
+
+        .replaceAll("$_namePlural", plural(Options.rename))
+        .replaceAll("$_name", Options.rename)
+        .replaceAll("$_nameSingular", singular(Options.rename))
+        .replaceAll("$_namePascal", pascalCase(Options.rename))
+        .replaceAll("$_nameCamel", camelCase(Options.rename))
+        .replaceAll("$_nameSnake", snakeCase(Options.rename))
+        .replaceAll("$_nameKebab", paramCase(Options.rename))
+        .replaceAll("$_namePath", pathCase(Options.rename));
 
       await Deno.writeTextFile(Options.newModulePath, Content);
 
