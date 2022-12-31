@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export interface I$_namePascal {
+  _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -16,6 +16,7 @@ import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
 import { RateLimiter } from "oak:limiter";
 import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
+import { ValidationException } from "validator";
 
 export const Port = parseInt(Env.get("PORT") || "8080");
 export const App = new AppServer();
@@ -52,7 +53,11 @@ if (import.meta.main) {
     try {
       await next();
     } catch (e) {
-      ctx.response.status = isHttpError(e) ? e.status : 500;
+      ctx.response.status = isHttpError(e)
+        ? e.status
+        : e instanceof ValidationException
+        ? 400
+        : 500;
       ctx.response.body = Response.statusCode(ctx.response.status)
         .messages(e.issues ?? [{ message: e.message }])
         .toObject();
