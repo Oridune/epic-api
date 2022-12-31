@@ -22,7 +22,7 @@ export default class $_namePascalController extends BaseController {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
-      .validate(ctx.router.request.url.searchParams, {
+      .validate(Object.fromEntries(ctx.router.request.url.searchParams), {
         name: "$_namePascal.query",
       });
 
@@ -54,7 +54,7 @@ export default class $_namePascalController extends BaseController {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
-      .validate(ctx.router.request.url.searchParams, {
+      .validate(Object.fromEntries(ctx.router.request.url.searchParams), {
         name: "$_namePascal.query",
       });
 

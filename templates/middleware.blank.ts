@@ -6,7 +6,9 @@ export default () =>
     // Query Validation (You can remove this validation if not required)
     const _Query = await e
       .object({}, { allowUnexpectedProps: true })
-      .validate(ctx.request.url.searchParams, { name: "query" });
+      .validate(Object.fromEntries(ctx.request.url.searchParams), {
+        name: "query",
+      });
 
     // Continue to next middleware
     await next();
