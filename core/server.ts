@@ -23,6 +23,8 @@ export const App = new AppServer();
 export const Router = new AppRouter();
 
 if (import.meta.main) {
+  await connectDatabase();
+
   for (const Plugin of await Manager.getPlugins())
     for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
       if (Entry.isDirectory)
@@ -161,6 +163,5 @@ if (import.meta.main) {
     })
   );
 
-  await connectDatabase();
   await App.listen({ port: Port });
 }
