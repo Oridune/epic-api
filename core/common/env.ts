@@ -9,6 +9,9 @@ export enum EnvType {
 
 export class Env {
   static configuration?: Record<string, string>;
+  static onGetFailed?: (
+    key: string
+  ) => Promise<string | null | undefined> | string | null | undefined;
 
   /**
    * Get the type of current environment (development, production, test etc.)
@@ -49,12 +52,17 @@ export class Env {
    * @param key Key of the variable
    * @returns
    */
-  static get(key: string) {
-    const Target = Env.getAll()[key];
+  static async get(key: string) {
+    let Data: string | null | undefined = Env.getAll()[key];
 
-    if (Target === undefined)
-      throw new Error(`Missing environment variable '${key}'!`);
+    if (typeof Data !== "string") {
+      if (typeof Env.onGetFailed === "function")
+        Data = await Env.onGetFailed(key);
 
-    return Target;
+      if (typeof Data !== "string")
+        throw new Error(`Missing environment variable '${key}'!`);
+    }
+
+    return Data;
   }
 }

@@ -18,7 +18,7 @@ import { RateLimiter } from "oak:limiter";
 import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
 import { ValidationException } from "validator";
 
-export const Port = parseInt(Env.get("PORT") || "8080");
+export const Port = parseInt((await Env.get("PORT")) || "8080");
 export const App = new AppServer();
 export const Router = new AppRouter();
 
