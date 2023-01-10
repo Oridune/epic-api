@@ -22,7 +22,7 @@ export const mergeConfig = async (dir: string) => {
     })
   ).default;
 
-  const ResultConfig = deepMerge(MainConfig, TempConfig);
+  const ResultConfig = deepMerge({ ...MainConfig }, TempConfig);
 
   delete ResultConfig.id;
   delete ResultConfig.version;
