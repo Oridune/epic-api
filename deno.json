@@ -2,6 +2,7 @@
   "id": "epic-api",
   "name": "Epic API",
   "description": "A powerful API built with the Epic API Framework.",
+  "homepage": "https://oridune.com",
   "compilerOptions": {
     "emitDecoratorMetadata": true
   },

@@ -8,11 +8,52 @@ export interface ISequenceData {
 }
 
 export class Manager {
-  protected LoadableExtensions = ["ts", "js"];
+  protected Ready = false;
+  protected SupportedModuleExtensions = ["ts", "js"];
+
+  public id!: string;
+  public version!: string;
+  public name!: string;
+  public description!: string;
+  public homepage?: string;
+  public icon?: string;
+  public author?: {
+    name?: string;
+    email?: string;
+    url?: string;
+  };
+  public keywords!: string[];
+  public donate?: string;
 
   constructor(public CWD = Deno.cwd()) {}
 
+  public async init() {
+    const Config = (
+      await import(`file:///${join(this.CWD, "deno.json")}`, {
+        assert: { type: "json" },
+      })
+    ).default;
+
+    this.id = Config.id ?? "unknown";
+    this.version = Config.version ?? "0.0.1";
+    this.name = Config.name ?? "Unknown";
+    this.description =
+      Config.description ??
+      "No description for this instance has been provided!";
+    this.homepage = Config.homepage;
+    this.icon = Config.icon;
+    this.author = typeof Config.author === "object" ? Config.author : {};
+    this.keywords = Config.keywords instanceof Array ? Config.keywords : [];
+    this.donate = Config.donate;
+
+    this.Ready = true;
+    return this;
+  }
+
   public async getSequenceData(path: string): Promise<ISequenceData> {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
     const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
@@ -35,6 +76,9 @@ export class Manager {
       | ISequenceData
       | ((data: ISequenceData) => ISequenceData | Promise<ISequenceData>)
   ) {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
     const TargetDir = join(this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
@@ -52,6 +96,9 @@ export class Manager {
     path: string,
     options?: { strict?: boolean }
   ): Promise<Set<string>> {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
     const Data = await this.getSequenceData(path);
     const Sequence = options?.strict
       ? Data.sequence?.filter((name) => !Data.excludes?.includes(name))
@@ -66,6 +113,9 @@ export class Manager {
       | Set<string>
       | ((sequence: Set<string>) => Set<string> | Promise<Set<string>>)
   ) {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
     await this.setSequenceData(path, async (data) => {
       data.sequence =
         typeof sequence === "function"
@@ -79,6 +129,9 @@ export class Manager {
   }
 
   public async getModules(path: string, parent?: string) {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
     const Sequence = await this.getSequence(path, { strict: true });
 
     return (
@@ -88,7 +141,7 @@ export class Manager {
             const Parent = parent?.split(".");
             Parent?.pop();
 
-            const Pattern = `(-?[a-zA-Z0-9]+)+\\.(${this.LoadableExtensions.join(
+            const Pattern = `(-?[a-zA-Z0-9]+)+\\.(${this.SupportedModuleExtensions.join(
               "|"
             )})$`;
 
@@ -109,10 +162,15 @@ export class Manager {
   }
 
   public async getPlugins() {
-    return Array.from(await this.getSequence("plugins", { strict: true })).map(
-      (path) => new Manager(join(this.CWD, "plugins", path))
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
+    return Promise.all(
+      Array.from(await this.getSequence("plugins", { strict: true })).map(
+        (path) => new Manager(join(this.CWD, "plugins", path)).init()
+      )
     );
   }
 }
 
-export default new Manager(Deno.cwd());
+export default await new Manager(Deno.cwd()).init();

@@ -25,8 +25,14 @@ export const mergeConfig = async (dir: string) => {
   const ResultConfig = deepMerge(MainConfig, TempConfig);
 
   delete ResultConfig.id;
+  delete ResultConfig.version;
   delete ResultConfig.name;
   delete ResultConfig.description;
+  delete ResultConfig.homepage;
+  delete ResultConfig.icon;
+  delete ResultConfig.author;
+  delete ResultConfig.keywords;
+  delete ResultConfig.donate;
 
   await Deno.writeTextFile(
     MainConfigPath,
