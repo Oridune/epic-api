@@ -171,6 +171,12 @@ export class Manager {
       )
     );
   }
+
+  public toJSON() {
+    // deno-lint-ignore no-unused-vars
+    const { CWD, Ready, SupportedModuleExtensions, ...object } = { ...this };
+    return object;
+  }
 }
 
 export default await new Manager(Deno.cwd()).init();
