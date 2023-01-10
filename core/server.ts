@@ -25,7 +25,7 @@ export const Router = new AppRouter();
 if (import.meta.main) {
   await connectDatabase();
 
-  for (const Plugin of await Manager.getPlugins())
+  for (const Plugin of await Manager.getActivePlugins())
     for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
       if (Entry.isDirectory)
         App.use(
@@ -69,7 +69,7 @@ if (import.meta.main) {
   await Promise.all(
     [
       ...(await (
-        await Manager.getPlugins()
+        await Manager.getActivePlugins()
       ).reduce<Promise<any[]>>(
         async (list, manager) => [
           ...(await list),
@@ -149,7 +149,7 @@ if (import.meta.main) {
   await Promise.all(
     [
       ...(await (
-        await Manager.getPlugins()
+        await Manager.getActivePlugins()
       ).reduce<Promise<any[]>>(
         async (list, manager) => [
           ...(await list),

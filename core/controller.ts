@@ -5,7 +5,7 @@ import Manager from "@Core/common/manager.ts";
 @Controller("/api/", {
   childs: [
     ...(await (
-      await Manager.getPlugins()
+      await Manager.getActivePlugins()
     ).reduce<Promise<any[]>>(
       async (list, manager) => [
         ...(await list),
