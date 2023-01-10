@@ -22,9 +22,22 @@ export const mergeConfig = async (dir: string) => {
     })
   ).default;
 
+  const ResultConfig = deepMerge(MainConfig, TempConfig);
+
+  delete ResultConfig.id;
+  delete ResultConfig.name;
+  delete ResultConfig.description;
+
   await Deno.writeTextFile(
     MainConfigPath,
-    JSON.stringify(deepMerge(MainConfig, TempConfig), undefined, 2)
+    JSON.stringify(
+      {
+        ...MainConfig,
+        ...ResultConfig,
+      },
+      undefined,
+      2
+    )
   );
 };
 
