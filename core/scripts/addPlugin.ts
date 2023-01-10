@@ -134,7 +134,7 @@ export const addPlugin = async (options: {
               join(PluginsDir, ResolvePluginName)
             ))
               if (
-                !/controllers|models|middlewares|jobs|public|resources|templates|\.sample\.env|\.git/.test(
+                !/controllers|models|middlewares|jobs|public|resources|templates|deno.json|\.sample\.env|\.git/.test(
                   Entry.name
                 )
               )

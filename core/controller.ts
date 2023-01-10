@@ -19,6 +19,6 @@ import Manager from "@Core/common/manager.ts";
 export class APIController extends BaseController {
   @Get()
   public Home() {
-    return Response.message("Hurry! the API is online!");
+    return Response.message("Hurry! The API is online!");
   }
 }
