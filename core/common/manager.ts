@@ -76,7 +76,18 @@ export class Manager {
       try {
         const Sequence = JSON.parse(await Deno.readTextFile(SequencePath));
         if (Sequence instanceof Array) return { sequence: Sequence };
-        if (typeof Sequence === "object" && Sequence !== null) return Sequence;
+        if (typeof Sequence === "object" && Sequence !== null) {
+          if (Sequence.excludes instanceof Array && Sequence.excludes.length) {
+            Sequence.excludes =
+              Sequence.sequence instanceof Array
+                ? Sequence.excludes.filter((name: string) =>
+                    Sequence.sequence.includes(name)
+                  )
+                : undefined;
+          }
+
+          return Sequence;
+        }
       } catch (error) {
         console.error(error);
       }
