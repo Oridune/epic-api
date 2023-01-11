@@ -134,6 +134,21 @@ export class Manager {
   }
 
   /**
+   * Reads the excludes information from .sequence.json > excludes
+   * @param path Path to the folder containing the sequence file.
+   * @returns
+   */
+  public async getExcludes(path: string): Promise<Set<string>> {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
+    const Data = await this.getSequenceData(path);
+    const Excludes = Data.excludes;
+
+    return new Set(Excludes);
+  }
+
+  /**
    * Reads the sequence information in detail from .sequence.json > sequence
    * @param path Path to the folder containing the sequence file.
    * @returns
@@ -174,6 +189,33 @@ export class Manager {
           : sequence instanceof Set
           ? Array.from(sequence)
           : [];
+
+      return data;
+    });
+  }
+
+  /**
+   * Write/Overwrite .sequence.json > excludes
+   * @param path Path to the folder containing the sequence file.
+   * @param excludes A Set of excludes data or a Callback that returns the Set of excludes data.
+   */
+  public async setExcludes(
+    path: string,
+    excludes:
+      | Set<string>
+      | ((excludes: Set<string>) => Set<string> | Promise<Set<string>>)
+  ) {
+    if (!this.Ready)
+      throw new Error(`Manager instance has not been initialized yet!`);
+
+    await this.setSequenceData(path, async (data) => {
+      data.excludes = (
+        typeof excludes === "function"
+          ? Array.from(await excludes(new Set<string>(data.excludes)))
+          : excludes instanceof Set
+          ? Array.from(excludes)
+          : []
+      ).filter((name) => data.sequence?.includes(name));
 
       return data;
     });
@@ -241,6 +283,7 @@ export class Manager {
             join(this.CWD, "plugins", detail.name)
           ).init();
 
+          ManagerInstance.id = detail.name;
           ManagerInstance.enabled = detail.enabled;
 
           return ManagerInstance;
