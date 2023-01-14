@@ -127,7 +127,7 @@ export const updateCore = async (options: {
       await Deno.remove(TempPath, { recursive: true });
 
       console.info("Core has been updated successfully!");
-    } else console.info("We were unable to update the core!");
+    } else throw new Error("We were unable to update the core!");
 
     Process.close();
   } catch (error) {
