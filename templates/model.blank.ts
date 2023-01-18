@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-export interface I$_namePascal {
+export interface I$_namePascal extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
