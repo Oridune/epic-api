@@ -6,7 +6,7 @@ export interface I$_namePascal {
   updatedAt: Date;
 }
 
-export const $_namePascalSchema = new mongoose.Schema(
+export const $_namePascalSchema = new mongoose.Schema<I$_namePascal>(
   {},
   { timestamps: true, versionKey: false }
 );
