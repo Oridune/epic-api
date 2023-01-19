@@ -24,7 +24,7 @@ export interface IControllerOptions {
 export interface IRouteOptions {
   name: string;
   description?: string;
-  scope: string;
+  scope?: string;
   method: RequestMethod;
   path: string;
   requestHandler: TRequestHandler;

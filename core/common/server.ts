@@ -6,6 +6,7 @@ import {
 
 export interface IRoute {
   group: string;
+  scope: string;
   endpoint: string;
   options: IRouteOptions;
 }
@@ -54,10 +55,9 @@ export class ApiServer {
         ].join("/");
         const ResolvedEndpoint = Endpoint ? `/${Endpoint}` : "/";
 
-        options.scope = options.scope ?? ControllerOptions.name;
-
         routes.push({
           group: ResolvedGroupPath,
+          scope: options.scope ?? ControllerOptions.name,
           endpoint: ResolvedEndpoint,
           options,
         });
