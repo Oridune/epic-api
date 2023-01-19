@@ -3,6 +3,7 @@ import { Controller, BaseController, Response, Get } from "@Core/common/mod.ts";
 import Manager from "@Core/common/manager.ts";
 
 @Controller("/api/", {
+  name: "api",
   childs: [
     ...(await (
       await Manager.getActivePlugins()
