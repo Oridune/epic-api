@@ -36,6 +36,7 @@ export class ApiServer {
           ...ResolvedPath,
         ].join("/");
         const ResolvedEndpoint = Endpoint ? `/${Endpoint}` : "/";
+        options.scope = options.scope ?? ControllerOptions.name;
         routes.push({ endpoint: ResolvedEndpoint, options });
       });
 
