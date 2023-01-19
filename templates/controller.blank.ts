@@ -12,18 +12,20 @@ import { Status, type RouterContext } from "oak";
 import e from "validator";
 
 @Controller("/$_namePath/", {
+  name: "$_fullNameCamel",
+
   /** Do not edit this code */
   childs: await Manager.getModules("controllers", basename(import.meta.url)),
   /** --------------------- */
 })
-export default class $_namePascalController extends BaseController {
+export default class $_fullNamePascalController extends BaseController {
   @Post("/")
-  async Create$_namePascal(ctx: IRequestContext<RouterContext<string>>) {
+  async create(ctx: IRequestContext<RouterContext<string>>) {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
       .validate(Object.fromEntries(ctx.router.request.url.searchParams), {
-        name: "$_namePascal.query",
+        name: "$_fullNameCamel.query",
       });
 
     /**
@@ -35,13 +37,13 @@ export default class $_namePascalController extends BaseController {
     // Params Validation
     const Params = await e
       .object({})
-      .validate(ctx.router.params, { name: "$_namePascal.params" });
+      .validate(ctx.router.params, { name: "$_fullNameCamel.params" });
 
     // Body Validation
     const Body = await e
       .object({})
       .validate(await ctx.router.request.body({ type: "json" }).value, {
-        name: "$_namePascal.body",
+        name: "$_fullNameCamel.body",
       });
 
     // Start coding here...
@@ -50,12 +52,12 @@ export default class $_namePascalController extends BaseController {
   }
 
   @Get("/")
-  async Get$_namePascal(ctx: IRequestContext<RouterContext<string>>) {
+  async list(ctx: IRequestContext<RouterContext<string>>) {
     // Query Validation
     const Query = await e
       .object({}, { allowUnexpectedProps: true })
       .validate(Object.fromEntries(ctx.router.request.url.searchParams), {
-        name: "$_namePascal.query",
+        name: "$_fullNameCamel.query",
       });
 
     /**
@@ -67,7 +69,7 @@ export default class $_namePascalController extends BaseController {
     // Params Validation
     const Params = await e
       .object({})
-      .validate(ctx.router.params, { name: "$_namePascal.params" });
+      .validate(ctx.router.params, { name: "$_fullNameCamel.params" });
 
     // Start coding here...
 

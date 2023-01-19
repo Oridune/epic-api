@@ -42,6 +42,7 @@ export const Route =
           ControllerRoutes[Name] = {
             name: Name,
             description: options?.description,
+            scope: options?.scope,
             method,
             path,
             requestHandler: desc.value,

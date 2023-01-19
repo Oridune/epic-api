@@ -54,6 +54,12 @@ export class ApiServer {
 
   constructor(protected Controller: typeof BaseController) {}
 
+  /**
+   * Pass a callback function for preparing the server with your favorite api framework.
+   *
+   * Callback will be called with the routes array and controller options, you can use this information to create a server.
+   * @param callback
+   */
   async create(
     callback: (
       routes: IRoute[],

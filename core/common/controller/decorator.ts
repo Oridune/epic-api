@@ -9,6 +9,7 @@ export const Controller =
     constructor.setOptions({
       name: options?.name ?? constructor.name,
       description: options?.description,
+      group: options?.group,
       prefix,
       childs: options?.childs ?? [],
       middlewares: options?.middlewares ?? [],
