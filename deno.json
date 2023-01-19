@@ -10,7 +10,7 @@
   "tasks": {
     "start": "ENV_TYPE=production deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
     "dev": "ENV_TYPE=development denon run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
-    "test": "ENV_TYPE=test deno run --allow-read --allow-env --allow-net ./core/server.ts",
+    "test": "ENV_TYPE=test deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
     "create:module": "deno run -A ./core/scripts/createModule.ts",
     "rename:module": "deno run -A ./core/scripts/renameModule.ts",
     "create:template": "deno run -A ./core/scripts/createTemplate.ts",
@@ -18,6 +18,7 @@
     "delete:template": "deno run -A ./core/scripts/deleteTemplate.ts",
     "add:plugin": "deno run -A ./core/scripts/addPlugin.ts",
     "remove:plugin": "deno run -A ./core/scripts/removePlugin.ts",
-    "update:core": "deno run -A ./core/scripts/updateCore.ts"
+    "update:core": "deno run -A ./core/scripts/updateCore.ts",
+    "sync:postman": "deno run -A ./core/scripts/syncPostman.ts"
   }
 }

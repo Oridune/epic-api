@@ -83,13 +83,13 @@ if (import.meta.main) {
     })
   );
 
-  await new ApiServer(APIController).create(async (routes) => {
+  await new ApiServer(APIController).prepare(async (routes) => {
     for (const Route of routes) {
       if (!Env.is(EnvType.PRODUCTION))
         console.info(
           "Endpoint:",
           Route.options.method.toUpperCase(),
-          "\t",
+          "\t\t",
           Route.endpoint
         );
 
