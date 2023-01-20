@@ -89,15 +89,15 @@ export interface PostmanCollectionInterface {
 }
 
 export const syncPostman = async (options: {
-  key: string;
-  collectionId: string;
+  key?: string;
+  collectionId?: string;
   name?: string;
 }) => {
   try {
     const Options = await e
       .object({
-        key: e.string(),
-        collectionId: e.string(),
+        key: e.optional(e.string()),
+        collectionId: e.optional(e.string()),
         name: e.optional(e.string()),
       })
       .validate(options);
@@ -214,10 +214,25 @@ export const syncPostman = async (options: {
       PostmanCollectionObject.item = PushRequests(RequestGroups);
     });
 
+    const PostmanCollectionContent = JSON.stringify(PostmanCollectionObject);
+
     await Deno.writeTextFile(
-      `postman.json`,
-      JSON.stringify(PostmanCollectionObject)
+      `postman_collection.json`,
+      PostmanCollectionContent
     );
+
+    if (Options.collectionId && Options.key)
+      await fetch(
+        "https://api.getpostman.com/collections/" + Options.collectionId,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": Options.key,
+          },
+          body: PostmanCollectionContent,
+        }
+      );
   } catch (error) {
     console.error(error, error.issues);
     throw error;
