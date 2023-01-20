@@ -91,98 +91,104 @@ export const syncPostman = async (options: {
   collectionId: string;
   name?: string;
 }) => {
-  const Options = await e
-    .object({
-      key: e.string(),
-      collectionId: e.string(),
-      name: e.optional(e.string()),
-    })
-    .validate(options);
+  try {
+    const Options = await e
+      .object({
+        key: e.string(),
+        collectionId: e.string(),
+        name: e.optional(e.string()),
+      })
+      .validate(options);
 
-  const Config = (
-    await import(`file:///${join(Deno.cwd(), "deno.json")}`, {
-      assert: { type: "json" },
-    })
-  ).default;
+    const Config = (
+      await import(`file:///${join(Deno.cwd(), "deno.json")}`, {
+        assert: { type: "json" },
+      })
+    ).default;
 
-  // Create Empty Collection
-  const PostmanCollectionObject: PostmanCollectionInterface = {
-    info: {
-      name: Options.name ?? Config.name ?? Options.collectionId,
-      schema:
-        "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    },
-    item: [],
-  };
-
-  await new ApiServer(APIController).prepare((routes) => {
-    const Requests: Record<string, PostmanCollectionItemInterface[]> = {};
-
-    for (const Route of routes) {
-      const Endpoint = join("{{host}}", Route.endpoint)
-        .replace(/\\/g, "/")
-        .replace("?", "");
-      const QueryParams = Object.entries<string>({});
-      const Headers: any[] = [];
-      const RawBody = "";
-
-      Requests[`${Route.group}/${Route.scope}`] = [
-        ...(Requests[`${Route.group}/${Route.scope}`] ?? []),
-        {
-          name: Route.options.name,
-          request: {
-            url:
-              Endpoint +
-              (QueryParams.length
-                ? `?${QueryParams.map(
-                    (param) => param[0] + "=" + param[1]
-                  ).join("&")}`
-                : ""),
-            method: Route.options.method.toUpperCase() as PostmanRequestMethods,
-            header: Headers,
-            body: {
-              mode: "raw",
-              raw: RawBody,
-            },
-          },
-          response: [],
-        },
-      ];
-    }
-
-    const formatRequests = (
-      names: [string, ...string[]],
-      item: PostmanCollectionItemInterface[]
-    ): { name: string; item: PostmanCollectionItemInterface[] } => {
-      if (names.length === 1)
-        return {
-          name: names[0],
-          item,
-        };
-
-      const Name = names.shift()!;
-
-      return {
-        name: Name,
-        item: [formatRequests(names as [string, ...string[]], item)],
-      };
+    // Create Empty Collection
+    const PostmanCollectionObject: PostmanCollectionInterface = {
+      info: {
+        name: Options.name ?? Config.name ?? Options.collectionId,
+        schema:
+          "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      },
+      item: [],
     };
 
-    for (const [Key, Items] of Object.entries(Requests)) {
-      const Names = Key.split("/").filter(Boolean);
+    await new ApiServer(APIController).prepare((routes) => {
+      const Requests: Record<string, PostmanCollectionItemInterface[]> = {};
 
-      if (!Names.length) PostmanCollectionObject.item = Items;
-      else
-        PostmanCollectionObject.item.push(
-          formatRequests(Names as [string, ...string[]], Items)
-        );
-    }
-  });
+      for (const Route of routes) {
+        const Endpoint = join("{{host}}", Route.endpoint)
+          .replace(/\\/g, "/")
+          .replace("?", "");
+        const QueryParams = Object.entries<string>({});
+        const Headers: any[] = [];
+        const RawBody = "";
 
-  await Deno.writeTextFile(
-    `postman.json`,
-    JSON.stringify(PostmanCollectionObject)
-  );
+        Requests[`${Route.group}/${Route.scope}`] = [
+          ...(Requests[`${Route.group}/${Route.scope}`] ?? []),
+          {
+            name: Route.options.name,
+            request: {
+              url:
+                Endpoint +
+                (QueryParams.length
+                  ? `?${QueryParams.map(
+                      (param) => param[0] + "=" + param[1]
+                    ).join("&")}`
+                  : ""),
+              method:
+                Route.options.method.toUpperCase() as PostmanRequestMethods,
+              header: Headers,
+              body: {
+                mode: "raw",
+                raw: RawBody,
+              },
+            },
+            response: [],
+          },
+        ];
+      }
+
+      const formatRequests = (
+        names: [string, ...string[]],
+        item: PostmanCollectionItemInterface[]
+      ): { name: string; item: PostmanCollectionItemInterface[] } => {
+        if (names.length === 1)
+          return {
+            name: names[0],
+            item,
+          };
+
+        const Name = names.shift()!;
+
+        return {
+          name: Name,
+          item: [formatRequests(names as [string, ...string[]], item)],
+        };
+      };
+
+      for (const [Key, Items] of Object.entries(Requests)) {
+        const Names = Key.split("/").filter(Boolean);
+
+        if (!Names.length) PostmanCollectionObject.item = Items;
+        else
+          PostmanCollectionObject.item.push(
+            formatRequests(Names as [string, ...string[]], Items)
+          );
+      }
+    });
+
+    await Deno.writeTextFile(
+      `postman.json`,
+      JSON.stringify(PostmanCollectionObject)
+    );
+  } catch (error) {
+    console.error(error, error.issues);
+    throw error;
+  }
 };
 
 if (import.meta.main) {
