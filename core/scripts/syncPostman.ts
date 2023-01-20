@@ -214,25 +214,30 @@ export const syncPostman = async (options: {
       PostmanCollectionObject.item = PushRequests(RequestGroups);
     });
 
-    const PostmanCollectionContent = JSON.stringify(PostmanCollectionObject);
-
     await Deno.writeTextFile(
       `postman_collection.json`,
-      PostmanCollectionContent
+      JSON.stringify(PostmanCollectionObject, undefined, 2)
     );
 
-    if (Options.collectionId && Options.key)
-      await fetch(
-        "https://api.getpostman.com/collections/" + Options.collectionId,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": Options.key,
-          },
-          body: PostmanCollectionContent,
-        }
+    if (Options.collectionId && Options.key) {
+      const URI =
+        "https://api.getpostman.com/collections/" + Options.collectionId;
+      const Response = await fetch(URI, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": Options.key,
+        },
+        body: JSON.stringify({ collection: PostmanCollectionObject }),
+      });
+
+      console.log(
+        "Postman Sync Response:",
+        URI,
+        Response.status,
+        await Response.json()
       );
+    }
   } catch (error) {
     console.error(error, error.issues);
     throw error;
@@ -240,10 +245,11 @@ export const syncPostman = async (options: {
 };
 
 if (import.meta.main) {
-  const { key, k, collectionId, c } = parse(Deno.args);
+  const { key, k, collectionId, c, name, n } = parse(Deno.args);
 
   syncPostman({
     key: key ?? k,
     collectionId: collectionId ?? c,
+    name: name ?? n,
   });
 }
