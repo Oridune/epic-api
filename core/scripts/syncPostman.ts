@@ -150,7 +150,7 @@ export const syncPostman = async (options: {
             groups,
             scope,
             request,
-            requestGroups[Group] as NestedRequests
+            (requestGroups[Group] as NestedRequests) ?? {}
           );
 
           return requestGroups;
