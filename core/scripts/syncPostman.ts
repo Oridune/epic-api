@@ -128,7 +128,7 @@ export const syncPostman = async (options: {
       for (const Route of routes) {
         const Groups = Route.group.split("/").filter(Boolean);
 
-        const PutRequest = (
+        const NormalizeRequest = (
           groups: string[],
           scope: string,
           request: PostmanCollectionItemInterface,
@@ -146,7 +146,7 @@ export const syncPostman = async (options: {
 
           const Group = groups.shift()!;
 
-          requestGroups[Group] = PutRequest(
+          requestGroups[Group] = NormalizeRequest(
             groups,
             scope,
             request,
@@ -164,7 +164,7 @@ export const syncPostman = async (options: {
         const BodyType = "raw";
         const Body = "";
 
-        PutRequest(
+        NormalizeRequest(
           Groups,
           Route.scope,
           {
@@ -191,7 +191,27 @@ export const syncPostman = async (options: {
         );
       }
 
-      console.log(JSON.stringify(RequestGroups, undefined, 2));
+      const PushRequests = (
+        requestGroups: NestedRequests
+      ): PostmanCollectionItemInterface[] => {
+        const Requests = [];
+        for (const [Key, Item] of Object.entries(requestGroups)) {
+          if (Item instanceof Array)
+            Requests.push({
+              name: Key,
+              item: Item,
+            });
+          else
+            Requests.push({
+              name: Key,
+              item: PushRequests(Item),
+            });
+        }
+
+        return Requests;
+      };
+
+      PostmanCollectionObject.item = PushRequests(RequestGroups);
     });
 
     await Deno.writeTextFile(
