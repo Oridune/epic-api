@@ -22,6 +22,13 @@ export type PostmanRequestMethods =
   | "PROPFIND"
   | "VIEW";
 
+export type PostmanHeader = Array<{
+  key: string;
+  value: string;
+  type: string;
+  disabled?: boolean;
+}>;
+
 export interface PostmanCollectionItemInterface {
   name: string;
   request?: {
@@ -39,12 +46,7 @@ export interface PostmanCollectionItemInterface {
       }>;
     };
     method: PostmanRequestMethods;
-    header?: Array<{
-      key: string;
-      value: string;
-      type: string;
-      disabled?: boolean;
-    }>;
+    header?: PostmanHeader;
     body?: {
       mode: "urlencoded" | "formdata" | "raw";
       urlencoded?: Array<{
@@ -117,18 +119,54 @@ export const syncPostman = async (options: {
     };
 
     await new ApiServer(APIController).prepare((routes) => {
-      const Requests: Record<string, PostmanCollectionItemInterface[]> = {};
+      type NestedRequests = {
+        [Key: string]: PostmanCollectionItemInterface[] | NestedRequests;
+      };
+
+      const RequestGroups: NestedRequests = {};
 
       for (const Route of routes) {
+        const Groups = Route.group.split("/").filter(Boolean);
+
+        const PutRequest = (
+          groups: string[],
+          scope: string,
+          request: PostmanCollectionItemInterface,
+          requestGroups: NestedRequests
+        ) => {
+          if (!groups.length) {
+            requestGroups[scope] = [
+              ...((requestGroups[scope] as PostmanCollectionItemInterface[]) ??
+                []),
+              request,
+            ];
+
+            return requestGroups;
+          }
+
+          const Group = groups.shift()!;
+
+          requestGroups[Group] = PutRequest(
+            groups,
+            scope,
+            request,
+            requestGroups[Group] as NestedRequests
+          );
+
+          return requestGroups;
+        };
+
         const Endpoint = join("{{host}}", Route.endpoint)
           .replace(/\\/g, "/")
           .replace("?", "");
         const QueryParams = Object.entries<string>({});
-        const Headers: any[] = [];
-        const RawBody = "";
+        const Headers: PostmanHeader = [];
+        const BodyType = "raw";
+        const Body = "";
 
-        Requests[`${Route.group}/${Route.scope}`] = [
-          ...(Requests[`${Route.group}/${Route.scope}`] ?? []),
+        PutRequest(
+          Groups,
+          Route.scope,
           {
             name: Route.options.name,
             request: {
@@ -143,42 +181,17 @@ export const syncPostman = async (options: {
                 Route.options.method.toUpperCase() as PostmanRequestMethods,
               header: Headers,
               body: {
-                mode: "raw",
-                raw: RawBody,
+                mode: BodyType,
+                [BodyType]: Body,
               },
             },
             response: [],
           },
-        ];
+          RequestGroups
+        );
       }
 
-      const formatRequests = (
-        names: [string, ...string[]],
-        item: PostmanCollectionItemInterface[]
-      ): { name: string; item: PostmanCollectionItemInterface[] } => {
-        if (names.length === 1)
-          return {
-            name: names[0],
-            item,
-          };
-
-        const Name = names.shift()!;
-
-        return {
-          name: Name,
-          item: [formatRequests(names as [string, ...string[]], item)],
-        };
-      };
-
-      for (const [Key, Items] of Object.entries(Requests)) {
-        const Names = Key.split("/").filter(Boolean);
-
-        if (!Names.length) PostmanCollectionObject.item = Items;
-        else
-          PostmanCollectionObject.item.push(
-            formatRequests(Names as [string, ...string[]], Items)
-          );
-      }
+      console.log(JSON.stringify(RequestGroups, undefined, 2));
     });
 
     await Deno.writeTextFile(
