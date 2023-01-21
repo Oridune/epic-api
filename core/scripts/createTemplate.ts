@@ -45,12 +45,16 @@ export const createTemplate = async (options: {
           ),
           fullName: e.any().custom((ctx) => ctx.parent?.output.name),
           content: e.optional(e.string()),
-          templateDir: e.optional(e.string()).default("templates"),
+          templateDirName: e.optional(e.string()).default("templates"),
+          templateDir: e
+            .any()
+            .custom((ctx) =>
+              join(Deno.cwd(), ctx.parent!.output.templateDirName)
+            ),
           templatePath: e
             .any()
             .custom((ctx) =>
               join(
-                Deno.cwd(),
                 ctx.parent!.output.templateDir,
                 `${ctx.parent!.output.type}.${ctx.parent!.output.name}`
               )
@@ -97,8 +101,11 @@ export const createTemplate = async (options: {
         .replaceAll("$_fullName", Options.fullName)
         .replaceAll("$_name", Options.name);
 
+      if (!(await exists(Options.templateDir)))
+        await Deno.mkdir(Options.templateDir, { recursive: true });
+
       await Deno.writeTextFile(Options.templatePath, Content);
-      await Manager.setSequence(Options.templateDir, (seq) =>
+      await Manager.setSequence(Options.templateDirName, (seq) =>
         seq.add(TemplateName)
       );
     }
