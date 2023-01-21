@@ -84,6 +84,25 @@ if (import.meta.main) {
   );
 
   await new ApiServer(APIController).prepare(async (routes) => {
+    const Hooks = await Promise.all<
+      | {
+          pre?: (...args: any[]) => Promise<void>;
+          post?: (...args: any[]) => Promise<void>;
+        }
+      | undefined
+    >([
+      ...(await (
+        await Manager.getActivePlugins()
+      ).reduce<Promise<any[]>>(
+        async (list, manager) => [
+          ...(await list),
+          ...(await manager.getModules("hooks")),
+        ],
+        Promise.resolve([])
+      )),
+      ...(await Manager.getModules("hooks")),
+    ]);
+
     for (const Route of routes) {
       if (!Env.is(EnvType.PRODUCTION))
         console.info(
@@ -120,7 +139,13 @@ if (import.meta.main) {
             options: Route.options,
           };
 
+          for (const Hook of Hooks)
+            await Hook?.pre?.(Route.scope, Route.options.name, RequestContext);
+
           const Result = await Route.options.requestHandler(RequestContext);
+
+          for (const Hook of Hooks)
+            await Hook?.post?.(Route.scope, Route.options.name, RequestContext);
 
           dispatchEvent(
             new CustomEvent(ctx.state.requestName, {

@@ -19,6 +19,7 @@ export enum ModuleType {
   MODEL = "model",
   JOB = "job",
   MIDDLEWARE = "middleware",
+  HOOK = "hook",
 }
 
 export const listTemplates = async (path: string, type: string) =>

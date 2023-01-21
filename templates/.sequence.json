@@ -3,6 +3,7 @@
     "controller.blank.ts",
     "job.blank.ts",
     "middleware.blank.ts",
-    "model.blank.ts"
+    "model.blank.ts",
+    "hook.blank.ts"
   ]
 }

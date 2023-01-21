@@ -39,7 +39,7 @@ export const createTemplate = async (options: {
             ctx.parent!.input.prompt
               ? ((await Input.prompt({
                   message:
-                    "What is the name of template? (In a filename format.)",
+                    "What is the name of template? (Full file name. E.g: blank.ts)",
                 })) as string)
               : undefined
           ),
