@@ -145,7 +145,10 @@ if (import.meta.main) {
           const Result = await Route.options.requestHandler(RequestContext);
 
           for (const Hook of Hooks)
-            await Hook?.post?.(Route.scope, Route.options.name, RequestContext);
+            await Hook?.post?.(Route.scope, Route.options.name, {
+              ctx: RequestContext,
+              res: Result,
+            });
 
           dispatchEvent(
             new CustomEvent(ctx.state.requestName, {
