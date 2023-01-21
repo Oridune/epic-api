@@ -112,7 +112,9 @@ export const createModule = async (options: {
                   })
                 : undefined
             ),
-          moduleDir: e.any().custom((ctx) => plural(ctx.parent!.output.type)),
+          moduleDirName: e
+            .any()
+            .custom((ctx) => plural(ctx.parent!.output.type)),
           module: e.any().custom((ctx) => {
             const Parent = ctx.parent!.output.parent?.split(".");
             Parent?.pop();
@@ -125,14 +127,15 @@ export const createModule = async (options: {
               .filter(Boolean)
               .join(".");
           }),
+          moduleDir: e
+            .any()
+            .custom((ctx) =>
+              join(Deno.cwd(), ctx.parent!.output.moduleDirName)
+            ),
           modulePath: e
             .any()
             .custom((ctx) =>
-              join(
-                Deno.cwd(),
-                ctx.parent!.output.moduleDir,
-                ctx.parent!.output.module
-              )
+              join(ctx.parent!.output.moduleDir, ctx.parent!.output.module)
             ),
           templatePath: e
             .any()
@@ -183,8 +186,11 @@ export const createModule = async (options: {
         .replaceAll("$_fullName", Options.fullName)
         .replaceAll("$_name", Options.name);
 
+      if (!(await exists(Options.moduleDir)))
+        await Deno.mkdir(Options.moduleDir, { recursive: true });
+
       await Deno.writeTextFile(Options.modulePath, Content);
-      await Manager.setSequence(Options.moduleDir, (seq) =>
+      await Manager.setSequence(Options.moduleDirName, (seq) =>
         seq.add(Options.module)
       );
     }
