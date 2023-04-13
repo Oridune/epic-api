@@ -105,21 +105,33 @@ export const updateCore = async (options: {
     const Status = await Process.status();
 
     if (Status.success) {
-      // Core Files
+      // Update Core Files
       for await (const Entry of expandGlob("core/**/*", {
         root: TempPath,
         globstar: true,
       }))
         if (!Entry.isDirectory)
-          Deno.copyFile(Entry.path, Entry.path.replace(TempPath, Deno.cwd()));
+          await Deno.copyFile(
+            Entry.path,
+            Entry.path.replace(TempPath, Deno.cwd())
+          );
 
-      // Template Files
+      // Update Template Files
       for await (const Entry of expandGlob("templates/**/*", {
         root: TempPath,
         globstar: true,
       }))
         if (!Entry.isDirectory)
-          Deno.copyFile(Entry.path, Entry.path.replace(TempPath, Deno.cwd()));
+          await Deno.copyFile(
+            Entry.path,
+            Entry.path.replace(TempPath, Deno.cwd())
+          );
+
+      // Update Docs File
+      await Deno.copyFile(
+        join(TempPath, "README.md"),
+        join(Deno.cwd(), "README.md")
+      );
 
       await mergeConfig(TempPath);
       await mergeImports(TempPath);
