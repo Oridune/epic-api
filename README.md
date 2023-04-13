@@ -1,6 +1,13 @@
 # epic-api
 
-A powerful express based api framework.
+A simple and powerful api framework that allows you to build faster!
+
+### Quick Start
+
+```sh
+# Clone the repository
+git clone https://github.com/Oridune/epic-api.git my-new-app
+```
 
 ### Environment variables are required
 
@@ -9,24 +16,22 @@ directory where you cloned this repository contains the required environment
 files. You need to create the following files:\
 ./env/.development.env\
 ./env/.production.env\
-./env/.test.env\
+./env/.test.env
+
 You can copy the initial environment variables content from ./.sample.env and
 modify them.
 
 ### Execute the following commands to run the application on your local machine:
 
 ```sh
-# Make sure you have the Epic CLI installed on your machine before you run the app or Install the CLI with the following command.
-npm i -g @oridune/epic
-
-# Or you can also update the CLI if it is already installed on your machine.
-epic update
-
 # For development server
-epic build && npm run dev
+deno run dev
 
 # For production
-epic build && npm start
+deno run start
+
+# For test
+deno run test
 ```
 
 ### Always keep your application updated!
@@ -37,5 +42,5 @@ the following command.
 
 ```sh
 # Following command updates the core of the application and make sure that the application has the latest security patches.
-epic upgrade-api
+deno run update:core
 ```

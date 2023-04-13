@@ -11,6 +11,7 @@
     "start": "ENV_TYPE=production deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
     "dev": "ENV_TYPE=development denon run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
     "test": "ENV_TYPE=test deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./core/server.ts",
+
     "create:module": "deno run -A ./core/scripts/createModule.ts",
     "rename:module": "deno run -A ./core/scripts/renameModule.ts",
     "create:template": "deno run -A ./core/scripts/createTemplate.ts",
