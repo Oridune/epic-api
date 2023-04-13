@@ -4,6 +4,8 @@ import { join } from "path";
 export enum EnvType {
   DEVELOPMENT = "development",
   PRODUCTION = "production",
+  STAGING = "staging",
+  SANDBOX = "sandbox",
   TEST = "test",
 }
 
