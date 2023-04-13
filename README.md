@@ -25,13 +25,13 @@ modify them.
 
 ```sh
 # For development server
-deno run dev
+deno task dev
 
 # For production
-deno run start
+deno task start
 
 # For test
-deno run test
+deno task test
 ```
 
 ### Always keep your application updated!
@@ -42,5 +42,5 @@ the following command.
 
 ```sh
 # Following command updates the core of the application and make sure that the application has the latest security patches.
-deno run update:core
+deno task update:core
 ```
