@@ -259,7 +259,9 @@ export class Manager {
 
     const Sequence = await this.getSequence(path, {
       strict: true,
-      fullPath: currentModuleUrl ? dirname(currentModuleUrl) : undefined,
+      fullPath: currentModuleUrl
+        ? dirname(currentModuleUrl.replace("file:///", ""))
+        : undefined,
     });
 
     const Parent = (currentModuleUrl ? basename(currentModuleUrl) : undefined)
