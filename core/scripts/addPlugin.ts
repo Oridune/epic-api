@@ -167,18 +167,21 @@ export const addPlugin = async (options: {
             await addPluginToImportMap(ResolvePluginName);
             await updatePluginDeclarationFile();
 
-            for await (const Entry of Deno.readDir(
-              join(PluginsDir, ResolvePluginName)
-            ))
-              if (
-                !/controllers|models|middlewares|jobs|public|resources|templates|deno.json|\.sample\.env|\.git/.test(
-                  Entry.name
-                )
-              )
+            for (const EntryName of [
+              ".git",
+              "core",
+              "env",
+              ".gitattributes",
+              ".gitignore",
+            ])
+              try {
                 await Deno.remove(
-                  join(PluginsDir, ResolvePluginName, Entry.name),
+                  join(PluginsDir, ResolvePluginName, EntryName),
                   { recursive: true }
                 );
+              } catch {
+                // Do nothing...
+              }
 
             console.info("Plugin has been added successfully!");
           } else throw new Error("We were unable to add this plugin!");

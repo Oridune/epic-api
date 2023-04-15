@@ -83,7 +83,7 @@ export const updateCore = async (options: {
     if (
       options.prompt &&
       !(await Confirm.prompt({
-        message: `Updating the core will overwrite any changes made to the core files! Are you sure you want to continue?`,
+        message: `Updating the core will overwrite any changes made to the core files and overwrite the README.md file! Are you sure you want to continue?`,
       }))
     )
       return;
@@ -128,6 +128,11 @@ export const updateCore = async (options: {
           );
 
       // Update Docs File
+      await Deno.copyFile(
+        join(Deno.cwd(), "README.md"),
+        join(Deno.cwd(), "previous.README.md")
+      );
+
       await Deno.copyFile(
         join(TempPath, "README.md"),
         join(Deno.cwd(), "README.md")
