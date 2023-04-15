@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { join } from "path";
 import { exists } from "fs";
+import { basename, dirname } from "path";
 
 export interface ISequenceData {
   sequence?: string[];
@@ -63,13 +64,20 @@ export class Manager {
   /**
    * Read the raw sequence data from .sequence.json file
    * @param path Path to the folder containing the sequence file.
+   * @param options
    * @returns
    */
-  public async getSequenceData(path: string): Promise<ISequenceData> {
+  public async getSequenceData(
+    path: string,
+    options?: {
+      cwd?: string;
+      fullPath?: string;
+    }
+  ): Promise<ISequenceData> {
     if (!this.Ready)
       throw new Error(`Manager instance has not been initialized yet!`);
 
-    const TargetDir = join(this.CWD, path);
+    const TargetDir = options?.fullPath ?? join(options?.cwd ?? this.CWD, path);
     const SequencePath = join(TargetDir, "./.sequence.json");
 
     if (await exists(SequencePath)) {
@@ -131,12 +139,19 @@ export class Manager {
    */
   public async getSequence(
     path: string,
-    options?: { strict?: boolean }
+    options?: {
+      strict?: boolean;
+      cwd?: string;
+      fullPath?: string;
+    }
   ): Promise<Set<string>> {
     if (!this.Ready)
       throw new Error(`Manager instance has not been initialized yet!`);
 
-    const Data = await this.getSequenceData(path);
+    const Data = await this.getSequenceData(path, {
+      cwd: options?.cwd,
+      fullPath: options?.fullPath,
+    });
     const Sequence = options?.strict
       ? Data.sequence?.filter((name) => !Data.excludes?.includes(name))
       : Data.sequence;
@@ -238,26 +253,31 @@ export class Manager {
    * @param parent Name of a parent module.
    * @returns
    */
-  public async getModules(path: string, parent?: string) {
+  public async getModules(path: string, currentModuleUrl?: string) {
     if (!this.Ready)
       throw new Error(`Manager instance has not been initialized yet!`);
 
-    const Sequence = await this.getSequence(path, { strict: true });
+    const Sequence = await this.getSequence(path, {
+      strict: true,
+      fullPath: currentModuleUrl ? dirname(currentModuleUrl) : undefined,
+    });
+
+    const Parent = (currentModuleUrl ? basename(currentModuleUrl) : undefined)
+      ?.split(".")
+      ?.slice(0, -1)
+      ?.join("\\.");
 
     return (
       await Promise.all(
         Array.from(Sequence)
           .filter((name: string) => {
-            const Parent = parent?.split(".");
-            Parent?.pop();
-
             const Pattern = `(-?[a-zA-Z0-9]+)+\\.(${this.SupportedModuleExtensions.join(
               "|"
             )})$`;
 
             return (
               Parent
-                ? new RegExp(`^${Parent.join("\\.")}\\.${Pattern}`)
+                ? new RegExp(`^${Parent}\\.${Pattern}`)
                 : new RegExp(`^${Pattern}`)
             ).test(name);
           })

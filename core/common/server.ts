@@ -63,14 +63,11 @@ export class ApiServer {
         });
       });
 
-      const ContorllerChildsAwaited = await ControllerOptions.childs;
-      const ControllerChilds =
-        ContorllerChildsAwaited instanceof Array
-          ? ContorllerChildsAwaited
-          : await ContorllerChildsAwaited();
-
       await Promise.all(
-        ControllerChilds.map((controller) =>
+        (ControllerOptions.childs instanceof Array
+          ? ControllerOptions.childs
+          : await ControllerOptions.childs()
+        ).map((controller) =>
           this.collectRoutes(controller, routes, {
             group: [...ResolvedGroup, ...ResolvedControllerGroup].join("/"),
             prefix: [...ResolvedPrefix, ...ResolvedControllerPrefix].join("/"),
