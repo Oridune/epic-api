@@ -79,7 +79,11 @@ export const addPluginToImportMap = async (
       const IsAbsolute = !IsUrl && isAbsolute(TempPath);
       const IsRelative = !IsUrl && !IsAbsolute;
 
-      if (IsRelative) ResolvedPath = join(`./plugins/${name}/`, TempPath);
+      if (IsRelative)
+        ResolvedPath = `./${join(`./plugins/${name}/`, TempPath).replace(
+          /\\/g,
+          "/"
+        )}`;
 
       ImportMap.scopes[RelativePluginPath][Key] = ResolvedPath;
     }
