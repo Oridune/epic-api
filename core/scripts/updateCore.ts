@@ -105,6 +105,9 @@ export const updateCore = async (options: {
     const Status = await Process.status();
 
     if (Status.success) {
+      // Kill the process
+      Process.kill();
+
       // Update Core Files
       for await (const Entry of expandGlob("core/**/*", {
         root: TempPath,
