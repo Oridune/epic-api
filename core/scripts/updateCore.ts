@@ -131,12 +131,11 @@ export const updateCore = async (options: {
       for await (const Entry of expandGlob("*.*", {
         root: TempPath,
         globstar: true,
-      }))
-        if (!Entry.isDirectory && !(await exists(Entry.path)))
-          await Deno.copyFile(
-            Entry.path,
-            Entry.path.replace(TempPath, Deno.cwd())
-          );
+      })) {
+        const TargetFile = Entry.path.replace(TempPath, Deno.cwd());
+        if (!Entry.isDirectory && !(await exists(TargetFile)))
+          await Deno.copyFile(Entry.path, TargetFile);
+      }
 
       // Update Docs File
       await Deno.copyFile(
