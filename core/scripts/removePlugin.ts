@@ -5,6 +5,8 @@ import e from "validator";
 import { Select, Confirm } from "cliffy:prompt";
 import Manager from "@Core/common/manager.ts";
 
+import { updatePluginDeclarationFile } from "./addPlugin.ts";
+
 export const removePluginFromImportMap = async (name: string) => {
   const ImportMapPath = join(Deno.cwd(), "import_map.json");
 
@@ -71,6 +73,7 @@ export const removePlugin = async (options: {
         });
 
         await removePluginFromImportMap(PluginName);
+        await updatePluginDeclarationFile();
 
         await Deno.remove(PluginPath, { recursive: true });
       }
