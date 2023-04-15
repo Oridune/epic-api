@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
-import { expandGlob } from "fs";
+import { expandGlob, exists } from "fs";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
@@ -83,7 +83,7 @@ export const updateCore = async (options: {
     if (
       options.prompt &&
       !(await Confirm.prompt({
-        message: `Updating the core will overwrite any changes made to the core files! Are you sure you want to continue?`,
+        message: `Updating the core will overwrite any changes made to the core and template files! Are you sure you want to continue?`,
       }))
     )
       return;
@@ -122,6 +122,17 @@ export const updateCore = async (options: {
         globstar: true,
       }))
         if (!Entry.isDirectory)
+          await Deno.copyFile(
+            Entry.path,
+            Entry.path.replace(TempPath, Deno.cwd())
+          );
+
+      // Resolve root files
+      for await (const Entry of expandGlob("*.*", {
+        root: TempPath,
+        globstar: true,
+      }))
+        if (!Entry.isDirectory && !(await exists(Entry.path)))
           await Deno.copyFile(
             Entry.path,
             Entry.path.replace(TempPath, Deno.cwd())
