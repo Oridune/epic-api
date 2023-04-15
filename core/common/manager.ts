@@ -257,11 +257,12 @@ export class Manager {
     if (!this.Ready)
       throw new Error(`Manager instance has not been initialized yet!`);
 
+    const FullPath = currentModuleUrl
+      ? dirname(currentModuleUrl.replace("file:///", ""))
+      : undefined;
     const Sequence = await this.getSequence(path, {
       strict: true,
-      fullPath: currentModuleUrl
-        ? dirname(currentModuleUrl.replace("file:///", ""))
-        : undefined,
+      fullPath: FullPath,
     });
 
     const Parent = (currentModuleUrl ? basename(currentModuleUrl) : undefined)
@@ -284,7 +285,7 @@ export class Manager {
             ).test(name);
           })
           .map(async (name: string) => {
-            const FilePath = join(join(this.CWD, path), name);
+            const FilePath = join(FullPath ?? join(this.CWD, path), name);
 
             if (await exists(FilePath))
               return (await import(`file:///${FilePath}`)).default;
