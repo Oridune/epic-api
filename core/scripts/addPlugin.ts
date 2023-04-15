@@ -1,5 +1,5 @@
 import { parse } from "flags";
-import { join } from "path";
+import { join, isAbsolute } from "path";
 import { exists } from "fs";
 import e from "validator";
 
@@ -32,14 +32,13 @@ export const addPluginToImportMap = async (
     name,
     "import_map.json"
   );
+  const RelativePluginPath = `./plugins/${name}/`;
 
   const ImportMap = (
     await import(`file:///${ImportMapPath}`, {
       assert: { type: "json" },
     })
   ).default;
-
-  const RelativePluginPath = `./plugins/${name}/`;
 
   ImportMap.imports = {
     ...ImportMap.imports,
@@ -48,12 +47,7 @@ export const addPluginToImportMap = async (
 
   ImportMap.scopes = {
     ...ImportMap.scopes,
-    [RelativePluginPath]: {
-      "@Controllers/": `./plugins/${name}/controllers/`,
-      "@Models/": `./plugins/${name}/models/`,
-      "@Jobs/": `./plugins/${name}/jobs/`,
-      "@Middlewares/": `./plugins/${name}/middlewares/`,
-    },
+    [RelativePluginPath]: {},
   };
 
   const PluginImportMap = (
@@ -65,10 +59,30 @@ export const addPluginToImportMap = async (
   const ImportKeys = Object.keys(ImportMap.imports ?? {});
   const PluginImportKeys = Object.keys(PluginImportMap.imports ?? {});
 
-  for (const Key of PluginImportKeys.filter((key) => !ImportKeys.includes(key)))
-    if (!/^@Plugin\/.*/.test(Key))
-      ImportMap.scopes[RelativePluginPath][Key] =
-        PluginImportMap.imports?.[Key];
+  for (const Key of PluginImportKeys.filter(
+    (key) => !ImportKeys.includes(key) || /@(-?\w+\/?)+/.test(key)
+  ))
+    if (!/^@Plugin\/.*/.test(Key)) {
+      const TempPath = PluginImportMap.imports?.[Key];
+
+      let ResolvedPath = TempPath;
+
+      let IsUrl: boolean;
+
+      try {
+        new URL(TempPath);
+        IsUrl = true;
+      } catch {
+        IsUrl = false;
+      }
+
+      const IsAbsolute = !IsUrl && isAbsolute(TempPath);
+      const IsRelative = !IsUrl && !IsAbsolute;
+
+      if (IsRelative) ResolvedPath = join(`./plugins/${name}/`, TempPath);
+
+      ImportMap.scopes[RelativePluginPath][Key] = ResolvedPath;
+    }
 
   await Deno.writeTextFile(
     ImportMapPath,
