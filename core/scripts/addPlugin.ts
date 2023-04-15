@@ -42,7 +42,7 @@ export const addPluginToImportMap = async (
 
   ImportMap.imports = {
     ...ImportMap.imports,
-    [`@Plugin/${name}/`]: RelativePluginPath,
+    [`@Plugins/${name}/`]: RelativePluginPath,
   };
 
   ImportMap.scopes = {
