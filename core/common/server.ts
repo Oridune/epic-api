@@ -63,14 +63,19 @@ export class ApiServer {
         });
       });
 
-      (ControllerOptions.childs instanceof Array
-        ? ControllerOptions.childs
-        : await ControllerOptions.childs()
-      ).forEach((controller) =>
-        this.collectRoutes(controller, routes, {
-          group: [...ResolvedGroup, ...ResolvedControllerGroup].join("/"),
-          prefix: [...ResolvedPrefix, ...ResolvedControllerPrefix].join("/"),
-        })
+      const ContorllerChildsAwaited = await ControllerOptions.childs;
+      const ControllerChilds =
+        ContorllerChildsAwaited instanceof Array
+          ? ContorllerChildsAwaited
+          : await ContorllerChildsAwaited();
+
+      await Promise.all(
+        ControllerChilds.map((controller) =>
+          this.collectRoutes(controller, routes, {
+            group: [...ResolvedGroup, ...ResolvedControllerGroup].join("/"),
+            prefix: [...ResolvedPrefix, ...ResolvedControllerPrefix].join("/"),
+          })
+        )
       );
     }
   }
