@@ -15,7 +15,7 @@ import e from "validator";
   name: "$_fullNameCamel",
 
   /** Do not edit this code */
-  childs: await Manager.getModules("controllers", basename(import.meta.url)),
+  childs: () => Manager.getModules("controllers", basename(import.meta.url)),
   /** --------------------- */
 })
 export default class $_fullNamePascalController extends BaseController {
