@@ -129,13 +129,8 @@ export const updateCore = async (options: {
 
       // Update Docs File
       await Deno.copyFile(
-        join(Deno.cwd(), "README.md"),
-        join(Deno.cwd(), "previous.README.md")
-      );
-
-      await Deno.copyFile(
         join(TempPath, "README.md"),
-        join(Deno.cwd(), "README.md")
+        join(Deno.cwd(), "new.README.md")
       );
 
       await mergeConfig(TempPath);
