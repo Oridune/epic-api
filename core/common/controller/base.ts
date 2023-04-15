@@ -32,11 +32,13 @@ export interface IRouteOptions {
   middlewares: TMiddleware[] | (() => TMiddleware[] | Promise<TMiddleware[]>);
 }
 
-export interface IRequestContext<Router = any> {
+export interface IRequestContext<RouterContext = any> {
   id: string;
-  router: Router;
+  router: RouterContext & IRouterContextExtendor;
   options: IRouteOptions;
 }
+
+export interface IRouterContextExtendor {}
 
 export type TRequestHandler = (
   ctx: IRequestContext,
