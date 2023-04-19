@@ -15,7 +15,6 @@ import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
 import { RateLimiter } from "oak:limiter";
-import { requestIdMiddleware, getRequestIdKey } from "oak:requestId";
 import { ValidationException } from "validator";
 
 export const Port = parseInt((await Env.get("PORT")) || "8080");
@@ -49,7 +48,12 @@ if (import.meta.main) {
   App.use(CORS());
   App.use(gzip());
   App.use(await RateLimiter());
-  App.use(requestIdMiddleware);
+  App.use(async (ctx, next) => {
+    const ID = crypto.randomUUID();
+    ctx.state["X-Request-ID"] = ID;
+    await next();
+    ctx.response.headers.set("X-Request-ID", ID);
+  });
 
   App.use(async (ctx, next) => {
     try {
@@ -126,7 +130,7 @@ if (import.meta.main) {
       Router[Route.options.method as "get"](
         Route.endpoint,
         async (ctx: RouterContext<string>, next: () => Promise<unknown>) => {
-          ctx.state.requestId = ctx.state[getRequestIdKey()];
+          ctx.state.requestId = ctx.state["X-Request-ID"];
           ctx.state.requestName = Route.options.name;
 
           await next();
