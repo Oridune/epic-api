@@ -89,7 +89,7 @@ export const updateCore = async (options: {
       return;
 
     const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
-    const TempPath = join(Deno.cwd(), "_");
+    const TempPath = join(Deno.cwd(), "_temp");
     const Process = Deno.run({
       cmd: [
         "git",
