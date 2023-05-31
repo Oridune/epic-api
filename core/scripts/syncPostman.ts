@@ -198,19 +198,21 @@ export const syncPostman = async (options: {
               header: Object.entries<string>(
                 RequestHandler.postman?.headers ?? {}
               ).map(([key, value]) => ({ key, value, type: "text" })),
-              body: {
-                mode: "raw",
-                raw: JSON.stringify(
-                  RequestHandler.postman?.body ?? {},
-                  undefined,
-                  2
-                ),
-                options: {
-                  raw: {
-                    language: "json",
-                  },
-                },
-              },
+              body: RequestHandler.postman.body
+                ? {
+                    mode: "raw",
+                    raw: JSON.stringify(
+                      RequestHandler.postman.body,
+                      undefined,
+                      2
+                    ),
+                    options: {
+                      raw: {
+                        language: "json",
+                      },
+                    },
+                  }
+                : undefined,
             },
             response: [],
           },
