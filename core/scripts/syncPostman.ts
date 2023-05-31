@@ -64,6 +64,11 @@ export interface PostmanCollectionItemInterface {
         disabled?: boolean;
       }>;
       raw?: string;
+      options?: {
+        raw?: {
+          language?: "json";
+        };
+      };
     };
     url:
       | string
@@ -163,15 +168,9 @@ export const syncPostman = async (options: {
         const Endpoint = join(Host, Route.endpoint)
           .replace(/\\/g, "/")
           .replace("?", "");
-        const PathParams = Object.entries<string>(
-          RequestHandler.postman?.params ?? {}
-        );
         const QueryParams = Object.entries<string>(
           RequestHandler.postman?.query ?? {}
         );
-        const Headers: PostmanHeader = [];
-        const BodyType = "raw";
-        const Body = JSON.stringify(RequestHandler.postman?.body ?? {});
 
         NormalizeRequest(
           Groups,
@@ -188,16 +187,29 @@ export const syncPostman = async (options: {
                       ).join("&")}`
                     : ""),
                 host: [Host],
-                path: Route.endpoint.split("/"),
+                path: Route.endpoint.replace(/^\//, "").split("/"),
                 query: QueryParams.map(([key, value]) => ({ key, value })),
-                variable: PathParams.map(([key, value]) => ({ key, value })),
+                variable: Object.entries<string>(
+                  RequestHandler.postman?.params ?? {}
+                ).map(([key, value]) => ({ key, value })),
               },
               method:
                 Route.options.method.toUpperCase() as PostmanRequestMethods,
-              header: Headers,
+              header: Object.entries<string>(
+                RequestHandler.postman?.headers ?? {}
+              ).map(([key, value]) => ({ key, value, type: "text" })),
               body: {
-                mode: BodyType,
-                [BodyType]: Body,
+                mode: "raw",
+                raw: JSON.stringify(
+                  RequestHandler.postman?.body ?? {},
+                  undefined,
+                  2
+                ),
+                options: {
+                  raw: {
+                    language: "json",
+                  },
+                },
               },
             },
             response: [],

@@ -19,7 +19,7 @@ import e from "validator";
 })
 export default class $_fullNamePascalController extends BaseController {
   @Post("/")
-  async create() {
+  public create() {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -67,7 +67,7 @@ export default class $_fullNamePascalController extends BaseController {
   }
 
   @Get("/")
-  async list() {
+  public list() {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
