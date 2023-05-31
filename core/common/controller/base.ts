@@ -16,8 +16,8 @@ export interface IControllerOptions {
   group?: string;
   prefix: string;
   childs:
-    | typeof BaseController[]
-    | (() => typeof BaseController[] | Promise<typeof BaseController[]>);
+    | (typeof BaseController)[]
+    | (() => (typeof BaseController)[] | Promise<(typeof BaseController)[]>);
   middlewares: TMiddleware[] | (() => TMiddleware[] | Promise<TMiddleware[]>);
 }
 
@@ -27,9 +27,16 @@ export interface IRouteOptions {
   scope?: string;
   method: RequestMethod;
   path: string;
-  requestHandler: TRequestHandler;
+  buildRequestHandler: TBuildRequestHandler;
   controller: typeof BaseController;
   middlewares: TMiddleware[] | (() => TMiddleware[] | Promise<TMiddleware[]>);
+}
+
+export interface IRoute {
+  group: string;
+  scope: string;
+  endpoint: string;
+  options: IRouteOptions;
 }
 
 export interface IRequestContext<RouterContext = any> {
@@ -38,12 +45,20 @@ export interface IRequestContext<RouterContext = any> {
   options: IRouteOptions;
 }
 
+// deno-lint-ignore no-empty-interface
 export interface IRouterContextExtendor {}
 
-export type TRequestHandler = (
-  ctx: IRequestContext,
-  ...args: any[]
-) => Promise<void | Response> | void | Response;
+export type TRequestHandler = {
+  handler: (
+    ctx: IRequestContext,
+    ...args: any[]
+  ) => Promise<void | Response> | void | Response;
+  [K: string]: any;
+};
+
+export type TBuildRequestHandler = (
+  route: IRoute
+) => TRequestHandler | Promise<TRequestHandler>;
 
 export class BaseController {
   /**

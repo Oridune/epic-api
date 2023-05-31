@@ -71,8 +71,10 @@ export interface PostmanCollectionItemInterface {
           raw: string;
           host: string[];
           path: string[];
-          protocol?: "http";
-          port?: "8080";
+          query?: Array<{ key: string; value: string }>;
+          variable?: Array<{ key: string; value: string }>;
+          protocol?: "http" | "https";
+          port?: string;
         };
   };
   response?: any[];
@@ -118,7 +120,7 @@ export const syncPostman = async (options: {
       item: [],
     };
 
-    await new ApiServer(APIController).prepare((routes) => {
+    await new ApiServer(APIController).prepare(async (routes) => {
       type NestedRequests = {
         [Key: string]: PostmanCollectionItemInterface[] | NestedRequests;
       };
@@ -156,13 +158,20 @@ export const syncPostman = async (options: {
           return requestGroups;
         };
 
-        const Endpoint = join("{{host}}", Route.endpoint)
+        const RequestHandler = await Route.options.buildRequestHandler(Route);
+        const Host = "{{host}}";
+        const Endpoint = join(Host, Route.endpoint)
           .replace(/\\/g, "/")
           .replace("?", "");
-        const QueryParams = Object.entries<string>({});
+        const PathParams = Object.entries<string>(
+          RequestHandler.postman?.params ?? {}
+        );
+        const QueryParams = Object.entries<string>(
+          RequestHandler.postman?.query ?? {}
+        );
         const Headers: PostmanHeader = [];
         const BodyType = "raw";
-        const Body = "";
+        const Body = JSON.stringify(RequestHandler.postman?.body ?? {});
 
         NormalizeRequest(
           Groups,
@@ -170,13 +179,19 @@ export const syncPostman = async (options: {
           {
             name: Route.options.name,
             request: {
-              url:
-                Endpoint +
-                (QueryParams.length
-                  ? `?${QueryParams.map(
-                      (param) => param[0] + "=" + param[1]
-                    ).join("&")}`
-                  : ""),
+              url: {
+                raw:
+                  Endpoint +
+                  (QueryParams.length
+                    ? `?${QueryParams.map(
+                        (param) => param[0] + "=" + param[1]
+                      ).join("&")}`
+                    : ""),
+                host: [Host],
+                path: Route.endpoint.split("/"),
+                query: QueryParams.map(([key, value]) => ({ key, value })),
+                variable: PathParams.map(([key, value]) => ({ key, value })),
+              },
               method:
                 Route.options.method.toUpperCase() as PostmanRequestMethods,
               header: Headers,

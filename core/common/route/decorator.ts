@@ -1,7 +1,7 @@
 import {
   BaseController,
   IRouteOptions,
-  TRequestHandler,
+  TBuildRequestHandler,
 } from "../controller/base.ts";
 
 export enum RequestMethod {
@@ -14,7 +14,7 @@ export enum RequestMethod {
 }
 
 export interface IRouteHandlerDescriptor extends PropertyDescriptor {
-  value?: TRequestHandler;
+  value?: TBuildRequestHandler;
 }
 
 export const Route =
@@ -22,7 +22,7 @@ export const Route =
   (
     path = "/",
     options?: Partial<
-      Omit<IRouteOptions, "method" | "path" | "requestHandler">
+      Omit<IRouteOptions, "method" | "path" | "buildRequestHandler">
     > & { disabled?: boolean }
   ) =>
   // deno-lint-ignore no-explicit-any
@@ -45,7 +45,7 @@ export const Route =
             scope: options?.scope,
             method,
             path,
-            requestHandler: desc.value,
+            buildRequestHandler: desc.value,
             controller: target,
             middlewares: options?.middlewares ?? [],
           };

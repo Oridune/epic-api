@@ -146,7 +146,9 @@ if (import.meta.main) {
           for (const Hook of Hooks)
             await Hook?.pre?.(Route.scope, Route.options.name, RequestContext);
 
-          const Result = await Route.options.requestHandler(RequestContext);
+          const RequestHandler = await Route.options.buildRequestHandler(Route);
+
+          const Result = await RequestHandler.handler(RequestContext);
 
           for (const Hook of Hooks)
             await Hook?.post?.(Route.scope, Route.options.name, {

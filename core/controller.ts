@@ -20,6 +20,10 @@ import Manager from "@Core/common/manager.ts";
 export class APIController extends BaseController {
   @Get("/")
   public home() {
-    return Response.message("Hurry! The API is online!");
+    return {
+      handler: () => {
+        return Response.message("Hurry! The API is online!");
+      },
+    };
   }
 }
