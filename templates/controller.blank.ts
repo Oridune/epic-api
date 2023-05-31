@@ -31,9 +31,9 @@ export default class $_fullNamePascalController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample(),
-        params: ParamsSchema.toSample(),
-        body: BodySchema.toSample(),
+        query: QuerySchema.toSample().data,
+        params: ParamsSchema.toSample().data,
+        body: BodySchema.toSample().data,
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -76,8 +76,8 @@ export default class $_fullNamePascalController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample(),
-        params: ParamsSchema.toSample(),
+        query: QuerySchema.toSample().data,
+        params: ParamsSchema.toSample().data,
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
