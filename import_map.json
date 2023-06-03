@@ -22,7 +22,8 @@
     "oak:logger": "https://deno.land/x/oak_logger@1.0.0/mod.ts",
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "oak:limiter": "https://deno.land/x/oak_rate_limit@v0.1.1/mod.ts",
-    "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts"
+    "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
+    "oak:testing": "https://deno.land/x/superoak@4.7.0/mod.ts"
   },
   "scopes": {}
 }

@@ -21,13 +21,13 @@ export const Port = parseInt((await Env.get("PORT")) || "8080");
 export const App = new AppServer();
 export const Router = new AppRouter();
 
-if (import.meta.main) {
+export const prepareAppServer = async (app: AppServer) => {
   await connectDatabase();
 
   for (const Plugin of await Manager.getActivePlugins())
     for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
       if (Entry.isDirectory)
-        App.use(
+        app.use(
           StaticFiles(join(Plugin.CWD, "public", Entry.name, "www"), {
             prefix: "/" + Entry.name,
             errorFile: true,
@@ -36,26 +36,26 @@ if (import.meta.main) {
 
   for await (const Entry of Deno.readDir("public"))
     if (Entry.isDirectory)
-      App.use(
+      app.use(
         StaticFiles(join(Deno.cwd(), "public", Entry.name, "www"), {
           prefix: "/" + Entry.name,
           errorFile: true,
         })
       );
 
-  App.use(Logger.logger);
-  App.use(Logger.responseTime);
-  App.use(CORS());
-  App.use(gzip());
-  App.use(await RateLimiter());
-  App.use(async (ctx, next) => {
+  app.use(Logger.logger);
+  app.use(Logger.responseTime);
+  app.use(CORS());
+  app.use(gzip());
+  app.use(await RateLimiter());
+  app.use(async (ctx, next) => {
     const ID = crypto.randomUUID();
     ctx.state["X-Request-ID"] = ID;
     await next();
     ctx.response.headers.set("X-Request-ID", ID);
   });
 
-  App.use(async (ctx, next) => {
+  app.use(async (ctx, next) => {
     try {
       await next();
     } catch (e) {
@@ -83,7 +83,7 @@ if (import.meta.main) {
       )),
       ...(await Manager.getModules("middlewares")),
     ].map(async (middleware) => {
-      if (typeof middleware === "function") App.use(await middleware());
+      if (typeof middleware === "function") app.use(await middleware());
     })
   );
 
@@ -173,14 +173,14 @@ if (import.meta.main) {
     }
   });
 
-  App.use(Router.routes());
-  App.use(Router.allowedMethods());
+  app.use(Router.routes());
+  app.use(Router.allowedMethods());
 
-  App.addEventListener("listen", () => {
-    console.info(`Server is listening on Port: ${Port}`);
-  });
+  return app;
+};
 
-  await Promise.all(
+export const startBackgroundJobs = async () =>
+  Promise.all(
     [
       ...(await (
         await Manager.getActivePlugins()
@@ -196,6 +196,14 @@ if (import.meta.main) {
       if (typeof job === "function") await job();
     })
   );
+
+if (import.meta.main) {
+  App.addEventListener("listen", ({ port }) =>
+    console.info(`Server is listening on Port: ${port}`)
+  );
+
+  await prepareAppServer(App);
+  await startBackgroundJobs();
 
   await App.listen({ port: Port });
 }
