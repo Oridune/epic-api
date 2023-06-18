@@ -21,3 +21,48 @@ Deno.test("/api/ Should return 200 ok", async () => {
       })
     );
 });
+
+Deno.test("/api/ Should return 200 ok for x-App-version latest", async () => {
+  const Request = await superoak(App);
+  await Request.get("/api/")
+    .set("x-App-version", "latest")
+    .expect(200)
+    .expect("Content-Type", /json/)
+    .expect(
+      JSON.stringify({
+        status: true,
+        messages: [{ message: "Hurry! The API is online!" }],
+      })
+    );
+});
+
+Deno.test("/api/ Should return 200 ok for x-App-version ^1.0.0", async () => {
+  const Request = await superoak(App);
+  await Request.get("/api/")
+    .set("x-App-version", "^1.0.0")
+    .expect(200)
+    .expect("Content-Type", /json/)
+    .expect(
+      JSON.stringify({
+        status: true,
+        messages: [{ message: "Hurry! The API is online!" }],
+      })
+    );
+});
+
+Deno.test(
+  "/api/ Should return 404 not found for x-App-version 2.0.0",
+  async () => {
+    const Request = await superoak(App);
+    await Request.get("/api/")
+      .set("x-App-version", "2.0.0")
+      .expect(404)
+      .expect("Content-Type", /json/)
+      .expect(
+        JSON.stringify({
+          status: false,
+          messages: [{ message: "Route not found!" }],
+        })
+      );
+  }
+);

@@ -3,6 +3,7 @@ import { join } from "path";
 import { Response, ApiServer, Env, EnvType } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
+import { semverResolve } from "@Core/common/semver.ts";
 import Manager from "@Core/common/manager.ts";
 import {
   Application as AppServer,
@@ -146,28 +147,46 @@ export const prepareAppServer = async (app: AppServer) => {
           for (const Hook of Hooks)
             await Hook?.pre?.(Route.scope, Route.options.name, RequestContext);
 
-          const RequestHandler = await Route.options.buildRequestHandler(Route);
-
-          const Result = await RequestHandler.handler(RequestContext);
-
-          for (const Hook of Hooks)
-            await Hook?.post?.(Route.scope, Route.options.name, {
-              ctx: RequestContext,
-              res: Result,
-            });
-
-          dispatchEvent(
-            new CustomEvent(ctx.state.requestName, {
-              detail: {
-                ctx: RequestContext,
-                res: Result,
-              },
-            })
+          const RequestVersions = await Route.options.buildRequestHandler(
+            Route
           );
 
-          ctx.response.body = (
-            Result instanceof Response ? Result : Response.status(true)
-          ).toObject();
+          const RequestHandler =
+            RequestVersions[
+              semverResolve(
+                ctx.request.headers.get("x-app-version") ?? "latest",
+                Object.keys(RequestVersions),
+                true
+              )
+            ];
+
+          if (typeof RequestHandler === "object") {
+            const Result = await RequestHandler.handler(RequestContext);
+
+            for (const Hook of Hooks)
+              await Hook?.post?.(Route.scope, Route.options.name, {
+                ctx: RequestContext,
+                res: Result,
+              });
+
+            dispatchEvent(
+              new CustomEvent(ctx.state.requestName, {
+                detail: {
+                  ctx: RequestContext,
+                  res: Result,
+                },
+              })
+            );
+
+            ctx.response.body = (
+              Result instanceof Response ? Result : Response.status(true)
+            ).toObject();
+          } else {
+            ctx.response.status = 404;
+            ctx.response.body = Response.statusCode(ctx.response.status)
+              .message("Route not found!")
+              .toObject();
+          }
         }
       );
     }

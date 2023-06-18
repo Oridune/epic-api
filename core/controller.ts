@@ -21,8 +21,10 @@ export class APIController extends BaseController {
   @Get("/")
   public home() {
     return {
-      handler: () => {
-        return Response.message("Hurry! The API is online!");
+      "1.0.0": {
+        handler: () => {
+          return Response.message("Hurry! The API is online!");
+        },
       },
     };
   }

@@ -39,14 +39,14 @@ export interface IRoute {
   options: IRouteOptions;
 }
 
+// deno-lint-ignore no-empty-interface
+export interface IRouterContextExtendor {}
+
 export interface IRequestContext<RouterContext = any> {
   id: string;
   router: RouterContext & IRouterContextExtendor;
   options: IRouteOptions;
 }
-
-// deno-lint-ignore no-empty-interface
-export interface IRouterContextExtendor {}
 
 export type TRequestHandler = {
   handler: (
@@ -56,9 +56,13 @@ export type TRequestHandler = {
   [K: string]: any;
 };
 
+export type TRequestVersions = {
+  [Version: string]: TRequestHandler;
+};
+
 export type TBuildRequestHandler = (
   route: IRoute
-) => TRequestHandler | Promise<TRequestHandler>;
+) => TRequestVersions | Promise<TRequestVersions>;
 
 export class BaseController {
   /**

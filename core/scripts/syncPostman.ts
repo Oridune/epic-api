@@ -3,6 +3,7 @@ import { join } from "path";
 import e from "validator";
 
 import { ApiServer } from "@Core/common/mod.ts";
+import { semverResolve } from "@Core/common/semver.ts";
 import { APIController } from "@Core/controller.ts";
 
 export type PostmanRequestMethods =
@@ -99,6 +100,7 @@ export const syncPostman = async (options: {
   key?: string;
   collectionId?: string;
   name?: string;
+  version?: string;
 }) => {
   try {
     const Options = await e
@@ -106,6 +108,7 @@ export const syncPostman = async (options: {
         key: e.optional(e.string()),
         collectionId: e.optional(e.string()),
         name: e.optional(e.string()),
+        version: e.optional(e.string()).default("latest"),
       })
       .validate(options);
 
@@ -163,61 +166,68 @@ export const syncPostman = async (options: {
           return requestGroups;
         };
 
-        const RequestHandler = await Route.options.buildRequestHandler(Route);
-        const Host = "{{host}}";
-        const Endpoint = join(Host, Route.endpoint)
-          .replace(/\\/g, "/")
-          .replace("?", "");
-        const QueryParams = Object.entries<string>(
-          RequestHandler.postman?.query ?? {}
-        );
+        const RequestVersions = await Route.options.buildRequestHandler(Route);
+        const RequestHandler =
+          RequestVersions[
+            semverResolve(Options.version, Object.keys(RequestVersions), true)
+          ];
 
-        NormalizeRequest(
-          Groups,
-          Route.scope,
-          {
-            name: Route.options.name,
-            request: {
-              url: {
-                raw:
-                  Endpoint +
-                  (QueryParams.length
-                    ? `?${QueryParams.map(
-                        (param) => param[0] + "=" + param[1]
-                      ).join("&")}`
-                    : ""),
-                host: [Host],
-                path: Route.endpoint.replace(/^\//, "").split("/"),
-                query: QueryParams.map(([key, value]) => ({ key, value })),
-                variable: Object.entries<string>(
-                  RequestHandler.postman?.params ?? {}
-                ).map(([key, value]) => ({ key, value })),
-              },
-              method:
-                Route.options.method.toUpperCase() as PostmanRequestMethods,
-              header: Object.entries<string>(
-                RequestHandler.postman?.headers ?? {}
-              ).map(([key, value]) => ({ key, value, type: "text" })),
-              body: RequestHandler.postman.body
-                ? {
-                    mode: "raw",
-                    raw: JSON.stringify(
-                      RequestHandler.postman.body,
-                      undefined,
-                      2
-                    ),
-                    options: {
-                      raw: {
-                        language: "json",
+        if (RequestHandler) {
+          const Host = "{{host}}";
+          const Endpoint = join(Host, Route.endpoint)
+            .replace(/\\/g, "/")
+            .replace("?", "");
+          const QueryParams = Object.entries<string>(
+            RequestHandler.postman?.query ?? {}
+          );
+
+          NormalizeRequest(
+            Groups,
+            Route.scope,
+            {
+              name: Route.options.name,
+              request: {
+                url: {
+                  raw:
+                    Endpoint +
+                    (QueryParams.length
+                      ? `?${QueryParams.map(
+                          (param) => param[0] + "=" + param[1]
+                        ).join("&")}`
+                      : ""),
+                  host: [Host],
+                  path: Route.endpoint.replace(/^\//, "").split("/"),
+                  query: QueryParams.map(([key, value]) => ({ key, value })),
+                  variable: Object.entries<string>(
+                    RequestHandler.postman?.params ?? {}
+                  ).map(([key, value]) => ({ key, value })),
+                },
+                method:
+                  Route.options.method.toUpperCase() as PostmanRequestMethods,
+                header: Object.entries<string>(
+                  RequestHandler.postman?.headers ?? {}
+                ).map(([key, value]) => ({ key, value, type: "text" })),
+                body: RequestHandler.postman.body
+                  ? {
+                      mode: "raw",
+                      raw: JSON.stringify(
+                        RequestHandler.postman.body,
+                        undefined,
+                        2
+                      ),
+                      options: {
+                        raw: {
+                          language: "json",
+                        },
                       },
-                    },
-                  }
-                : undefined,
+                    }
+                  : undefined,
+              },
+              response: [],
             },
-            response: [],
-          },
-          RequestGroups
-        );
+            RequestGroups
+          );
+        }
       }
 
       const PushRequests = (
@@ -244,7 +254,7 @@ export const syncPostman = async (options: {
     });
 
     await Deno.writeTextFile(
-      `postman_collection.json`,
+      `postman_collection-${Options.version}.json`,
       JSON.stringify(PostmanCollectionObject, undefined, 2)
     );
 
@@ -274,11 +284,12 @@ export const syncPostman = async (options: {
 };
 
 if (import.meta.main) {
-  const { key, k, collectionId, c, name, n } = parse(Deno.args);
+  const { key, k, collectionId, c, name, n, version, v } = parse(Deno.args);
 
   syncPostman({
     key: key ?? k,
     collectionId: collectionId ?? c,
     name: name ?? n,
+    version: version ?? v,
   });
 }

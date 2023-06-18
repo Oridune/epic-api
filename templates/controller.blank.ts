@@ -29,7 +29,8 @@ export default class $_fullNamePascalController extends BaseController {
     // Define Body Schema
     const BodySchema = e.object({});
 
-    return {
+    // Request Handler Object
+    const RequestHandler = {
       postman: {
         query: QuerySchema.toSample().data,
         params: ParamsSchema.toSample().data,
@@ -64,6 +65,10 @@ export default class $_fullNamePascalController extends BaseController {
         return Response.statusCode(Status.Created);
       },
     };
+
+    return {
+      "1.0.0": RequestHandler,
+    };
   }
 
   @Get("/")
@@ -74,7 +79,8 @@ export default class $_fullNamePascalController extends BaseController {
     // Define Params Schema
     const ParamsSchema = e.object({});
 
-    return {
+    // Request Handler Object
+    const RequestHandler = {
       postman: {
         query: QuerySchema.toSample().data,
         params: ParamsSchema.toSample().data,
@@ -101,6 +107,10 @@ export default class $_fullNamePascalController extends BaseController {
 
         return Response.status(true);
       },
+    };
+
+    return {
+      "1.0.0": RequestHandler,
     };
   }
 }
