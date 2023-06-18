@@ -1,8 +1,9 @@
 import {
   BaseController,
   IRouteOptions,
-  TBuildRequestHandler,
+  TRequestHandler,
 } from "../controller/base.ts";
+import { semverResolve } from "../semver.ts";
 
 export enum RequestMethod {
   GET = "get",
@@ -14,7 +15,7 @@ export enum RequestMethod {
 }
 
 export interface IRouteHandlerDescriptor extends PropertyDescriptor {
-  value?: TBuildRequestHandler;
+  value?: TRequestHandler;
 }
 
 export const Route =
@@ -37,6 +38,7 @@ export const Route =
         const ControllerRoutes = ControllerConstructor.getRoutes();
 
         if (typeof desc.value === "function") {
+          const Handler = desc.value;
           const Name = options?.name ?? key;
 
           ControllerRoutes[Name] = {
@@ -45,7 +47,46 @@ export const Route =
             scope: options?.scope,
             method,
             path,
-            buildRequestHandler: desc.value,
+            buildRequestHandler: async (route, options) => {
+              const Handled = await Handler(route);
+
+              if (Handled instanceof Map) {
+                if (!options?.version) return;
+
+                const MapKeys = Array.from(Handled.keys());
+                const Versions = MapKeys.reduce<string[]>(
+                  (list, v) => [
+                    ...list,
+                    ...(v instanceof Array ? v : [v]).filter(
+                      (_) => typeof _ === "string"
+                    ),
+                  ],
+                  []
+                );
+
+                const Version = semverResolve(options.version, Versions, true);
+
+                if (!Version) return;
+
+                return {
+                  version: Version,
+                  object: Handled.get(
+                    MapKeys.find((key) =>
+                      key instanceof Array
+                        ? key.includes(Version)
+                        : key === Version
+                    )!
+                  ),
+                };
+              } else if (
+                typeof Handled === "object" &&
+                typeof Handled.handler === "function"
+              )
+                return {
+                  version: "latest",
+                  object: Handled,
+                };
+            },
             controller: target,
             middlewares: options?.middlewares ?? [],
           };

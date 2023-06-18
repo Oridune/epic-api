@@ -43,12 +43,14 @@ export interface IRoute {
 export interface IRouterContextExtendor {}
 
 export interface IRequestContext<RouterContext = any> {
+  requestedVersion: string;
+  version: string;
   id: string;
   router: RouterContext & IRouterContextExtendor;
   options: IRouteOptions;
 }
 
-export type TRequestHandler = {
+export type TRequestHandlerObject = {
   handler: (
     ctx: IRequestContext,
     ...args: any[]
@@ -56,13 +58,29 @@ export type TRequestHandler = {
   [K: string]: any;
 };
 
-export type TRequestVersions = {
-  [Version: string]: TRequestHandler;
+export type TRequestHandler = (
+  route: IRoute
+) =>
+  | TRequestHandlerObject
+  | Map<string | string[], TRequestHandlerObject>
+  | Promise<
+      TRequestHandlerObject | Map<string | string[], TRequestHandlerObject>
+    >;
+
+export type TBuildRequestHandlerResult = {
+  version: string;
+  object: TRequestHandlerObject | void;
 };
 
 export type TBuildRequestHandler = (
-  route: IRoute
-) => TRequestVersions | Promise<TRequestVersions>;
+  route: IRoute,
+  options?: {
+    version?: string | null;
+  }
+) =>
+  | TBuildRequestHandlerResult
+  | void
+  | Promise<TBuildRequestHandlerResult | void>;
 
 export class BaseController {
   /**

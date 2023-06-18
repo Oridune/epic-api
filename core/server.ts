@@ -138,7 +138,11 @@ export const prepareAppServer = async (app: AppServer) => {
         },
         ...Middlewares,
         async (ctx: RouterContext<string>) => {
+          const TargetVersion =
+            ctx.request.headers.get("x-app-version") ?? "latest";
           const RequestContext = {
+            requestedVersion: TargetVersion,
+            version: TargetVersion,
             id: ctx.state.requestId,
             router: ctx,
             options: Route.options,
@@ -147,21 +151,16 @@ export const prepareAppServer = async (app: AppServer) => {
           for (const Hook of Hooks)
             await Hook?.pre?.(Route.scope, Route.options.name, RequestContext);
 
-          const RequestVersions = await Route.options.buildRequestHandler(
-            Route
-          );
-
-          const RequestHandler =
-            RequestVersions[
-              semverResolve(
-                ctx.request.headers.get("x-app-version") ?? "latest",
-                Object.keys(RequestVersions),
-                true
-              )
-            ];
+          const { version, object: RequestHandler } =
+            (await Route.options.buildRequestHandler(Route, {
+              version: RequestContext.version,
+            })) ?? {};
 
           if (typeof RequestHandler === "object") {
-            const Result = await RequestHandler.handler(RequestContext);
+            RequestContext.version = version ?? TargetVersion;
+            const Result = await RequestHandler.handler.bind(RequestHandler)(
+              RequestContext
+            );
 
             for (const Hook of Hooks)
               await Hook?.post?.(Route.scope, Route.options.name, {

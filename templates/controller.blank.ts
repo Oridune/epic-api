@@ -66,9 +66,7 @@ export default class $_fullNamePascalController extends BaseController {
       },
     };
 
-    return {
-      "1.0.0": RequestHandler,
-    };
+    return new Map().set("1.0.0", RequestHandler);
   }
 
   @Get("/")
@@ -109,8 +107,6 @@ export default class $_fullNamePascalController extends BaseController {
       },
     };
 
-    return {
-      "1.0.0": RequestHandler,
-    };
+    return new Map().set("1.0.0", RequestHandler);
   }
 }

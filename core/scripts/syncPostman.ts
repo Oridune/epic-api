@@ -166,13 +166,12 @@ export const syncPostman = async (options: {
           return requestGroups;
         };
 
-        const RequestVersions = await Route.options.buildRequestHandler(Route);
-        const RequestHandler =
-          RequestVersions[
-            semverResolve(Options.version, Object.keys(RequestVersions), true)
-          ];
+        const { object: RequestHandler } =
+          (await Route.options.buildRequestHandler(Route, {
+            version: Options.version,
+          })) ?? {};
 
-        if (RequestHandler) {
+        if (typeof RequestHandler === "object") {
           const Host = "{{host}}";
           const Endpoint = join(Host, Route.endpoint)
             .replace(/\\/g, "/")

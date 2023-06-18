@@ -21,11 +21,24 @@ export class APIController extends BaseController {
   @Get("/")
   public home() {
     return {
-      "1.0.0": {
-        handler: () => {
-          return Response.message("Hurry! The API is online!");
-        },
+      handler: () => {
+        return Response.message("Hurry! The API is online!");
       },
     };
+  }
+
+  @Get("/test/")
+  public test() {
+    const Handler = {
+      handler: ({ version }: { version: string }) => {
+        return Response.message(
+          `Your test was successful from API version ${version}!`
+        );
+      },
+    };
+
+    return new Map()
+      .set(["0.0.1", "1.0.0"], Handler)
+      .set(["1.0.2", "1.0.5"], Handler);
   }
 }
