@@ -34,7 +34,7 @@ deno task create:env -t development,test,production --encryptionKey=123457890 --
 
 Once you have setup everything correctly, run the following command to start the API server:
 
-```
+```bash
 # Execute the built-in Deno task
 deno task dev
 ```
