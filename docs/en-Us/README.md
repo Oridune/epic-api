@@ -1,3 +1,7 @@
+---
+description: Setup your first Epic API project.
+---
+
 # Getting started
 
 ## Introduction
