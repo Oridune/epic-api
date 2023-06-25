@@ -3,7 +3,6 @@ import { join } from "path";
 import { Response, ApiServer, Env, EnvType } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
-import { semverResolve } from "@Core/common/semver.ts";
 import Manager from "@Core/common/manager.ts";
 import {
   Application as AppServer,
