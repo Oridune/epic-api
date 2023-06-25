@@ -3,6 +3,7 @@ import {
   BaseController,
   Get,
   Post,
+  Versioned,
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
@@ -29,8 +30,7 @@ export default class $_fullNamePascalController extends BaseController {
     // Define Body Schema
     const BodySchema = e.object({});
 
-    // Request Handler Object
-    const RequestHandler = {
+    return new Versioned().add("1.0.0", {
       postman: {
         query: QuerySchema.toSample().data,
         params: ParamsSchema.toSample().data,
@@ -64,9 +64,7 @@ export default class $_fullNamePascalController extends BaseController {
 
         return Response.statusCode(Status.Created);
       },
-    };
-
-    return new Map().set("1.0.0", RequestHandler);
+    });
   }
 
   @Get("/")
@@ -77,8 +75,7 @@ export default class $_fullNamePascalController extends BaseController {
     // Define Params Schema
     const ParamsSchema = e.object({});
 
-    // Request Handler Object
-    const RequestHandler = {
+    return new Versioned().add("1.0.0", {
       postman: {
         query: QuerySchema.toSample().data,
         params: ParamsSchema.toSample().data,
@@ -105,8 +102,6 @@ export default class $_fullNamePascalController extends BaseController {
 
         return Response.status(true);
       },
-    };
-
-    return new Map().set("1.0.0", RequestHandler);
+    });
   }
 }

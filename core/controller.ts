@@ -1,5 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
-import { Controller, BaseController, Response, Get } from "@Core/common/mod.ts";
+import {
+  Controller,
+  BaseController,
+  Get,
+  Versioned,
+  Response,
+} from "@Core/common/mod.ts";
 import Manager from "@Core/common/manager.ts";
 
 @Controller("/api/", {
@@ -29,16 +35,20 @@ export class APIController extends BaseController {
 
   @Get("/test/")
   public test() {
-    const Handler = {
-      handler: ({ version }: { version: string }) => {
-        return Response.message(
-          `Your test was successful from API version ${version}!`
-        );
-      },
-    };
-
-    return new Map()
-      .set(["0.0.1", "1.0.0"], Handler)
-      .set(["1.0.2", "1.0.5"], Handler);
+    return new Versioned()
+      .add(["0.0.1", "1.0.0"], {
+        handler: ({ version }: { version: string }) => {
+          return Response.message(
+            `Your test was successful from API version ${version}!`
+          );
+        },
+      })
+      .add(["1.0.2", "1.0.5"], {
+        handler: ({ version }: { version: string }) => {
+          return Response.message(
+            `Another test was successful from API version ${version}!`
+          );
+        },
+      });
   }
 }

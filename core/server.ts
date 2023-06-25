@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { join } from "path";
-import { Response, ApiServer, Env, EnvType } from "@Core/common/mod.ts";
+import { Response, Server, Env, EnvType } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
 import Manager from "@Core/common/manager.ts";
@@ -87,7 +87,7 @@ export const prepareAppServer = async (app: AppServer) => {
     })
   );
 
-  await new ApiServer(APIController).prepare(async (routes) => {
+  await new Server(APIController).prepare(async (routes) => {
     const Hooks = await Promise.all<
       | {
           pre?: (...args: any[]) => Promise<void>;

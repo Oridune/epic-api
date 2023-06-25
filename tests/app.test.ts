@@ -44,7 +44,7 @@ Deno.test(
       .set("x-App-version", "^1.0.0")
       .expect(200)
       .expect("Content-Type", /json/)
-      .expect(/Your test was successful from API version 1.0.5!/);
+      .expect(/Another test was successful from API version 1.0.5!/);
   }
 );
 

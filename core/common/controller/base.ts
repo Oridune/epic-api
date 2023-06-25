@@ -1,6 +1,7 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any no-empty-interface
 import { Reflect } from "reflect";
 import { RequestMethod } from "../route/decorator.ts";
+import { Versioned } from "../versioned.ts";
 import { Response } from "../response.ts";
 
 export enum ControllerMetadataKey {
@@ -39,8 +40,9 @@ export interface IRoute {
   options: IRouteOptions;
 }
 
-// deno-lint-ignore no-empty-interface
 export interface IRouterContextExtendor {}
+
+export interface IRequestHandlerObjectExtendor {}
 
 export interface IRequestContext<RouterContext = any> {
   requestedVersion: string;
@@ -50,7 +52,7 @@ export interface IRequestContext<RouterContext = any> {
   options: IRouteOptions;
 }
 
-export type TRequestHandlerObject = {
+export type TRequestHandlerObject = IRequestHandlerObjectExtendor & {
   handler: (
     ctx: IRequestContext,
     ...args: any[]
@@ -58,14 +60,12 @@ export type TRequestHandlerObject = {
   [K: string]: any;
 };
 
-export type TRequestHandler = (
-  route: IRoute
-) =>
+export type TRequestHandlerReturn =
   | TRequestHandlerObject
-  | Map<string | string[], TRequestHandlerObject>
-  | Promise<
-      TRequestHandlerObject | Map<string | string[], TRequestHandlerObject>
-    >;
+  | Versioned
+  | Promise<TRequestHandlerObject | Versioned>;
+
+export type TRequestHandler = (route: IRoute) => TRequestHandlerReturn;
 
 export type TBuildRequestHandlerResult = {
   version: string;

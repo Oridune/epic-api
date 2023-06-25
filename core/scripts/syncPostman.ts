@@ -1,9 +1,9 @@
+// deno-lint-ignore-file no-explicit-any
 import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
-import { ApiServer } from "@Core/common/mod.ts";
-import { semverResolve } from "@Core/common/semver.ts";
+import { Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 
 export type PostmanRequestMethods =
@@ -128,7 +128,7 @@ export const syncPostman = async (options: {
       item: [],
     };
 
-    await new ApiServer(APIController).prepare(async (routes) => {
+    await new Server(APIController).prepare(async (routes) => {
       type NestedRequests = {
         [Key: string]: PostmanCollectionItemInterface[] | NestedRequests;
       };
@@ -206,7 +206,7 @@ export const syncPostman = async (options: {
                 header: Object.entries<string>(
                   RequestHandler.postman?.headers ?? {}
                 ).map(([key, value]) => ({ key, value, type: "text" })),
-                body: RequestHandler.postman.body
+                body: RequestHandler.postman?.body
                   ? {
                       mode: "raw",
                       raw: JSON.stringify(

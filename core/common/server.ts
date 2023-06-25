@@ -4,7 +4,7 @@ import {
   IRoute,
 } from "./controller/base.ts";
 
-export class ApiServer {
+export class Server {
   protected Routes: IRoute[] = [];
 
   protected async collectRoutes(

@@ -3,6 +3,7 @@ import {
   IRouteOptions,
   TRequestHandler,
 } from "../controller/base.ts";
+import { Versioned } from "../versioned.ts";
 import { semverResolve } from "../semver.ts";
 
 export enum RequestMethod {
@@ -50,10 +51,11 @@ export const Route =
             buildRequestHandler: async (route, options) => {
               const Handled = await Handler(route);
 
-              if (Handled instanceof Map) {
+              if (Handled instanceof Versioned) {
                 if (!options?.version) return;
 
-                const MapKeys = Array.from(Handled.keys());
+                const VersionMap = Handled.toMap();
+                const MapKeys = Array.from(VersionMap.keys());
                 const Versions = MapKeys.reduce<string[]>(
                   (list, v) => [
                     ...list,
@@ -70,7 +72,7 @@ export const Route =
 
                 return {
                   version: Version,
-                  object: Handled.get(
+                  object: VersionMap.get(
                     MapKeys.find((key) =>
                       key instanceof Array
                         ? key.includes(Version)
