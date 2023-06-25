@@ -1,6 +1,6 @@
 # Getting started
 
-## Welcome !
+## Introduction
 
 Epic API (epic-api) is a robust framework for developing efficient and scalable [Deno.js](https://deno.com/runtime) APIs. It leverages the powerful Oak framework to handle API requests seamlessly. The primary objective behind creating this framework is to enhance the developer experience by automating a significant portion of the coding process and reducing the need for rewriting or managing boilerplate code. Throughout its development, utmost consideration has been given to industry best practices.
 
