@@ -56,7 +56,19 @@ export class Env {
    * @param key Key of the variable
    * @returns
    */
-  static async get(key: string) {
+  static async get(key: string): Promise<string>;
+
+  /**
+   * Asynchronously get a specific environment variable
+   *
+   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   *
+   * You can assign a custom backup method on Env.onGetFailed if it is not already assigned.
+   * @param key Key of the variable
+   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined`.
+   */
+  static async get(key: string, silent: true): Promise<string | undefined>;
+  static async get(key: string, silent?: true) {
     let Data: string | null | undefined = Env.getAll()[key];
 
     if (typeof Data !== "string") {
@@ -64,7 +76,8 @@ export class Env {
         Data = await Env.onGetFailed(key);
 
       if (typeof Data !== "string")
-        throw new Error(`Missing environment variable '${key}'!`);
+        if (silent) return;
+        else throw new Error(`Missing environment variable '${key}'!`);
     }
 
     return Data;

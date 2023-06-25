@@ -17,13 +17,10 @@ import { gzip } from "oak:compress";
 import { RateLimiter } from "oak:limiter";
 import { ValidationException } from "validator";
 
-export const Port = parseInt((await Env.get("PORT")) || "8080");
 export const App = new AppServer();
 export const Router = new AppRouter();
 
 export const prepareAppServer = async (app: AppServer) => {
-  await connectDatabase();
-
   for (const Plugin of await Manager.getActivePlugins())
     for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
       if (Entry.isDirectory)
@@ -196,7 +193,7 @@ export const prepareAppServer = async (app: AppServer) => {
   return app;
 };
 
-export const startBackgroundJobs = async () =>
+export const startBackgroundJobs = async (app: AppServer) =>
   Promise.all(
     [
       ...(await (
@@ -210,17 +207,35 @@ export const startBackgroundJobs = async () =>
       )),
       ...(await Manager.getModules("jobs")),
     ].map(async (job) => {
-      if (typeof job === "function") await job();
+      if (typeof job === "function") await job(app);
     })
   );
 
+export const startAppServer = async (app: AppServer) => {
+  const Database = await connectDatabase();
+  await prepareAppServer(app);
+  await startBackgroundJobs(app);
+
+  // // Create Server Abort Controller
+  // const { signal, abort } = new AbortController();
+
+  return {
+    // signal,
+    end: async () => {
+      await Database.disconnect();
+      // abort();
+    },
+  };
+};
+
 if (import.meta.main) {
+  await startAppServer(App);
+
   App.addEventListener("listen", ({ port }) =>
     console.info(`Server is listening on Port: ${port}`)
   );
 
-  await prepareAppServer(App);
-  await startBackgroundJobs();
-
-  await App.listen({ port: Port });
+  await App.listen({
+    port: parseInt((await Env.get("PORT", true)) || "8080"),
+  });
 }
