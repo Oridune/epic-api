@@ -34,16 +34,15 @@ import { type RouterContext } from "oak";
 export default class UsersController extends BaseController {
   @Get("/")
   public list() {
+    // This is a factory method that returns a request handler.
     // Write any validation schemas or meta logic here.
     // Information returned from this function can be used to generate docs etc.
   
-    return {
-      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // This function actually handles the request!
-        // Start coding here...
+    return (ctx: IRequestContext<RouterContext<string>>) => {
+      // This function actually handles the request!
+      // Start coding here...
 
-        return Response.status(true);
-      },
+      return Response.status(true);
     };
   }
 }
@@ -247,5 +246,82 @@ This code imports some components from `@Core/common/mod.ts`. These components a
 | Route          | Decorator | Define a route with any above method.                                                                                                                             |
 | Response       | Class     | Every route method returns an object that contains a route handler function, and this route handler function should return a Response class instance or a `void`. |
 
+### Create Controller Manually
 
+In order to understand the workings of each component above, we need to create a component manually. We will create a controller step by step so that you can understand each and every component in detail.
 
+#### Step 1:
+
+Lets suppose we are working on a controller file called `controllers/users.ts`, start by writing the following code:
+
+{% code title="controllers/users.ts" lineNumbers="true" %}
+```typescript
+import { BaseController, Controller } from "@Core/common/mod.ts";
+
+@Controller("/users/", {
+    name: "users"
+})
+export default class UsersController extends BaseController {}
+```
+{% endcode %}
+
+Ok, that looks cool! We've exported a default class called `UsersController` that extends `BaseController` class. We also decorated the `UsersController` class with `Controller` decorator. Then we passed "/users/" path as the first argument of `Controller` decorator, and then an object containing `name` property (A unique name of this controller that can be used for multiple stuff E.g. permission name-spacing.) at the second argument.
+
+Now, in order to import this controller in the project, we will insert the filename into the `.sequence.json` file on the same directory. The sequence file should look like the following:
+
+{% code title="controllers/.sequence.json" lineNumbers="true" %}
+```json
+{
+  "sequence": [
+    "users.ts"
+  ]
+}
+```
+{% endcode %}
+
+#### Step 2:
+
+Now that we have a working controller. Let's continue adding a `GET` route to this controller. We will modify the above code as following:
+
+{% code title="controllers/users.ts" lineNumbers="true" %}
+```typescript
+import { BaseController, Controller, Get, Response } from "@Core/common/mod.ts";
+
+@Controller("/users/", {
+    name: "users"
+})
+export default class UsersController extends BaseController {
+    @Get("/")
+    public list() {
+        // Return a request handler function.
+        return () => {
+            // You will write your fetch users logic here.
+            const UsersList = [];
+        
+            // Return a response instance.
+            if(UsersList)
+                return Response.message("Listing the users.").data({
+                    users: UsersList // Users list here...
+                });
+                
+            return Response.status(false).message("No users found!");
+        }
+    }
+}
+```
+{% endcode %}
+
+In this code we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` module. Then we created a `list` method on the `UsersController` class which returns a request handler function. You will be writing your fetch users logic in this handler and return a `Response` instance accordingly.
+
+Now spin-up the server with the following command:
+
+```bash
+# Execute the built-in Deno task
+deno task dev
+```
+
+Now if we test our endpoint in the postman, we get the following result:
+
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+
+Perfect! Our application is running smoothly.
