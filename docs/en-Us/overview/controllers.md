@@ -189,9 +189,9 @@ The routes for this controller will be accessible on the following endpoint: `{{
 {% hint style="info" %}
 **Did you notice the postman property?**
 
-This property is returned as the metadata of this controller's individual request. You may pass a sample data shape to this property so that postman can document what information shape does this route accept!
+This property is returned as the metadata of this controller's individual request. You may pass a sample data shape to this property so that postman can document what information shape this route accepts!
 
-Defining shapes during the development is really a headache! And this is where `validator` got you covered! `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
+Defining the data shapes during the development is really a headache! And this is where `validator` got you covered! `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
 {% endhint %}
 
 ### Create a Child-Controller
@@ -215,11 +215,11 @@ This is how your folder structure and `.sequence.json` file is going to look lik
 The routes for this child-controller will be accessible on the following endpoint: `{{host}}/api/users/posts/`
 {% endhint %}
 
-All of this was a basic overview on how to create controllers in Epic API. You may have seen some components in these controllers that you are familiar with and some not. Let's deep dive into the components of the controllers that make it work!
+Now that we have a basic knowledge on how to create controllers and how they are structured in Epic API, it is time to delve into the specifics. You may have noticed certain components in the above controllers, some of which you may be familiar with while others may be new to you. Let us now explore the constituent elements of controllers that enable their functionality.
 
-### Deep Dive
+### Controller Components
 
-See the following part of the code, this code imports some components from `@Core/common/mod.ts`. These components are used to create a working controller.
+See the following part of the code:
 
 ```typescript
 import {
@@ -232,7 +232,7 @@ import {
 } from "@Core/common/mod.ts";
 ```
 
-Followings are some important components exported by `@Core/common/mod.ts` module:
+This code imports some components from `@Core/common/mod.ts`. These components are used to create a working controller. Followings are some important components exported by `@Core/common/mod.ts` module:
 
 | Component      | Type      | Description                                                                                                                                                       |
 | -------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
