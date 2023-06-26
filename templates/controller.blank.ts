@@ -18,6 +18,7 @@ import { type RouterContext } from "oak";
 export default class $_fullNamePascalController extends BaseController {
   @Get("/")
   public list() {
+    // This is a factory method that returns a request handler.
     // Write any validation schemas or meta logic here.
     // Information returned from this function can be used to generate docs etc.
 
