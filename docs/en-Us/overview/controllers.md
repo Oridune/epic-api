@@ -208,7 +208,7 @@ This command will generate a similar controller as above, but it will be named a
 
 This is how your folder structure and `.sequence.json` file is going to look like:
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
 
 {% hint style="info" %}
 The routes for this child-controller will be accessible on the following endpoint: `{{host}}/api/users/posts/`
@@ -288,30 +288,35 @@ Now that we have a working controller. Let's continue adding a `GET` route to th
 import { BaseController, Controller, Get, Response } from "@Core/common/mod.ts";
 
 @Controller("/users/", {
-    name: "users"
+  name: "users",
 })
 export default class UsersController extends BaseController {
-    @Get("/")
-    public list() {
-        // Return a request handler function.
-        return () => {
-            // You will write your fetch users logic here.
-            const UsersList = [];
-        
-            // Return a response instance.
-            if(UsersList)
-                return Response.message("Listing the users.").data({
-                    users: UsersList // Users list here...
-                });
-                
-            return Response.status(false).message("No users found!");
-        }
-    }
+  static UsersList: { username: string; password: string }[] = [];
+
+  static getUsers = () => UsersController.UsersList;
+
+  @Get("/")
+  public list() {
+    // Return a request handler function.
+    return () => {
+      // You will write your fetch users logic here.
+      const Users = UsersController.getUsers();
+
+      // Return a response instance.
+      if (Users)
+        return Response.message("Listing the users.").data({
+          users: Users, // Users list here...
+        });
+
+      return Response.status(false).message("No users found!");
+    };
+  }
 }
+
 ```
 {% endcode %}
 
-In this code we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` module. Then we created a `list` method on the `UsersController` class which returns a request handler function. You will be writing your fetch users logic in this handler and return a `Response` instance accordingly.
+In this code we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` module. Then we created a service method `getUsers` on the `UsersController` class. And then we created a `list` method decorated with the `Get` decorator on the `UsersController` class which returns a request handler function. You will be writing your fetch users logic in this handler and return a `Response` instance accordingly.
 
 Now spin-up the server with the following command:
 
@@ -322,6 +327,89 @@ deno task dev
 
 Now if we test our endpoint in the postman, we get the following result:
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
-Perfect! Our application is running smoothly.
+#### Step 3:
+
+Let's extend our controller's functionality by adding a `POST` route. Again we will modify the above code like this:
+
+{% code title="controllers/users.ts" lineNumbers="true" %}
+```typescript
+import {
+  BaseController,
+  Controller,
+  Get,
+  Post,
+  Response,
+  type IRequestContext,
+} from "@Core/common/mod.ts";
+import { Status, type RouterContext } from "oak";
+import e from "validator";
+
+@Controller("/users/", {
+  name: "users",
+})
+export default class UsersController extends BaseController {
+  static UsersList: { username: string; password: string }[] = [];
+
+  static getUsers = () => UsersController.UsersList;
+
+  static createUser = (user: { username: string; password: string }) => {
+    UsersController.UsersList.push(user);
+  };
+
+  @Get("/")
+  public list() {
+    // Return a request handler function.
+    return () => {
+      // You will write your fetch users logic here.
+      const Users = UsersController.getUsers();
+
+      // Return a response instance.
+      if (Users)
+        return Response.message("Listing the users.").data({
+          users: Users, // Users list here...
+        });
+
+      return Response.status(false).message("No users found!");
+    };
+  }
+
+  @Post("/")
+  public create() {
+    // Create a body validator schema.
+    const BodySchema = e.object({
+      username: e.string(),
+      password: e.string(),
+    });
+
+    // Return a request handler function.
+    return async (ctx: IRequestContext<RouterContext<string>>) => {
+      // Validate user data
+      const User = await BodySchema.validate(
+        await ctx.router.request.body({ type: "json" }).value
+      );
+
+      // Create user
+      UsersController.createUser(User);
+
+      // Return a response instance.
+      return Response.statusCode(Status.Created).data({
+        user: User,
+      });
+    };
+  }
+}
+
+```
+{% endcode %}
+
+Now if we test our endpoint in the postman, we get the following result:
+
+<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>POST http://localhost:3742/api/users/</p></figcaption></figure>
+
+Let's try to execute the previous route again and we get the following result:
+
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+
+Congratulations! You have successfully created your first Epic API :tada:
