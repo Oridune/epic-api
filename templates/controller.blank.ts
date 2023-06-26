@@ -2,14 +2,11 @@ import {
   Controller,
   BaseController,
   Get,
-  Post,
-  Versioned,
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 import Manager from "@Core/common/manager.ts";
-import { Status, type RouterContext } from "oak";
-import e from "validator";
+import { type RouterContext } from "oak";
 
 @Controller("/$_namePath/", {
   name: "$_fullNameCamel",
@@ -19,89 +16,16 @@ import e from "validator";
   /** --------------------- */
 })
 export default class $_fullNamePascalController extends BaseController {
-  @Post("/")
-  public create() {
-    // Define Query Schema
-    const QuerySchema = e.object({}, { allowUnexpectedProps: true });
-
-    // Define Params Schema
-    const ParamsSchema = e.object({});
-
-    // Define Body Schema
-    const BodySchema = e.object({});
-
-    return new Versioned().add("1.0.0", {
-      postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
-        body: BodySchema.toSample().data,
-      },
-      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // Query Validation
-        const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_fullNameCamel.query" }
-        );
-
-        /**
-         * It is recommended to keep the following validators in place even if you don't want to validate any data.
-         * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
-
-        // Params Validation
-        const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_fullNameCamel.params",
-        });
-
-        // Body Validation
-        const Body = await BodySchema.validate(
-          await ctx.router.request.body({ type: "json" }).value,
-          { name: "$_fullNameCamel.body" }
-        );
-
-        // Start coding here...
-
-        return Response.statusCode(Status.Created);
-      },
-    });
-  }
-
   @Get("/")
   public list() {
-    // Define Query Schema
-    const QuerySchema = e.object({}, { allowUnexpectedProps: true });
+    // Write any validation schemas or meta logic here.
+    // Information returned from this function can be used to generate docs etc.
 
-    // Define Params Schema
-    const ParamsSchema = e.object({});
+    return (ctx: IRequestContext<RouterContext<string>>) => {
+      // This function actually handles the request!
+      // Start coding here...
 
-    return new Versioned().add("1.0.0", {
-      postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
-      },
-      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // Query Validation
-        const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_fullNameCamel.query" }
-        );
-
-        /**
-         * It is recommended to keep the following validators in place even if you don't want to validate any data.
-         * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
-
-        // Params Validation
-        const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_fullNameCamel.params",
-        });
-
-        // Start coding here...
-
-        return Response.status(true);
-      },
-    });
+      return Response.status(true);
+    };
   }
 }

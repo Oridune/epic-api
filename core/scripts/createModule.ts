@@ -72,13 +72,15 @@ export const createModule = async (options: {
               const Parent =
                 ctx.parent!.input.prompt &&
                 ctx.parent!.output.type === "controller"
-                  ? await Select.prompt({
-                      message: "Choose a parent controller",
-                      options: [
-                        "none",
-                        ...(await Manager.getSequence("controllers")),
-                      ],
-                    })
+                  ? await (async () => {
+                      const List = await Manager.getSequence("controllers");
+                      return List.size
+                        ? await Select.prompt({
+                            message: "Choose a parent controller",
+                            options: ["none", ...List],
+                          })
+                        : undefined;
+                    })()
                   : undefined;
 
               return Parent === "none" ? undefined : Parent;

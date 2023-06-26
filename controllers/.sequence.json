@@ -1,3 +1,6 @@
 {
-  "sequence": []
+  "sequence": [
+    "users.ts",
+    "users.posts.ts"
+  ]
 }

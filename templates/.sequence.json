@@ -1,6 +1,8 @@
 {
   "sequence": [
     "controller.blank.ts",
+    "controller.validated.ts",
+    "controller.versioned.ts",
     "job.blank.ts",
     "middleware.blank.ts",
     "model.blank.ts",

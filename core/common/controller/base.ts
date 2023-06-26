@@ -52,20 +52,23 @@ export interface IRequestContext<RouterContext = any> {
   options: IRouteOptions;
 }
 
+export type TRequestHandler = (
+  ctx: IRequestContext,
+  ...args: any[]
+) => Promise<void | Response> | void | Response;
+
 export type TRequestHandlerObject = IRequestHandlerObjectExtendor & {
-  handler: (
-    ctx: IRequestContext,
-    ...args: any[]
-  ) => Promise<void | Response> | void | Response;
+  handler: TRequestHandler;
   [K: string]: any;
 };
 
 export type TRequestHandlerReturn =
+  | TRequestHandler
   | TRequestHandlerObject
   | Versioned
-  | Promise<TRequestHandlerObject | Versioned>;
+  | Promise<TRequestHandler | TRequestHandlerObject | Versioned>;
 
-export type TRequestHandler = (route: IRoute) => TRequestHandlerReturn;
+export type TRequestHandlerFactory = (route: IRoute) => TRequestHandlerReturn;
 
 export type TBuildRequestHandlerResult = {
   version: string;
