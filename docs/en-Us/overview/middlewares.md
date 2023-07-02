@@ -89,3 +89,14 @@ export default class UsersController extends BaseController {
 
 ```
 {% endcode %}
+
+Use the following command to delete the middleware:
+
+{% hint style="warning" %}
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+{% endhint %}
+
+```bash
+# Execute the built-in Deno task
+deno task delete:module -t middleware -n checkAuth.ts
+```

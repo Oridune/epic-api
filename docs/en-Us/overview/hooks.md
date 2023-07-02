@@ -14,7 +14,7 @@ When a request is received by the Epic API framework, it first checks for any re
 
 ### Post Hooks
 
-Once the pre-hooks have completed their execution, the request is passed to the request handler for further processing. The request handler is responsible for generating the response based on the received request. After the request handler completes its execution, the framework checks for any registered post-hooks associated with the route or endpoint. Like pre-hooks, post-hooks are executed in the order they were defined and can be utilized to perform tasks such as response formatting, logging, or caching.
+Once the pre-hooks have completed their execution, the request is passed to the request handler for further processing. The request handler generates the response based on the received request. After the request handler completes its execution, the framework checks for any registered post-hooks associated with the route or endpoint. Like pre-hooks, post-hooks are executed in the order they were defined and can be utilized to perform tasks such as response formatting, logging, or caching.
 
 You can execute the following command to create a hook:
 
@@ -65,3 +65,13 @@ export default {
 
 The above code snippet contains both pre and post-hooks. You can remove one of these hooks from the object if needed.
 
+Use the following command to delete the hook:
+
+{% hint style="warning" %}
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+{% endhint %}
+
+```bash
+# Execute the built-in Deno task
+deno task delete:module -t hook -n checkPermission.ts
+```

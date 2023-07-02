@@ -16,31 +16,46 @@ Creating a model in this framework is simple! Just execute the following command
 
 ```bash
 # Execute the built-in Deno task
-deno task create:module -t model -n users --template blank.ts
+deno task create:module -t model -n user --template blank.ts
 ```
+
+{% hint style="info" %}
+It is a good practice to use a singular model name like `-n user` in the above command because a model represents a single data entity.
+{% endhint %}
 
 It will generate the following model:
 
-{% code title="models/users.ts" lineNumbers="true" %}
+{% code title="models/user.ts" lineNumbers="true" %}
 ```typescript
 import mongoose from "mongoose";
 
-export interface IUsers extends mongoose.Document {
+export interface IUser extends mongoose.Document {
   createdAt: Date;
   updatedAt: Date;
 }
 
-export const UsersSchema = new mongoose.Schema<IUsers>(
+export const UserSchema = new mongoose.Schema<IUser>(
   {},
   { timestamps: true, versionKey: false }
 );
 
-export const UsersModel = mongoose.model<IUsers>(
-  "users",
-  UsersSchema
+export const UserModel = mongoose.model<IUser>(
+  "user",
+  UserSchema
 );
 
 ```
 {% endcode %}
 
-Now you can import `UsersModel` in your controllers and start interacting with the database. If you don't know how to use Mongoose ODM, [read this](https://mongoosejs.com/docs/).
+Now you can import `UserModel` in your controllers and start interacting with the database. If you don't know how to use Mongoose ODM, [read this](https://mongoosejs.com/docs/).
+
+Use the following command to delete the model:
+
+{% hint style="warning" %}
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+{% endhint %}
+
+```bash
+# Execute the built-in Deno task
+deno task delete:module -t model -n user.ts
+```
