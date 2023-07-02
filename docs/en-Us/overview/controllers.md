@@ -210,7 +210,7 @@ This command will generate a similar controller as above, but it will be named a
 
 This is how your folder structure and the `.sequence.json` file are going to look:
 
-<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
 
 {% hint style="info" %}
 The routes for this child-controller will be accessible on the following endpoint: `{{host}}/api/users/posts/`
@@ -318,7 +318,7 @@ deno task dev
 
 Now if we test our endpoint in the Postman, we get the following result:
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 #### Step 3:
 
@@ -397,11 +397,11 @@ export default class UsersController extends BaseController {
 
 Now if we test our endpoint in the Postman, we get the following result:
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>POST http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>POST http://localhost:3742/api/users/</p></figcaption></figure>
 
 Let's try to execute the previous route again and we get the following result:
 
-<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 Congratulations! You have successfully created your first Epic API :tada:
 

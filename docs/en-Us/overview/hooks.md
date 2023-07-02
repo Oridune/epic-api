@@ -4,7 +4,7 @@ description: Hooks are executed before and after the request handler is executed
 
 # Hooks
 
-Hooks in the Epic API framework offer a powerful mechanism to extend the framework's behavior, enabling developers to execute certain functions or code snippets before and after the request handler.
+Hooks in the Epic API framework offer a powerful mechanism to extend the framework's behavior, enabling developers to execute certain functions or code snippets before and after the request handler. The most common example of a hook's use case is a permissions check of the requesting client.
 
 Hooks are divided into two categories: pre-hooks and post-hooks. Pre-hooks are executed before the request handler is invoked, while post-hooks are executed after the request handler has finished its execution. This setup allows developers to perform necessary tasks or implement additional logic at different stages of the request lifecycle.
 
@@ -35,20 +35,25 @@ import {
 import { type RouterContext } from "oak";
 
 export default {
+  // This function is executed when a request is received from the client
+  // and it passes all the middlewares.
   pre: (
     scope: string,
     name: string,
-    _ctx: IRequestContext<RouterContext<string>>
+    ctx: IRequestContext<RouterContext<string>>
   ) => {
     console.info(
       "We are going to execute the following scope.permission:",
       `${scope}.${name}`
     );
   },
+
+  // This function is executed after the request handler has been executed
+  // and the server is about the send the response to the client.
   post: (
     scope: string,
     name: string,
-    _detail: {
+    detail: {
       ctx: IRequestContext<RouterContext<string>>;
       res: RawResponse | Response;
     }
