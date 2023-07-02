@@ -190,7 +190,7 @@ The routes for this controller will be accessible on the following endpoint: `{{
 {% hint style="info" %}
 **Did you notice the postman property?**
 
-This property is returned as the metadata of this controller's request. You may pass a sample data shape to this property so that the postman can document what information shape this route accepts!
+This property is returned as the metadata of this controller's request. You may pass a sample data shape to this property so that the postman can document what information shape this route accepts! [See how it works](../utilities/postman.md).
 
 Defining the data shapes during development is a headache! And this is where `validator` got you covered! The `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
 {% endhint %}
@@ -210,7 +210,7 @@ This command will generate a similar controller as above, but it will be named a
 
 This is how your folder structure and the `.sequence.json` file are going to look:
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
 
 {% hint style="info" %}
 The routes for this child-controller will be accessible on the following endpoint: `{{host}}/api/users/posts/`
@@ -401,7 +401,7 @@ Now if we test our endpoint in the Postman, we get the following result:
 
 Let's try to execute the previous route again and we get the following result:
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 Congratulations! You have successfully created your first Epic API :tada:
 
