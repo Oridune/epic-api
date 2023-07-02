@@ -1,5 +1,5 @@
 ---
-description: Middleware is a function which is called before the request handler.
+description: Middleware is a function which is called before the actual request handler.
 ---
 
 # Middlewares
