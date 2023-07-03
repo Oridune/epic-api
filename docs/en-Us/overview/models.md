@@ -9,7 +9,7 @@ By default, Epic API uses [MongoDB](https://www.mongodb.com/) with [Mongoose ODM
 In this documentation, we will delve into the concept of models within Epic API, exploring their significance and how they streamline the interaction between the application and the MongoDB database. Understanding the fundamental principles of models will empower developers to design and implement robust and scalable database structures, ultimately enhancing their applications' overall functionality and performance.
 
 {% hint style="info" %}
-If you want to use a different database with Epic API, [consider reading this documentation](../core/database.md).
+If you want to use a different database with Epic API, [consider reading this documentation](../examples/replace-mongodb-with-typeorm.md).
 {% endhint %}
 
 Creating a model in this framework is simple! Just execute the following command:
