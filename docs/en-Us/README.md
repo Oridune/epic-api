@@ -23,9 +23,9 @@ git clone https://github.com/Oridune/epic-api.git my-new-app
 
 ### Environment Variables
 
-When developing any kind of application, it is a good practice to manage your environment variables in a professional manner. Similarly when working with Epic API, once you've cloned the repository, You are required to setup the environment variables first before you start working!
+When developing any application, it is an excellent practice to manage your environment variables in a professional manner. Similarly, when working with Epic API, once you've cloned the repository, you must set up the environment variables before you start working!
 
-Epic API supports 3 environment types **Development**, **Test** and **Production**. You are required to execute the following command if the environment files doesn't already exist:
+Epic API supports 3 environment types **Development**, **Test,** and **Production**. You are required to execute the following command if the environment files don't already exist:
 
 ```bash
 # Execute the built-in Deno task
@@ -33,7 +33,7 @@ deno task create:env -t development,test,production --encryptionKey=123457890 --
 ```
 
 {% hint style="info" %}
-**Note:** You can pass the environment variables directly in the command to auto populate into the environment files for example `--encryptionKey=123` or `--foo=bar`.
+**Note:** You can pass the environment variables directly in the command to auto-populate into the environment files. For example `--encryptionKey=123` or `--foo=bar`.
 {% endhint %}
 
 Once you have setup everything correctly, run the following command to start the API server:

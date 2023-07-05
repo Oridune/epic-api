@@ -13,23 +13,17 @@
 * [Jobs](overview/jobs.md)
 * [Plugins](overview/plugins.md)
 
-## Core
-
-* [Architecture](core/architecture.md)
-* [Common](core/common.md)
-* [Scripts](core/scripts.md)
-* [Database](core/database.md)
-
 ## Techniques
 
+* [Architecture](techniques/architecture.md)
 * [Configuration](techniques/configuration.md)
 * [Validations](techniques/validations.md)
 * [Versioning](techniques/versioning.md)
-* [Caching](techniques/caching.md)
 
 ## Utilities
 
 * [Postman](utilities/postman.md)
+* [Caching](utilities/caching.md)
 
 ## Examples
 
