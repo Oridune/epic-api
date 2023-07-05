@@ -1,6 +1,12 @@
 // deno-lint-ignore-file no-explicit-any
 import { join } from "path";
-import { Response, Server, Env, EnvType } from "@Core/common/mod.ts";
+import {
+  RawResponse,
+  Response,
+  Server,
+  Env,
+  EnvType,
+} from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { connectDatabase } from "@Core/database.ts";
 import Manager from "@Core/common/manager.ts";
@@ -56,14 +62,13 @@ export const prepareAppServer = async (app: AppServer) => {
     try {
       await next();
     } catch (e) {
-      ctx.response.status = isHttpError(e)
-        ? e.status
-        : e instanceof ValidationException
-        ? 400
-        : 500;
-      ctx.response.body = Response.statusCode(ctx.response.status)
-        .messages(e.issues ?? [{ message: e.message }])
-        .toObject();
+      const NewResponse = Response.statusCode(
+        isHttpError(e) ? e.status : e instanceof ValidationException ? 400 : 500
+      ).messages(e.issues ?? [{ message: e.message }]);
+
+      ctx.response.status = NewResponse.getStatusCode();
+      ctx.response.headers = NewResponse.getHeaders();
+      ctx.response.body = NewResponse.getBody();
     }
   });
 
@@ -152,35 +157,34 @@ export const prepareAppServer = async (app: AppServer) => {
               version: RequestContext.version,
             })) ?? {};
 
-          if (typeof RequestHandler === "object") {
-            RequestContext.version = version ?? TargetVersion;
-            const Result = await RequestHandler.handler.bind(RequestHandler)(
-              RequestContext
-            );
+          RequestContext.version = version ?? RequestContext.version;
 
-            for (const Hook of Hooks)
-              await Hook?.post?.(Route.scope, Route.options.name, {
+          const ReturnedResponse = await RequestHandler?.handler.bind(
+            RequestHandler
+          )(RequestContext);
+
+          for (const Hook of Hooks)
+            await Hook?.post?.(Route.scope, Route.options.name, {
+              ctx: RequestContext,
+              res: ReturnedResponse,
+            });
+
+          dispatchEvent(
+            new CustomEvent(ctx.state.requestName, {
+              detail: {
                 ctx: RequestContext,
-                res: Result,
-              });
+                res: ReturnedResponse,
+              },
+            })
+          );
 
-            dispatchEvent(
-              new CustomEvent(ctx.state.requestName, {
-                detail: {
-                  ctx: RequestContext,
-                  res: Result,
-                },
-              })
-            );
-
-            ctx.response.body = (
-              Result instanceof Response ? Result : Response.status(true)
-            ).toObject();
-          } else {
-            ctx.response.status = 404;
-            ctx.response.body = Response.statusCode(ctx.response.status)
-              .message("Route not found!")
-              .toObject();
+          if (
+            ReturnedResponse instanceof RawResponse ||
+            ReturnedResponse instanceof Response
+          ) {
+            ctx.response.status = ReturnedResponse.getStatusCode();
+            ctx.response.headers = ReturnedResponse.getHeaders();
+            ctx.response.body = ReturnedResponse.getBody();
           }
         }
       );
@@ -194,42 +198,59 @@ export const prepareAppServer = async (app: AppServer) => {
 };
 
 export const startBackgroundJobs = async (app: AppServer) =>
-  Promise.all(
-    [
-      ...(await (
-        await Manager.getActivePlugins()
-      ).reduce<Promise<any[]>>(
-        async (list, manager) => [
-          ...(await list),
-          ...(await manager.getModules("jobs")),
-        ],
-        Promise.resolve([])
-      )),
-      ...(await Manager.getModules("jobs")),
-    ].map(async (job) => {
-      if (typeof job === "function") await job(app);
-    })
-  );
+  (
+    await Promise.all<Promise<() => Promise<void>>[]>(
+      [
+        ...(await (
+          await Manager.getActivePlugins()
+        ).reduce<Promise<any[]>>(
+          async (list, manager) => [
+            ...(await list),
+            ...(await manager.getModules("jobs")),
+          ],
+          Promise.resolve([])
+        )),
+        ...(await Manager.getModules("jobs")),
+      ].map(async (job) => {
+        if (typeof job === "function") return await job(app);
+      })
+    )
+  ).filter((_) => typeof _ === "function");
 
 export const startAppServer = async (app: AppServer) => {
-  const Database = await connectDatabase();
   await prepareAppServer(app);
-  await startBackgroundJobs(app);
 
-  // // Create Server Abort Controller
-  // const { signal, abort } = new AbortController();
+  const Database = await connectDatabase();
+  const JobCleanups = await startBackgroundJobs(app);
+
+  const Controller = new AbortController();
 
   return {
-    // signal,
+    signal: Controller.signal,
     end: async () => {
+      Controller.abort();
+
+      await Promise.all(JobCleanups.map((_) => _()));
       await Database.disconnect();
-      // abort();
+
+      console.info("Application terminated successfully!");
     },
   };
 };
 
 if (import.meta.main) {
-  await startAppServer(App);
+  const { signal, end } = await startAppServer(App);
+
+  (["SIGINT", "SIGBREAK", "SIGTERM"] satisfies Deno.Signal[]).map((_) => {
+    try {
+      Deno.addSignalListener(_, async () => {
+        await end();
+        Deno.exit();
+      });
+    } catch {
+      // Do nothing...
+    }
+  });
 
   App.addEventListener("listen", ({ port }) =>
     console.info(`Server is listening on Port: ${port}`)
@@ -237,5 +258,6 @@ if (import.meta.main) {
 
   await App.listen({
     port: parseInt((await Env.get("PORT", true)) || "8080"),
+    signal,
   });
 }

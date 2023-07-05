@@ -55,16 +55,7 @@ Deno.test("Basic Flow Test", async (t) => {
     "/api/test/ Should return 404 not found for x-App-version 2.0.0",
     async () => {
       const Request = await superoak(App);
-      await Request.get("/api/test/")
-        .set("x-App-version", "2.0.0")
-        .expect(404)
-        .expect("Content-Type", /json/)
-        .expect(
-          JSON.stringify({
-            status: false,
-            messages: [{ message: "Route not found!" }],
-          })
-        );
+      await Request.get("/api/test/").set("x-App-version", "2.0.0").expect(404);
     }
   );
 

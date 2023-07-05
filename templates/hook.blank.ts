@@ -1,23 +1,32 @@
-import { type IRequestContext, type Response } from "@Core/common/mod.ts";
+import {
+  type IRequestContext,
+  type RawResponse,
+  type Response,
+} from "@Core/common/mod.ts";
 import { type RouterContext } from "oak";
 
 export default {
+  // This function is executed when a request is received from the client
+  // and it passes all the middlewares.
   pre: (
     scope: string,
     name: string,
-    _ctx: IRequestContext<RouterContext<string>>
+    ctx: IRequestContext<RouterContext<string>>
   ) => {
     console.info(
       "We are going to execute the following scope.permission:",
       `${scope}.${name}`
     );
   },
+
+  // This function is executed after the request handler has been executed
+  // and the server is about the send the response to the client.
   post: (
     scope: string,
     name: string,
-    _detail: {
+    detail: {
       ctx: IRequestContext<RouterContext<string>>;
-      res: Response;
+      res: RawResponse | Response;
     }
   ) => {
     console.info(

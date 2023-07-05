@@ -5,12 +5,151 @@ export interface ResponseMessage {
   [K: string]: any;
 }
 
-export class Response {
-  protected Status = true;
+export class RawResponse {
   protected StatusCode = 200;
+  protected Headers = new Headers();
+  protected Type?: string;
+  protected Body?: any;
+
+  /**
+   * Create a response object with HTTP response code
+   * @param code
+   * @returns
+   */
+  static statusCode(code: number) {
+    return new RawResponse().statusCode(code);
+  }
+
+  /**
+   * Create a response object with a header appended
+   * @param name
+   * @param value
+   * @returns
+   */
+  static header(name: string, value: string) {
+    return new RawResponse().header(name, value);
+  }
+
+  /**
+   * Create a response object with the given headers
+   * @param headers
+   * @returns
+   */
+  static headers(headers: Headers) {
+    return new RawResponse().headers(headers);
+  }
+
+  /**
+   * Create a response object
+   * @param body
+   * @param type
+   * @returns
+   */
+  static body(body: any, type?: string) {
+    return new RawResponse(body, type);
+  }
+
+  constructor(body?: any, type?: string) {
+    if (body) this.body(body);
+    if (type) this.type(type);
+  }
+
+  /**
+   * Set a HTTP response code
+   * @param code
+   * @returns
+   */
+  public statusCode(code: number) {
+    this.StatusCode = typeof code === "number" ? code : 500;
+    return this;
+  }
+
+  /**
+   * Set a header of your response
+   * @param name
+   * @param value
+   * @returns
+   */
+  public header(name: string, value: string) {
+    this.Headers.append(name, value);
+    return this;
+  }
+
+  /**
+   * Set the headers of your response
+   * @param headers
+   * @returns
+   */
+  public headers(headers: Headers) {
+    this.Headers = headers;
+    return this;
+  }
+
+  /**
+   * Set the response body
+   * @param body
+   * @param type
+   * @returns
+   */
+  public body(body: any, type?: string) {
+    this.Body = body;
+    if (type) this.type(type);
+    return this;
+  }
+
+  /**
+   * Set the response type
+   * @param type
+   * @returns
+   */
+  public type(type: string) {
+    this.Type = type;
+    return this;
+  }
+
+  /**
+   * Get HTTP Status Code
+   * @returns
+   */
+  public getStatusCode() {
+    return this.StatusCode;
+  }
+
+  /**
+   * Get HTTP Headers
+   * @returns
+   */
+  public getHeaders() {
+    return this.Headers;
+  }
+
+  /**
+   * Get the Body
+   * @returns
+   */
+  public getBody() {
+    return this.Body;
+  }
+}
+
+export class Response {
+  protected StatusCode = 200;
+  protected Headers = new Headers();
+
+  protected Status = true;
   protected Messages?: ResponseMessage[];
   protected Data?: any;
   protected Metadata?: any;
+
+  /**
+   * Create a raw response object
+   * @param body
+   * @param type
+   * @returns
+   */
+  static raw(body: any, type?: string) {
+    return new RawResponse(body, type);
+  }
 
   /**
    * Create a response object with status `true | false`
@@ -31,6 +170,25 @@ export class Response {
   }
 
   /**
+   * Create a response object with a header appended
+   * @param name
+   * @param value
+   * @returns
+   */
+  static header(name: string, value: string) {
+    return new Response().header(name, value);
+  }
+
+  /**
+   * Create a response object with the given headers
+   * @param headers
+   * @returns
+   */
+  static headers(headers: Headers) {
+    return new Response().headers(headers);
+  }
+
+  /**
    * Create a response object with a message
    * @param message
    * @param metadata Optionally pass a metadata object.
@@ -38,6 +196,15 @@ export class Response {
    */
   static message(message: string, metadata?: Record<string, any>) {
     return new Response().message(message, metadata);
+  }
+
+  /**
+   * Create a response object with multiple messages
+   * @param messages
+   * @returns
+   */
+  static messages(messages: ResponseMessage[]) {
+    return new Response().messages(messages);
   }
 
   /**
@@ -59,7 +226,10 @@ export class Response {
     return new Response().metadata(metadata);
   }
 
-  constructor() {}
+  constructor(data?: any, metadata?: Record<string, any>) {
+    if (data) this.data(data);
+    if (metadata) this.metadata(metadata);
+  }
 
   /**
    * Set a status of your response `true | false`
@@ -78,6 +248,27 @@ export class Response {
    */
   public statusCode(code: number) {
     this.StatusCode = typeof code === "number" ? code : 500;
+    return this;
+  }
+
+  /**
+   * Set a header of your response
+   * @param name
+   * @param value
+   * @returns
+   */
+  public header(name: string, value: string) {
+    this.Headers.append(name, value);
+    return this;
+  }
+
+  /**
+   * Set the headers of your response
+   * @param headers
+   * @returns
+   */
+  public headers(headers: Headers) {
+    this.Headers = headers;
     return this;
   }
 
@@ -132,10 +323,26 @@ export class Response {
   }
 
   /**
-   * Converts the current response object to a normalized object.
+   * Get HTTP Status Code
    * @returns
    */
-  public toObject() {
+  public getStatusCode() {
+    return this.StatusCode;
+  }
+
+  /**
+   * Get HTTP Headers
+   * @returns
+   */
+  public getHeaders() {
+    return this.Headers;
+  }
+
+  /**
+   * Converts the current response object to a normalized body.
+   * @returns
+   */
+  public getBody() {
     return {
       status: this.Status,
       messages: this.Messages,

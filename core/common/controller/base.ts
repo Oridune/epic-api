@@ -2,7 +2,7 @@
 import { Reflect } from "reflect";
 import { RequestMethod } from "../route/decorator.ts";
 import { Versioned } from "../versioned.ts";
-import { Response } from "../response.ts";
+import { RawResponse, Response } from "../response.ts";
 
 export enum ControllerMetadataKey {
   OPTIONS = "options",
@@ -55,7 +55,7 @@ export interface IRequestContext<RouterContext = any> {
 export type TRequestHandler = (
   ctx: IRequestContext,
   ...args: any[]
-) => Promise<void | Response> | void | Response;
+) => Promise<void | RawResponse | Response> | void | RawResponse | Response;
 
 export type TRequestHandlerObject = IRequestHandlerObjectExtendor & {
   handler: TRequestHandler;
