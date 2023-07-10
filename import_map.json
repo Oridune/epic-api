@@ -14,6 +14,7 @@
     "fs": "https://deno.land/std@0.165.0/fs/mod.ts",
     "reflect": "https://deno.land/x/reflect_metadata@v0.1.12/mod.ts",
     "mongoose": "npm:mongoose@6.7.5",
+    "ts-reset": "npm:@total-typescript/ts-reset",
     "validator": "https://deno.land/x/oridune_validator@v0.2.2/mod.ts",
     "flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
