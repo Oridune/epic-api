@@ -1,5 +1,5 @@
 import { parse } from "flags";
-import { join } from "path";
+import { join, dirname } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
 import { expandGlob, exists } from "fs";
 import e from "validator";
@@ -107,37 +107,38 @@ export const updateCore = async (options: {
     if (Status.success) {
       Process.close();
 
-      // Update Core Files
-      for await (const Entry of expandGlob("core/**/*", {
-        root: TempPath,
-        globstar: true,
-      }))
-        if (!Entry.isDirectory)
-          await Deno.copyFile(
-            Entry.path,
-            Entry.path.replace(TempPath, Deno.cwd())
-          );
+      // Create/Update Files
+      for (const Glob of ["core/**/*", "templates/**/*"].map((pattern) =>
+        expandGlob(pattern, {
+          root: TempPath,
+          globstar: true,
+        })
+      ))
+        for await (const Entry of Glob)
+          if (!Entry.isDirectory)
+            await Deno.copyFile(
+              Entry.path,
+              Entry.path.replace(TempPath, Deno.cwd())
+            );
 
-      // Update Template Files
-      for await (const Entry of expandGlob("templates/**/*", {
-        root: TempPath,
-        globstar: true,
-      }))
-        if (!Entry.isDirectory)
-          await Deno.copyFile(
-            Entry.path,
-            Entry.path.replace(TempPath, Deno.cwd())
-          );
+      // Create Files
+      for (const Glob of ["tests/**/*", "*.*"].map((pattern) =>
+        expandGlob(pattern, {
+          root: TempPath,
+          globstar: true,
+        })
+      ))
+        for await (const Entry of Glob) {
+          const TargetFile = Entry.path.replace(TempPath, Deno.cwd());
+          if (!Entry.isDirectory && !(await exists(TargetFile))) {
+            const Directory = dirname(TargetFile);
 
-      // Resolve root files
-      for await (const Entry of expandGlob("*.*", {
-        root: TempPath,
-        globstar: true,
-      })) {
-        const TargetFile = Entry.path.replace(TempPath, Deno.cwd());
-        if (!Entry.isDirectory && !(await exists(TargetFile)))
-          await Deno.copyFile(Entry.path, TargetFile);
-      }
+            if (!(await exists(Directory)))
+              await Deno.mkdir(Directory, { recursive: true });
+
+            await Deno.copyFile(Entry.path, TargetFile);
+          }
+        }
 
       // Update Docs File
       await Deno.copyFile(
