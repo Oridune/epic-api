@@ -1,4 +1,4 @@
-import Semver from "https://esm.sh/u-semver@0.7.1";
+import Semver from "u-semver";
 
 export const semverResolve = <T extends string>(
   version: string,
