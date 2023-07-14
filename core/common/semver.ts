@@ -1,4 +1,4 @@
-import Semver from "npm:u-semver";
+import Semver from "npm:u-semver@0.7.1";
 
 export const semverResolve = <T extends string>(
   version: string,
