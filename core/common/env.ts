@@ -39,12 +39,13 @@ export class Env {
    * @returns
    */
   static getAll() {
-    return (
-      Env.configuration ??
-      (Env.configuration = config({
-        path: join(Deno.cwd(), `./env/.${Env.getType()}.env`),
-      }))
-    );
+    return {
+      ...Deno.env.toObject(),
+      ...(Env.configuration ??
+        (Env.configuration = config({
+          path: join(Deno.cwd(), `./env/.${Env.getType()}.env`),
+        }))),
+    };
   }
 
   /**
