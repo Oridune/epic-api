@@ -8,7 +8,7 @@ import {
   EnvType,
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
-import { connectDatabase } from "@Core/database.ts";
+import { Database } from "../database.ts";
 import Manager from "@Core/common/manager.ts";
 import {
   Application as AppServer,
@@ -220,7 +220,8 @@ export const startBackgroundJobs = async (app: AppServer) =>
 export const startAppServer = async (app: AppServer) => {
   await prepareAppServer(app);
 
-  const Database = await connectDatabase();
+  await Database.connect();
+
   const JobCleanups = await startBackgroundJobs(app);
 
   const Controller = new AbortController();
@@ -237,27 +238,3 @@ export const startAppServer = async (app: AppServer) => {
     },
   };
 };
-
-if (import.meta.main) {
-  const { signal, end } = await startAppServer(App);
-
-  (["SIGINT", "SIGBREAK", "SIGTERM"] satisfies Deno.Signal[]).map((_) => {
-    try {
-      Deno.addSignalListener(_, async () => {
-        await end();
-        Deno.exit();
-      });
-    } catch {
-      // Do nothing...
-    }
-  });
-
-  App.addEventListener("listen", ({ port }) =>
-    console.info(`Server is listening on Port: ${port}`)
-  );
-
-  await App.listen({
-    port: parseInt((await Env.get("PORT", true)) || "8080"),
-    signal,
-  });
-}
