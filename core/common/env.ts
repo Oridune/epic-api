@@ -30,8 +30,8 @@ export class Env {
    * @param type Type of environment (development, production, test etc.)
    * @returns
    */
-  static is(type: EnvType) {
-    return Env.getType() === type;
+  static is(...types: EnvType[]) {
+    return types.includes(Env.getType());
   }
 
   /**

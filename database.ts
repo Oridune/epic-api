@@ -30,7 +30,7 @@ export class Database {
     );
 
     // Enable mongoose logs in development
-    Database.connection.set("debug", Env.is(EnvType.DEVELOPMENT));
+    Database.connection.set("debug", !Env.is(EnvType.PRODUCTION));
   }
 
   /**

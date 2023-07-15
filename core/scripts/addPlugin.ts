@@ -189,8 +189,6 @@ export const addPlugin = async (options: {
               ".git",
               "core",
               "env",
-              ".gitattributes",
-              ".gitignore",
               "database.ts",
               "serve.ts",
             ])
