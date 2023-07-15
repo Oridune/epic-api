@@ -149,6 +149,9 @@ export const updateCore = async (options: {
       await mergeConfig(TempPath);
       await mergeImports(TempPath);
 
+      // Sleep for 1s
+      await new Promise((_) => setTimeout(_, 1000));
+
       await Deno.remove(TempPath, { recursive: true });
 
       console.info("Core has been updated successfully!");
