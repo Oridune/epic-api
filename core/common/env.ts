@@ -18,9 +18,9 @@ export class Env {
    *
    */
   static getType() {
-    const Target = Deno.env.get("ENV_TYPE");
+    const Target = Deno.env.get("ENV_TYPE") as EnvType | undefined;
 
-    return Target && Object.values(EnvType).includes(Target as EnvType)
+    return Target && Object.values(EnvType).includes(Target)
       ? Target
       : EnvType.DEVELOPMENT;
   }
