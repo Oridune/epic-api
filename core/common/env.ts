@@ -42,9 +42,14 @@ export class Env {
     return {
       ...Deno.env.toObject(),
       ...(Env.configuration ??
-        (Env.configuration = config({
-          path: join(Deno.cwd(), `./env/.${Env.getType()}.env`),
-        }))),
+        (Env.configuration = {
+          ...config({
+            path: join(Deno.cwd(), `./env/.env`),
+          }),
+          ...config({
+            path: join(Deno.cwd(), `./env/.${Env.getType()}.env`),
+          }),
+        })),
     };
   }
 
