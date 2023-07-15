@@ -90,6 +90,9 @@ export const updateCore = async (options: {
 
     const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
     const TempPath = join(Deno.cwd(), "_temp");
+
+    await Deno.remove(TempPath, { recursive: true });
+
     const Process = Deno.run({
       cmd: [
         "git",
@@ -150,7 +153,7 @@ export const updateCore = async (options: {
       await mergeImports(TempPath);
 
       // Sleep for 1s
-      await new Promise((_) => setTimeout(_, 1000));
+      await new Promise((_) => setTimeout(_, 3000));
 
       await Deno.remove(TempPath, { recursive: true });
 
