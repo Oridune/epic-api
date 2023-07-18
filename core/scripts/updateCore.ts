@@ -91,7 +91,8 @@ export const updateCore = async (options: {
     const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
     const TempPath = join(Deno.cwd(), "_temp");
 
-    await Deno.remove(TempPath, { recursive: true });
+    if (await exists(TempPath))
+      await Deno.remove(TempPath, { recursive: true });
 
     const Process = Deno.run({
       cmd: [
@@ -111,11 +112,12 @@ export const updateCore = async (options: {
       Process.close();
 
       // Create/Update Files
-      for (const Glob of ["core/**/*", "templates/**/*"].map((pattern) =>
-        expandGlob(pattern, {
-          root: TempPath,
-          globstar: true,
-        })
+      for (const Glob of ["core/**/*", "templates/**/*", "serve.ts"].map(
+        (pattern) =>
+          expandGlob(pattern, {
+            root: TempPath,
+            globstar: true,
+          })
       ))
         for await (const Entry of Glob)
           if (!Entry.isDirectory)
