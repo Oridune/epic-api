@@ -16,11 +16,11 @@ import {
     for (const [, SubLoader] of Loader.getLoaders() ?? [])
       for (const [, Controller] of SubLoader.tree.get("controllers")?.modules ??
         [])
-        if (typeof Controller.object.default === "object")
+        if (typeof Controller.object.default === "function")
           Controllers.push(Controller.object.default);
 
     for (const [, Controller] of Loader.getModules("controllers") ?? [])
-      if (typeof Controller.object.default === "object")
+      if (typeof Controller.object.default === "function")
         Controllers.push(Controller.object.default);
 
     return Controllers;
