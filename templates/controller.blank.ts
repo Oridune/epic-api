@@ -7,7 +7,7 @@ import {
 } from "@Core/common/mod.ts";
 import { type RouterContext } from "oak";
 
-@Controller("/$_namePath/", { name: "$_nameKebab" })
+@Controller("/$_namePath/", { name: "$_nameCamel" })
 export default class $_fullNamePascalController extends BaseController {
   @Get("/")
   public list() {
