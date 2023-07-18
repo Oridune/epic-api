@@ -127,7 +127,7 @@ export const updateCore = async (options: {
             );
 
       // Create Files
-      for (const Glob of ["tests/**/*", "*.*"].map((pattern) =>
+      for (const Glob of ["tests/**/*", "*.*", "*"].map((pattern) =>
         expandGlob(pattern, {
           root: TempPath,
           globstar: true,
