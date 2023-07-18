@@ -2,9 +2,9 @@ import { parse } from "flags";
 import { join, basename } from "path";
 import e from "validator";
 
-import { listTemplates, ModuleType } from "@Core/scripts/createModule.ts";
+import { listValidTemplates, ModuleType } from "@Core/scripts/createModule.ts";
 import { Select, Confirm } from "cliffy:prompt";
-import Manager from "@Core/common/manager.ts";
+import { Loader } from "@Core/common/loader.ts";
 
 export const deleteTemplate = async (options: {
   type: ModuleType;
@@ -25,13 +25,14 @@ export const deleteTemplate = async (options: {
                   })) as ModuleType)
                 : undefined
             ),
-          templateDir: e.optional(e.string()).default("templates"),
           name: e.optional(e.string()).default(async (ctx) =>
             ctx.parent!.input.prompt
               ? await Select.prompt({
                   message: "Choose the template to be deleted",
-                  options: await listTemplates(
-                    ctx.parent!.output.templateDir,
+                  options: listValidTemplates(
+                    Array.from(
+                      Loader.getSequence("templates")?.includes() ?? []
+                    ),
                     ctx.parent!.output.type
                   ),
                 })
@@ -42,7 +43,7 @@ export const deleteTemplate = async (options: {
             .custom((ctx) =>
               join(
                 Deno.cwd(),
-                ctx.parent!.output.templateDir,
+                "templates",
                 `${ctx.parent!.output.type}.${ctx.parent!.output.name}`
               )
             ),
@@ -63,10 +64,9 @@ export const deleteTemplate = async (options: {
         return;
 
       await Deno.remove(Options.templatePath);
-
-      await Manager.setSequence(Options.templateDir, (seq) => {
-        seq.delete(TemplateName);
-        return seq;
+      await Loader.getSequence("templates")?.set((_) => {
+        _.delete(TemplateName);
+        return _;
       });
     }
 
@@ -80,7 +80,9 @@ export const deleteTemplate = async (options: {
 if (import.meta.main) {
   const { type, t, name, n } = parse(Deno.args);
 
-  deleteTemplate({
+  await Loader.load({ includeTypes: ["templates"], sequenceOnly: true });
+
+  await deleteTemplate({
     type: type ?? t,
     name: name ?? n,
     prompt: true,

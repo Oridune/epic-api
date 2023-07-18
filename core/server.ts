@@ -6,10 +6,10 @@ import {
   Server,
   Env,
   EnvType,
+  Loader,
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "../database.ts";
-import Manager from "@Core/common/manager.ts";
 import {
   Application as AppServer,
   Router as AppRouter,
@@ -23,42 +23,42 @@ import { gzip } from "oak:compress";
 import { RateLimiter } from "oak:limiter";
 import { ValidationException } from "validator";
 
-export const App = new AppServer();
-export const Router = new AppRouter();
+export const prepareAppServer = async () => {
+  const App = new AppServer();
+  const Router = new AppRouter();
 
-export const prepareAppServer = async (app: AppServer) => {
-  for (const Plugin of await Manager.getActivePlugins())
-    for await (const Entry of Deno.readDir(join(Plugin.CWD, "public")))
-      if (Entry.isDirectory)
-        app.use(
-          StaticFiles(join(Plugin.CWD, "public", Entry.name, "www"), {
-            prefix: "/" + Entry.name,
-            errorFile: true,
-          })
-        );
-
-  for await (const Entry of Deno.readDir("public"))
-    if (Entry.isDirectory)
-      app.use(
-        StaticFiles(join(Deno.cwd(), "public", Entry.name, "www"), {
-          prefix: "/" + Entry.name,
+  for (const [, SubLoader] of Loader.getLoaders() ?? [])
+    for await (const UI of SubLoader.tree
+      .get("public")
+      ?.sequence.listDetailed() ?? [])
+      App.use(
+        StaticFiles(join(UI.path, "www"), {
+          prefix: "/" + UI.name,
           errorFile: true,
         })
       );
 
-  app.use(Logger.logger);
-  app.use(Logger.responseTime);
-  app.use(CORS());
-  app.use(gzip());
-  app.use(await RateLimiter());
-  app.use(async (ctx, next) => {
+  for await (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
+    App.use(
+      StaticFiles(join(UI.path, "www"), {
+        prefix: "/" + UI.name,
+        errorFile: true,
+      })
+    );
+
+  App.use(Logger.logger);
+  App.use(Logger.responseTime);
+  App.use(CORS());
+  App.use(gzip());
+  App.use(await RateLimiter());
+  App.use(async (ctx, next) => {
     const ID = crypto.randomUUID();
     ctx.state["X-Request-ID"] = ID;
     await next();
     ctx.response.headers.set("X-Request-ID", ID);
   });
 
-  app.use(async (ctx, next) => {
+  App.use(async (ctx, next) => {
     try {
       await next();
     } catch (e) {
@@ -72,42 +72,30 @@ export const prepareAppServer = async (app: AppServer) => {
     }
   });
 
-  await Promise.all(
-    [
-      ...(await (
-        await Manager.getActivePlugins()
-      ).reduce<Promise<any[]>>(
-        async (list, manager) => [
-          ...(await list),
-          ...(await manager.getModules("middlewares")),
-        ],
-        Promise.resolve([])
-      )),
-      ...(await Manager.getModules("middlewares")),
-    ].map(async (middleware) => {
-      if (typeof middleware === "function") app.use(await middleware());
-    })
-  );
+  for (const [, SubLoader] of Loader.getLoaders() ?? [])
+    for (const [, Middleware] of SubLoader.tree.get("middlewares")?.modules ??
+      [])
+      if (typeof Middleware.object.default === "function")
+        App.use(await Middleware.object.default());
+
+  for (const [, Middleware] of Loader.getModules("middlewares") ?? [])
+    if (typeof Middleware.object.default === "function")
+      App.use(await Middleware.object.default());
 
   await new Server(APIController).prepare(async (routes) => {
-    const Hooks = await Promise.all<
-      | {
-          pre?: (...args: any[]) => Promise<void>;
-          post?: (...args: any[]) => Promise<void>;
-        }
-      | undefined
-    >([
-      ...(await (
-        await Manager.getActivePlugins()
-      ).reduce<Promise<any[]>>(
-        async (list, manager) => [
-          ...(await list),
-          ...(await manager.getModules("hooks")),
-        ],
-        Promise.resolve([])
-      )),
-      ...(await Manager.getModules("hooks")),
-    ]);
+    const Hooks: Array<{
+      pre?: (...args: any[]) => Promise<void>;
+      post?: (...args: any[]) => Promise<void>;
+    }> = [];
+
+    for (const [, SubLoader] of Loader.getLoaders() ?? [])
+      for (const [, Hook] of SubLoader.tree.get("hooks")?.modules ?? [])
+        if (typeof Hook.object.default === "object")
+          Hooks.push(Hook.object.default);
+
+    for (const [, Hook] of Loader.getModules("hooks") ?? [])
+      if (typeof Hook.object.default === "object")
+        Hooks.push(Hook.object.default);
 
     for (const Route of routes) {
       if (!Env.is(EnvType.PRODUCTION))
@@ -150,7 +138,7 @@ export const prepareAppServer = async (app: AppServer) => {
           };
 
           for (const Hook of Hooks)
-            await Hook?.pre?.(Route.scope, Route.options.name, RequestContext);
+            await Hook.pre?.(Route.scope, Route.options.name, RequestContext);
 
           const { version, object: RequestHandler } =
             (await Route.options.buildRequestHandler(Route, {
@@ -191,42 +179,37 @@ export const prepareAppServer = async (app: AppServer) => {
     }
   });
 
-  app.use(Router.routes());
-  app.use(Router.allowedMethods());
+  App.use(Router.routes());
+  App.use(Router.allowedMethods());
 
-  return app;
+  return App;
 };
 
-export const startBackgroundJobs = async (app: AppServer) =>
-  (
-    await Promise.all<Promise<() => Promise<void>>[]>(
-      [
-        ...(await (
-          await Manager.getActivePlugins()
-        ).reduce<Promise<any[]>>(
-          async (list, manager) => [
-            ...(await list),
-            ...(await manager.getModules("jobs")),
-          ],
-          Promise.resolve([])
-        )),
-        ...(await Manager.getModules("jobs")),
-      ].map(async (job) => {
-        if (typeof job === "function") return await job(app);
-      })
-    )
-  ).filter((_) => typeof _ === "function");
+export const startBackgroundJobs = async (app: AppServer) => {
+  const Jobs: Array<(app: AppServer) => Promise<() => Promise<void>>> = [];
 
-export const startAppServer = async (app: AppServer) => {
-  await prepareAppServer(app);
+  for (const [, SubLoader] of Loader.getLoaders() ?? [])
+    for (const [, Job] of SubLoader.tree.get("jobs")?.modules ?? [])
+      if (typeof Job.object.default === "function")
+        Jobs.push(Job.object.default);
+
+  for (const [, Job] of Loader.getModules("jobs") ?? [])
+    if (typeof Job.object.default === "function") Jobs.push(Job.object.default);
+
+  return await Promise.all(Jobs.map((_) => _(app)));
+};
+
+export const startAppServer = async () => {
+  const App = await prepareAppServer();
 
   await Database.connect();
 
-  const JobCleanups = await startBackgroundJobs(app);
+  const JobCleanups = await startBackgroundJobs(App);
 
   const Controller = new AbortController();
 
   return {
+    app: App,
     signal: Controller.signal,
     end: async () => {
       Controller.abort();

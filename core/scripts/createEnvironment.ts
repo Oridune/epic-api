@@ -29,15 +29,24 @@ export const createEnvironment = async (options: {
       )
       .validate(options);
 
+    const EnvironmentDir = join(Deno.cwd(), "./env/");
+    const GlobalEnvironmentFilePath = join(EnvironmentDir, ".env");
+
+    if (!(await exists(GlobalEnvironmentFilePath)))
+      await Deno.writeTextFile(
+        GlobalEnvironmentFilePath,
+        "# Put your global environment variables here."
+      );
+
     for (const Type of Options.types) {
-      const EnvironmentDir = join(Deno.cwd(), "./env/");
-      const EnvironmentFilePath = join(EnvironmentDir, `.${Type}.env`);
+      const EnvironmentFileName = `.${Type}.env`;
+      const EnvironmentFilePath = join(EnvironmentDir, EnvironmentFileName);
 
       if (
         options.prompt &&
         (await exists(EnvironmentFilePath)) &&
         !(await Confirm.prompt({
-          message: `Are you sure you want to re-create the environment file '.${Type}.env'?`,
+          message: `Are you sure you want to re-create the environment file '${EnvironmentFileName}'?`,
         }))
       )
         return;
@@ -72,7 +81,7 @@ export const createEnvironment = async (options: {
 if (import.meta.main) {
   const { _, types, t, content, c, ...Variables } = parse(Deno.args);
 
-  createEnvironment({
+  await createEnvironment({
     types: types ?? t,
     content: content ?? c,
     variables: Variables,

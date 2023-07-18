@@ -11,7 +11,7 @@ import {
   paramCase,
   pathCase,
 } from "stringcase/mod.ts";
-import Manager from "@Core/common/manager.ts";
+import { Loader } from "@Core/common/loader.ts";
 import { ModuleType } from "@Core/scripts/createModule.ts";
 
 export const renameModule = async (options: {
@@ -39,7 +39,9 @@ export const renameModule = async (options: {
               ? await Select.prompt({
                   message: "Choose the module to be renamed",
                   options: Array.from(
-                    await Manager.getSequence(plural(ctx.parent!.output.type))
+                    Loader.getSequence(
+                      plural(ctx.parent!.output.type)
+                    )?.includes() ?? []
                   ),
                 })
               : undefined
@@ -171,14 +173,17 @@ export const renameModule = async (options: {
       await Deno.writeTextFile(Options.newModulePath, Content);
 
       if (Options.modulePath !== Options.newModulePath) {
-        await Manager.setSequence(Options.moduleDir, (seq) => {
-          seq.delete(Options.module!);
-          return seq.add(Options.newModule!);
+        await Loader.getSequence(plural(Options.type))?.set((_) => {
+          _.delete(Options.module!);
+          return _.add(Options.newModule!);
         });
 
         await Deno.remove(Options.modulePath);
       }
-    }
+    } else
+      throw new Error(
+        `We couldn't rename that module! Some information is missing.`
+      );
 
     console.info("Module has been renamed successfully!");
   } catch (error) {
@@ -190,7 +195,12 @@ export const renameModule = async (options: {
 if (import.meta.main) {
   const { type, t, module, m, rename } = parse(Deno.args);
 
-  renameModule({
+  await Loader.load({
+    excludeTypes: ["plugins", "templates"],
+    sequenceOnly: true,
+  });
+
+  await renameModule({
     type: type ?? t,
     module: module ?? m,
     rename,

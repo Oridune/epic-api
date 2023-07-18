@@ -7,5 +7,6 @@
     "middleware.blank.ts",
     "model.blank.ts",
     "hook.blank.ts"
-  ]
+  ],
+  "excludes": []
 }

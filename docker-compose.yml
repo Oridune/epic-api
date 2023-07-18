@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    container_name: epic-api-container
+    image: epic-api-image
+    ports:
+      - "3742:3742"
+    env_file:
+      - ./env/.env
+      - ./env/.production.env

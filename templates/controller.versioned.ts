@@ -7,17 +7,10 @@ import {
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
-import Manager from "@Core/common/manager.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/$_namePath/", {
-  name: "$_fullNameCamel",
-
-  /** Do not edit this code */
-  childs: () => Manager.getModules("controllers", import.meta.url),
-  /** --------------------- */
-})
+@Controller("/$_namePath/", { name: "$_fullNameCamel" })
 export default class $_fullNamePascalController extends BaseController {
   @Post("/")
   public create() {

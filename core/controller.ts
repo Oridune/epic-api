@@ -1,27 +1,30 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import {
+  Loader,
   Controller,
   BaseController,
   Get,
   Versioned,
   Response,
 } from "@Core/common/mod.ts";
-import Manager from "@Core/common/manager.ts";
 
 @Controller("/api/", {
   name: "api",
-  childs: [
-    ...(await (
-      await Manager.getActivePlugins()
-    ).reduce<Promise<any[]>>(
-      async (list, manager) => [
-        ...(await list),
-        ...(await manager.getModules("controllers")),
-      ],
-      Promise.resolve([])
-    )),
-    ...(await Manager.getModules("controllers")),
-  ],
+  childs: () => {
+    const Controllers: Array<typeof BaseController> = [];
+
+    for (const [, SubLoader] of Loader.getLoaders() ?? [])
+      for (const [, Controller] of SubLoader.tree.get("controllers")?.modules ??
+        [])
+        if (typeof Controller.object.default === "object")
+          Controllers.push(Controller.object.default);
+
+    for (const [, Controller] of Loader.getModules("controllers") ?? [])
+      if (typeof Controller.object.default === "object")
+        Controllers.push(Controller.object.default);
+
+    return Controllers;
+  },
 })
 export class APIController extends BaseController {
   @Get("/")

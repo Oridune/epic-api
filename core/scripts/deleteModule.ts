@@ -5,7 +5,7 @@ import e from "validator";
 import { ModuleType } from "@Core/scripts/createModule.ts";
 import { Select, Confirm } from "cliffy:prompt";
 import { plural } from "pluralize";
-import Manager from "@Core/common/manager.ts";
+import { Loader } from "@Core/common/loader.ts";
 
 export const deleteModule = async (options: {
   type: ModuleType;
@@ -31,7 +31,9 @@ export const deleteModule = async (options: {
               ? await Select.prompt({
                   message: "Choose the module to be deleted",
                   options: Array.from(
-                    await Manager.getSequence(plural(ctx.parent!.output.type))
+                    Loader.getSequence(
+                      plural(ctx.parent!.output.type)
+                    )?.includes() ?? []
                   ),
                 })
               : undefined
@@ -51,7 +53,7 @@ export const deleteModule = async (options: {
       )
       .validate(options);
 
-    if (Options.name) {
+    if (Options.type && Options.name) {
       if (
         options.prompt &&
         !(await Confirm.prompt({
@@ -61,12 +63,14 @@ export const deleteModule = async (options: {
         return;
 
       await Deno.remove(Options.modulePath);
-
-      await Manager.setSequence(Options.moduleDir, (seq) => {
-        seq.delete(Options.name!);
-        return seq;
+      await Loader.getSequence(plural(Options.type))?.set((_) => {
+        _.delete(Options.name!);
+        return _;
       });
-    }
+    } else
+      throw new Error(
+        `We couldn't delete that module! The type or name is missing.`
+      );
 
     console.info("Module has been deleted successfully!");
   } catch (error) {
@@ -78,7 +82,12 @@ export const deleteModule = async (options: {
 if (import.meta.main) {
   const { type, t, name, n } = parse(Deno.args);
 
-  deleteModule({
+  await Loader.load({
+    excludeTypes: ["plugins", "templates"],
+    sequenceOnly: true,
+  });
+
+  await deleteModule({
     type: type ?? t,
     name: name ?? n,
     prompt: true,

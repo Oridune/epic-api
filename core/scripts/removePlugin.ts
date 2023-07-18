@@ -3,7 +3,7 @@ import { join } from "path";
 import e from "validator";
 
 import { Select, Confirm } from "cliffy:prompt";
-import Manager from "@Core/common/manager.ts";
+import { Loader } from "@Core/common/loader.ts";
 
 import { updatePluginDeclarationFile } from "./addPlugin.ts";
 
@@ -32,7 +32,9 @@ export const removePlugin = async (options: {
   prompt?: boolean;
 }) => {
   try {
-    const PluginsList = Array.from(await Manager.getSequence("plugins"));
+    const PluginsList = Array.from(
+      Loader.getSequence("plugins")?.includes() ?? []
+    );
     const Options = await e
       .object(
         {
@@ -67,9 +69,9 @@ export const removePlugin = async (options: {
       for (const PluginName of Options.name) {
         const PluginPath = join(Deno.cwd(), "plugins", PluginName);
 
-        await Manager.setSequence("plugins", (seq) => {
-          seq.delete(PluginName);
-          return seq;
+        await Loader.getSequence("plugins")?.set((_) => {
+          _.delete(PluginName);
+          return _;
         });
 
         await removePluginFromImportMap(PluginName);
@@ -77,7 +79,10 @@ export const removePlugin = async (options: {
 
         await Deno.remove(PluginPath, { recursive: true });
       }
-    }
+    } else
+      throw new Error(
+        `We couldn't delete that plugin! The plugin name is missing.`
+      );
 
     console.info("Plugin has been removed successfully!");
   } catch (error) {
@@ -89,7 +94,9 @@ export const removePlugin = async (options: {
 if (import.meta.main) {
   const { name, n } = parse(Deno.args);
 
-  removePlugin({
+  await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
+
+  await removePlugin({
     name: name ?? n,
     prompt: true,
   });

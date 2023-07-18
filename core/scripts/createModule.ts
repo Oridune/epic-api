@@ -12,7 +12,7 @@ import {
   paramCase,
   pathCase,
 } from "stringcase/mod.ts";
-import Manager from "@Core/common/manager.ts";
+import { Loader } from "@Core/common/loader.ts";
 
 export enum ModuleType {
   CONTROLLER = "controller",
@@ -22,8 +22,8 @@ export enum ModuleType {
   HOOK = "hook",
 }
 
-export const listTemplates = async (path: string, type: string) =>
-  Array.from(await Manager.getSequence(path))
+export const listValidTemplates = (templates: string[], type: string) =>
+  templates
     .filter((name) => new RegExp(`^${type}\\..+`).test(name))
     .map((name) => name.replace(new RegExp(`^${type}\\.`), ""));
 
@@ -36,6 +36,9 @@ export const createModule = async (options: {
   prompt?: boolean;
 }) => {
   try {
+    const Templates = Array.from(
+      Loader.getSequence("templates")?.includes() ?? []
+    );
     const Options = await e
       .object(
         {
@@ -60,55 +63,18 @@ export const createModule = async (options: {
                   })) as string)
                 : undefined
             ),
-          parent: e
-            .optional(
-              e.in(async (ctx) =>
-                ctx.parent!.output.type === "controller"
-                  ? Array.from(await Manager.getSequence("controllers"))
-                  : []
-              )
-            )
-            .default(async (ctx) => {
-              const Parent =
-                ctx.parent!.input.prompt &&
-                ctx.parent!.output.type === "controller"
-                  ? await (async () => {
-                      const List = await Manager.getSequence("controllers");
-                      return List.size
-                        ? await Select.prompt({
-                            message: "Choose a parent controller",
-                            options: ["none", ...List],
-                          })
-                        : undefined;
-                    })()
-                  : undefined;
-
-              return Parent === "none" ? undefined : Parent;
-            }),
-          fullName: e.any().custom((ctx) => {
-            const Parent = ctx.parent!.output.parent?.split(".");
-            Parent?.pop();
-
-            return [Parent?.join("-"), ctx.parent!.output.name]
-              .filter(Boolean)
-              .join("-");
-          }),
-          templateDir: e.optional(e.string()).default("templates"),
           template: e
             .optional(
               e.in((ctx) =>
-                listTemplates(
-                  ctx.parent!.output.templateDir,
-                  ctx.parent!.output.type
-                )
+                listValidTemplates(Templates, ctx.parent!.output.type)
               )
             )
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? await Select.prompt({
                     message: "Choose a template",
-                    options: await listTemplates(
-                      ctx.parent!.output.templateDir,
+                    options: listValidTemplates(
+                      Templates,
                       ctx.parent!.output.type
                     ),
                   })
@@ -117,18 +83,14 @@ export const createModule = async (options: {
           moduleDirName: e
             .any()
             .custom((ctx) => plural(ctx.parent!.output.type)),
-          module: e.any().custom((ctx) => {
-            const Parent = ctx.parent!.output.parent?.split(".");
-            Parent?.pop();
-
-            return [
-              Parent?.join("."),
-              ctx.parent!.output.name,
-              ctx.parent!.output.template.split(".").pop(),
-            ]
-              .filter(Boolean)
-              .join(".");
-          }),
+          module: e
+            .any()
+            .custom((ctx) =>
+              [
+                ctx.parent!.output.name,
+                ctx.parent!.output.template.split(".").pop(),
+              ].join(".")
+            ),
           moduleDir: e
             .any()
             .custom((ctx) =>
@@ -144,7 +106,7 @@ export const createModule = async (options: {
             .custom((ctx) =>
               join(
                 Deno.cwd(),
-                ctx.parent!.output.templateDir,
+                "templates",
                 `${ctx.parent!.output.type}.${ctx.parent!.output.template}`
               )
             ),
@@ -153,7 +115,7 @@ export const createModule = async (options: {
       )
       .validate(options);
 
-    if (Options.name && Options.fullName) {
+    if (Options.type && Options.name) {
       if (
         options.prompt &&
         (await exists(Options.modulePath)) &&
@@ -164,38 +126,26 @@ export const createModule = async (options: {
         return;
 
       const Content = (await Deno.readTextFile(Options.templatePath))
-        .replaceAll("$_fullNamePascal", pascalCase(Options.fullName))
         .replaceAll("$_namePascal", pascalCase(Options.name))
-
-        .replaceAll("$_fullNameCamel", camelCase(Options.fullName))
         .replaceAll("$_nameCamel", camelCase(Options.name))
-
-        .replaceAll("$_fullNameSnake", snakeCase(Options.fullName))
         .replaceAll("$_nameSnake", snakeCase(Options.name))
-
-        .replaceAll("$_fullNameKebab", paramCase(Options.fullName))
         .replaceAll("$_nameKebab", paramCase(Options.name))
-
-        .replaceAll("$_fullNamePath", pathCase(Options.fullName))
         .replaceAll("$_namePath", pathCase(Options.name))
-
-        .replaceAll("$_fullNamePlural", plural(Options.fullName))
         .replaceAll("$_namePlural", plural(Options.name))
-
-        .replaceAll("$_fullNameSingular", singular(Options.fullName))
         .replaceAll("$_nameSingular", singular(Options.name))
-
-        .replaceAll("$_fullName", Options.fullName)
         .replaceAll("$_name", Options.name);
 
       if (!(await exists(Options.moduleDir)))
         await Deno.mkdir(Options.moduleDir, { recursive: true });
 
       await Deno.writeTextFile(Options.modulePath, Content);
-      await Manager.setSequence(Options.moduleDirName, (seq) =>
-        seq.add(Options.module)
+      await Loader.getSequence(plural(Options.type))?.set((_) =>
+        _.add(Options.module)
       );
-    }
+    } else
+      throw new Error(
+        `We couldn't create that module! The type or name is missing.`
+      );
 
     console.info("Module has been created successfully!");
   } catch (error) {
@@ -207,7 +157,9 @@ export const createModule = async (options: {
 if (import.meta.main) {
   const { type, t, name, n, parent, p, template } = parse(Deno.args);
 
-  createModule({
+  await Loader.load({ excludeTypes: ["plugins"], sequenceOnly: true });
+
+  await createModule({
     type: type ?? t,
     name: name ?? n,
     parent: parent ?? p,
