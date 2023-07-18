@@ -198,7 +198,9 @@ export const startBackgroundJobs = async (app: AppServer) => {
   for (const [, Job] of Loader.getModules("jobs") ?? [])
     if (typeof Job.object.default === "function") Jobs.push(Job.object.default);
 
-  return await Promise.all(Jobs.map((_) => _(app)));
+  return (await Promise.all(Jobs.map((_) => _(app)))).filter(
+    (_) => typeof _ === "function"
+  );
 };
 
 export const startAppServer = async () => {
