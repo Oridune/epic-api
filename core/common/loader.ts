@@ -30,14 +30,26 @@ export class Sequence {
     );
   }
 
+  /**
+   * Get the included items in the sequence
+   * @returns
+   */
   public includes() {
     return this.Includes;
   }
 
+  /**
+   * Get items that are excluded (disabled)
+   * @returns
+   */
   public excludes() {
     return this.Excludes;
   }
 
+  /**
+   * Lists the active sequence items
+   * @returns
+   */
   public list() {
     const List: string[] = [];
 
@@ -47,13 +59,22 @@ export class Sequence {
     return List;
   }
 
+  /**
+   * Lists all sequence items in detail
+   * @returns
+   */
   public listDetailed() {
-    return this.list().map((name) => ({
+    return Array.from(this.Includes).map((name) => ({
       name,
       path: join(dirname(this.Path), name),
+      enabled: !this.Excludes.has(name),
     }));
   }
 
+  /**
+   * Add or Remove sequence items
+   * @param sequence A `Set` or a `function` that returns a `Set`
+   */
   public async set(
     sequence:
       | Set<string>
@@ -69,6 +90,10 @@ export class Sequence {
     await this.persist();
   }
 
+  /**
+   * Add or Remove excluded sequence items
+   * @param sequence A `Set` or a `function` that returns a `Set`
+   */
   public async exclude(
     excludes:
       | Set<string>
@@ -84,10 +109,25 @@ export class Sequence {
     await this.persist();
   }
 
+  /**
+   * Remove sequence items
+   * @param items Items to be removed
+   */
   public async delete(...items: string[]) {
+    (items instanceof Array ? items : []).forEach(this.Includes.delete);
+
+    await this.persist();
+  }
+
+  /**
+   * Enable or Disable sequence items
+   * @param items
+   */
+  public async toggle(...items: string[]) {
     (items instanceof Array ? items : []).forEach((item) => {
-      this.Includes.delete(item);
-      this.Excludes.delete(item);
+      if (this.Includes.has(item))
+        if (this.Excludes.has(item)) this.Excludes.delete(item);
+        else this.Excludes.add(item);
     });
 
     await this.persist();
@@ -98,6 +138,11 @@ export class Sequence {
    * @returns
    */
   public toJSON() {
+    // Resolve Sequence Data
+    Array.from(this.Excludes).forEach((item) => {
+      if (!this.Includes.has(item)) this.Excludes.delete(item);
+    });
+
     return {
       sequence: Array.from(this.Includes),
       excludes: Array.from(this.Excludes),
@@ -224,9 +269,18 @@ export class Loader {
     return Tree;
   }
 
-  static isValidType(target: string, type?: "module" | "loader" | "sequence") {
+  /**
+   * Throws an error if target is not a valid type
+   * @param target
+   * @param type
+   * @returns
+   */
+  static isValidType(
+    target: string,
+    category?: "module" | "loader" | "sequence"
+  ) {
     const Err = new Error(`Invalid loader type '${target}'!`);
-    switch (type) {
+    switch (category) {
       case "module":
         if (!Loader.Modules.includes(target)) throw Err;
         break;
@@ -245,18 +299,37 @@ export class Loader {
     return target;
   }
 
+  /**
+   * Builds a module tree of your project
+   * @param options
+   */
   static async load(options?: TLoadOptions) {
     Loader.Tree = await Loader.buildTree(options);
   }
 
+  /**
+   * Get the `Sequence` object for a given type
+   * @param type
+   * @returns
+   */
   static getSequence(type: string) {
     return Loader.Tree.get(Loader.isValidType(type))?.sequence;
   }
 
+  /**
+   * Get the module for a given type
+   * @param type
+   * @returns
+   */
   static getModules(type: string) {
     return Loader.Tree.get(Loader.isValidType(type, "module"))?.modules;
   }
 
+  /**
+   * Get the sub-loaders for e.g. `plugins`
+   * @param type
+   * @returns
+   */
   static getLoaders(type = "plugins") {
     return Loader.Tree.get(Loader.isValidType(type, "loader"))?.loaders;
   }

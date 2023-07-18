@@ -31,20 +31,22 @@ export const prepareAppServer = async () => {
     for await (const UI of SubLoader.tree
       .get("public")
       ?.sequence.listDetailed() ?? [])
+      if (UI.enabled)
+        App.use(
+          StaticFiles(join(UI.path, "www"), {
+            prefix: "/" + UI.name,
+            errorFile: true,
+          })
+        );
+
+  for await (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
+    if (UI.enabled)
       App.use(
         StaticFiles(join(UI.path, "www"), {
           prefix: "/" + UI.name,
           errorFile: true,
         })
       );
-
-  for await (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
-    App.use(
-      StaticFiles(join(UI.path, "www"), {
-        prefix: "/" + UI.name,
-        errorFile: true,
-      })
-    );
 
   App.use(Logger.logger);
   App.use(Logger.responseTime);

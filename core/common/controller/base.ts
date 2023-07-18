@@ -52,10 +52,12 @@ export interface IRequestContext<RouterContext = any> {
   options: IRouteOptions;
 }
 
+export type TResponse = void | RawResponse | Response;
+
 export type TRequestHandler = (
   ctx: IRequestContext,
   ...args: any[]
-) => Promise<void | RawResponse | Response> | void | RawResponse | Response;
+) => Promise<TResponse> | TResponse;
 
 export type TRequestHandlerObject = IRequestHandlerObjectExtendor & {
   handler: TRequestHandler;
