@@ -9,7 +9,7 @@ import {
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/$_namePath/", { name: "$_fullNameCamel" })
+@Controller("/$_namePath/", { name: "$_nameKebab" })
 export default class $_fullNamePascalController extends BaseController {
   @Post("/")
   public create() {
