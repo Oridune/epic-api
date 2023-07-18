@@ -161,12 +161,60 @@ export class Response {
   }
 
   /**
+   * Create a response object with status `true`
+   * @returns
+   */
+  static true() {
+    return Response.status(true);
+  }
+
+  /**
+   * Create a response object with status `false`
+   * @returns
+   */
+  static false() {
+    return Response.status(false);
+  }
+
+  /**
    * Create a response object with HTTP response code
    * @param code
    * @returns
    */
   static statusCode(code: number) {
     return new Response().statusCode(code).status(!(code > 399));
+  }
+
+  /**
+   * Create a response object with HTTP response code `200`
+   * @returns
+   */
+  static ok() {
+    return Response.statusCode(200);
+  }
+
+  /**
+   * Create a response object with HTTP response code `201`
+   * @returns
+   */
+  static created() {
+    return Response.statusCode(201);
+  }
+
+  /**
+   * Create a response object with HTTP response code `401`
+   * @returns
+   */
+  static unauthorized() {
+    return Response.statusCode(401);
+  }
+
+  /**
+   * Create a response object with HTTP response code `404`
+   * @returns
+   */
+  static notFound() {
+    return Response.statusCode(404);
   }
 
   /**
