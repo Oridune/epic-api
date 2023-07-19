@@ -15,6 +15,8 @@ import {
   Router as AppRouter,
   RouterContext,
   isHttpError,
+  send,
+  Context,
 } from "oak";
 import StaticFiles from "oak:static";
 import Logger from "oak:logger";
@@ -23,35 +25,33 @@ import { gzip } from "oak:compress";
 import { RateLimiter } from "oak:limiter";
 import { ValidationException } from "validator";
 
+export const serveStatic =
+  (prefix: string, path: string) =>
+  async (
+    ctx: Context<Record<string, any>, Record<string, any>>,
+    next: () => Promise<unknown>
+  ) => {
+    const Prefix = new RegExp(`^/${prefix}/?`);
+
+    if (Prefix.test(ctx.request.url.pathname)) {
+      const File = ctx.request.url.pathname.replace(Prefix, "/");
+      const Stat = await Deno.stat(File).catch(() => {});
+      await send(ctx, Stat?.isFile ? File : "index.html", {
+        root: join(path, "www"),
+      });
+    }
+
+    await next();
+  };
+
 export const prepareAppServer = async () => {
   const App = new AppServer();
   const Router = new AppRouter();
 
-  for (const [, SubLoader] of Loader.getLoaders() ?? [])
-    for await (const UI of SubLoader.tree
-      .get("public")
-      ?.sequence.listDetailed() ?? [])
-      if (UI.enabled)
-        App.use(
-          StaticFiles(join(UI.path, "www"), {
-            prefix: "/" + UI.name,
-            errorFile: true,
-          })
-        );
-
-  for await (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
-    if (UI.enabled)
-      App.use(
-        StaticFiles(join(UI.path, "www"), {
-          prefix: "/" + UI.name,
-          errorFile: true,
-        })
-      );
-
   App.use(Logger.logger);
   App.use(Logger.responseTime);
-  App.use(CORS());
   App.use(gzip());
+  App.use(CORS());
   App.use(await RateLimiter());
   App.use(async (ctx, next) => {
     const ID = crypto.randomUUID();
@@ -59,6 +59,15 @@ export const prepareAppServer = async () => {
     await next();
     ctx.response.headers.set("X-Request-ID", ID);
   });
+
+  for (const [, SubLoader] of Loader.getLoaders() ?? [])
+    for await (const UI of SubLoader.tree
+      .get("public")
+      ?.sequence.listDetailed() ?? [])
+      if (UI.enabled) App.use(serveStatic(UI.name, UI.path));
+
+  for await (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
+    if (UI.enabled) App.use(serveStatic(UI.name, UI.path));
 
   App.use(async (ctx, next) => {
     try {
