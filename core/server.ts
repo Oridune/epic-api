@@ -18,7 +18,6 @@ import {
   send,
   Context,
 } from "oak";
-import StaticFiles from "oak:static";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
