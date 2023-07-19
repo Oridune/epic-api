@@ -248,8 +248,8 @@ export class Loader {
                 Loaders.set(name, {
                   name,
                   tree: await Loader.buildTree({
+                    ...options,
                     cwd: PluginPath,
-                    includeTypes: options?.includeTypes,
                   }),
                 });
               })
