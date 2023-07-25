@@ -16,7 +16,5 @@ export const serveStatic =
       await send(ctx, Stat?.isFile ? File : "index.html", {
         root: join(path, "www"),
       });
-    }
-
-    await next();
+    } else await next();
   };
