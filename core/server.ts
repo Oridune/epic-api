@@ -1,12 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import {
-  RawResponse,
-  Response,
-  Server,
-  Env,
-  EnvType,
-  Loader,
-} from "@Core/common/mod.ts";
+import { RawResponse, Response, Server, Loader } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "../database.ts";
 import {
@@ -70,13 +63,13 @@ export const prepareAppServer = async () => {
         Hooks.push(Hook.object.default);
 
     for (const Route of routes) {
-      if (!Env.is(EnvType.PRODUCTION))
-        console.info(
-          "Endpoint:",
-          Route.options.method.toUpperCase(),
-          "\t\t",
-          Route.endpoint
-        );
+      console.info(
+        "Endpoint:",
+        "\t",
+        Route.options.method.toUpperCase(),
+        "\t\t",
+        Route.endpoint
+      );
 
       const ControllerOptions = Route.options.controller.getOptions();
       const Middlewares = [

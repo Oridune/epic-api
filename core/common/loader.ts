@@ -260,8 +260,8 @@ export class Loader {
             modules: Modules,
             loaders: Loaders,
           });
-        } catch {
-          // Do nothing...
+        } catch (error) {
+          console.error(error);
         }
       })
     );

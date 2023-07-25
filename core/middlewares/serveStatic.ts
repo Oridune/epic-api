@@ -2,9 +2,10 @@
 import { send, Context } from "oak";
 import { join } from "path";
 
-export const serveStatic =
-  (prefix: string, path: string) =>
-  async (
+export const serveStatic = (prefix: string, path: string) => {
+  console.info("Static:", "\t", prefix.toUpperCase(), "\t\t", `/${prefix}/`);
+
+  return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
     next: () => Promise<unknown>
   ) => {
@@ -18,3 +19,4 @@ export const serveStatic =
       });
     } else await next();
   };
+};
