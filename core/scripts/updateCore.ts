@@ -120,11 +120,17 @@ export const updateCore = async (options: {
           })
       ))
         for await (const Entry of Glob)
-          if (!Entry.isDirectory)
-            await Deno.copyFile(
-              Entry.path,
-              Entry.path.replace(TempPath, Deno.cwd())
-            );
+          if (!Entry.isDirectory) {
+            const SourcePath = Entry.path;
+            const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
+            const TargetDirectory = dirname(TargetPath);
+
+            await Deno.mkdir(TargetDirectory, { recursive: true }).catch(() => {
+              // Do nothing...
+            });
+
+            await Deno.copyFile(SourcePath, TargetPath);
+          }
 
       // Create Files
       for (const Glob of ["tests/**/*", "*.*", "*"].map((pattern) =>
@@ -134,14 +140,18 @@ export const updateCore = async (options: {
         })
       ))
         for await (const Entry of Glob) {
-          const TargetFile = Entry.path.replace(TempPath, Deno.cwd());
-          if (!Entry.isDirectory && !(await exists(TargetFile))) {
-            const Directory = dirname(TargetFile);
+          if (!Entry.isDirectory) {
+            const SourcePath = Entry.path;
+            const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
+            const TargetDirectory = dirname(TargetPath);
 
-            if (!(await exists(Directory)))
-              await Deno.mkdir(Directory, { recursive: true });
+            if (!(await exists(TargetPath))) continue;
 
-            await Deno.copyFile(Entry.path, TargetFile);
+            await Deno.mkdir(TargetDirectory, { recursive: true }).catch(() => {
+              // Do nothing...
+            });
+
+            await Deno.copyFile(SourcePath, TargetPath);
           }
         }
 
