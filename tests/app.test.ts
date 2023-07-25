@@ -11,13 +11,23 @@ Deno.test({
 
     await t.step("/ Should return 404 not found", async () => {
       const Request = await superoak(app);
-      await Request.get("/").expect(404);
+      await Request.get("/")
+        .expect("X-Request-ID", /.*/)
+        .expect("X-Rate-Limit-Reset", /[0-9]+/)
+        .expect("X-Rate-Limit-Limit", /[0-9]+/)
+        .expect("X-Rate-Limit-Remaining", /[0-9]+/)
+        .expect("Content-Type", /json/)
+        .expect(404);
     });
 
     await t.step("/api/ Should return 200 ok", async () => {
       const Request = await superoak(app);
       await Request.get("/api/")
         .expect(200)
+        .expect("X-Request-ID", /.*/)
+        .expect("X-Rate-Limit-Reset", /[0-9]+/)
+        .expect("X-Rate-Limit-Limit", /[0-9]+/)
+        .expect("X-Rate-Limit-Remaining", /[0-9]+/)
         .expect("Content-Type", /json/)
         .expect(
           JSON.stringify({
@@ -63,6 +73,26 @@ Deno.test({
         await Request.get("/api/test/")
           .set("x-App-version", "2.0.0")
           .expect(404);
+      }
+    );
+
+    await t.step(
+      "/api/ Should return 429 too many requests error",
+      async () => {
+        const RequestLimit = 50;
+
+        for (let i = 0; i < RequestLimit; i++) {
+          const Request = await superoak(app);
+          await Request.get("/");
+        }
+
+        const Request = await superoak(app);
+        await Request.get("/api/")
+          .expect("Content-Type", /json/)
+          .expect("X-Rate-Limit-Reset", /[0-9]+/)
+          .expect("X-Rate-Limit-Limit", RequestLimit.toString())
+          .expect("X-Rate-Limit-Remaining", "0")
+          .expect(429);
       }
     );
 

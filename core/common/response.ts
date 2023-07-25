@@ -140,6 +140,7 @@ export class Response {
   protected Messages?: ResponseMessage[];
   protected Data?: any;
   protected Metadata?: any;
+  protected ErrorStack?: string;
 
   /**
    * Create a raw response object
@@ -274,6 +275,14 @@ export class Response {
     return new Response().metadata(metadata);
   }
 
+  /**
+   * Create a response with an error stack
+   * @param stack Error stack information
+   */
+  static errorStack(stack: string) {
+    return new Response().errorStack(stack);
+  }
+
   constructor(data?: any, metadata?: Record<string, any>) {
     if (data) this.data(data);
     if (metadata) this.metadata(metadata);
@@ -371,6 +380,16 @@ export class Response {
   }
 
   /**
+   * Set an error stack on your response
+   * @param stack Error stack information
+   * @returns
+   */
+  public errorStack(stack: string) {
+    if (typeof stack === "string") this.ErrorStack = stack;
+    return this;
+  }
+
+  /**
    * Get HTTP Status Code
    * @returns
    */
@@ -396,6 +415,7 @@ export class Response {
       messages: this.Messages,
       data: this.Data,
       metadata: this.Metadata,
+      errorStack: this.ErrorStack,
     };
   }
 }
