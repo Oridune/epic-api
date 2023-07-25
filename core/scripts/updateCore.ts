@@ -145,7 +145,7 @@ export const updateCore = async (options: {
             const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
             const TargetDirectory = dirname(TargetPath);
 
-            if (!(await exists(TargetPath))) continue;
+            if (await exists(TargetPath)) continue;
 
             await Deno.mkdir(TargetDirectory, { recursive: true }).catch(() => {
               // Do nothing...
