@@ -3,7 +3,15 @@ import { send, Context } from "oak";
 import { join } from "path";
 
 export const serveStatic = (prefix: string, path: string) => {
-  console.info("Static:", "\t", prefix.toUpperCase(), "\t\t", `/${prefix}/`);
+  console.info(
+    "Static:",
+    "\t",
+    prefix.toUpperCase(),
+    "\t\t",
+    `/${prefix}/`,
+    "\t\t",
+    path
+  );
 
   return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
@@ -12,11 +20,12 @@ export const serveStatic = (prefix: string, path: string) => {
     const Prefix = new RegExp(`^/${prefix}/?`);
 
     if (Prefix.test(ctx.request.url.pathname)) {
-      const File = ctx.request.url.pathname.replace(Prefix, "/");
-      const Stat = await Deno.stat(File).catch(() => {});
-      await send(ctx, Stat?.isFile ? File : "index.html", {
-        root: join(path, "www"),
-      });
+      const SendOptions = { root: join(path, "www"), index: "index.html" };
+      await send(
+        ctx,
+        ctx.request.url.pathname.replace(Prefix, "/"),
+        SendOptions
+      ).catch(() => send(ctx, "/", SendOptions));
     } else await next();
   };
 };

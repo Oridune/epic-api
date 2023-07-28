@@ -19,7 +19,7 @@
     "validator": "https://deno.land/x/oridune_validator@v0.2.2/mod.ts",
     "flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
-    "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
+    "oak": "https://deno.land/x/oak@v12.6.0/mod.ts",
     "oak:logger": "https://deno.land/x/oak_logger@1.0.0/mod.ts",
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
