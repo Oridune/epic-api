@@ -81,10 +81,12 @@ Deno.test({
       async () => {
         const RequestLimit = 50;
 
-        for (let i = 0; i < RequestLimit; i++) {
-          const Request = await superoak(app);
-          await Request.get("/");
-        }
+        await Promise.all(
+          new Array(RequestLimit).fill(null).map(async () => {
+            const Request = await superoak(app);
+            await Request.get("/");
+          })
+        );
 
         const Request = await superoak(app);
         await Request.get("/api/")
