@@ -8,7 +8,7 @@ import {
 import { type RouterContext } from "oak";
 
 @Controller("/$_namePath/", { name: "$_nameCamel" })
-export default class $_fullNamePascalController extends BaseController {
+export default class $_namePascalController extends BaseController {
   @Get("/")
   public list() {
     // This is a factory method that returns a request handler.
