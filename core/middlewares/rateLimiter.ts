@@ -2,8 +2,13 @@
 import { Context, Status } from "oak";
 
 export type RateLimitOptions = {
-  limit: number;
-  windowMs: number;
+  onRateLimit?: (
+    ctx: Context<Record<string, any>, Record<string, any>>,
+    next: () => Promise<unknown>,
+    options: RateLimitOptions
+  ) => Promise<unknown> | unknown;
+  limit?: number | string;
+  windowMs?: number | string;
 };
 
 export type RateLimitData = { resetOnMs: number; count: number };
@@ -24,16 +29,9 @@ export class RateLimitStore {
   }
 }
 
-export const rateLimiter = (
-  onRateLimit?: (
-    ctx: Context<Record<string, any>, Record<string, any>>,
-    next: () => Promise<unknown>,
-    options: RateLimitOptions
-  ) => Promise<unknown> | unknown,
-  options?: RateLimitOptions
-) => {
-  const Limit = options?.limit ?? 50;
-  const WindowMs = options?.windowMs ?? 1000 * 60;
+export const rateLimiter = (options?: RateLimitOptions) => {
+  const Limit = parseInt((options?.limit ?? 50).toString());
+  const WindowMs = parseInt((options?.windowMs ?? 1000).toString());
 
   return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
@@ -66,8 +64,8 @@ export const rateLimiter = (
     if (LimitData.count >= Limit && !ResetRequired) {
       ctx.response.status = Status.TooManyRequests;
 
-      if (typeof onRateLimit === "function")
-        await onRateLimit(ctx, next, {
+      if (typeof options?.onRateLimit === "function")
+        await options.onRateLimit(ctx, next, {
           ...options,
           limit: Limit,
           windowMs: WindowMs,

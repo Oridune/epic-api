@@ -1,5 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
-import { RawResponse, Response, Server, Loader } from "@Core/common/mod.ts";
+import {
+  Env,
+  RawResponse,
+  Response,
+  Server,
+  Loader,
+} from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "../database.ts";
 import {
@@ -26,7 +32,12 @@ export const prepareAppServer = async () => {
 
   App.use(gzip());
   App.use(CORS());
-  App.use(rateLimiter());
+  App.use(
+    rateLimiter({
+      limit: await Env.get("RATE_LIMITER_LIMIT", true),
+      windowMs: await Env.get("RATE_LIMITER_WINDOW_MS", true),
+    })
+  );
   App.use(requestId());
 
   for (const [, SubLoader] of Loader.getLoaders() ?? [])
