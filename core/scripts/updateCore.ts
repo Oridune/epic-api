@@ -183,7 +183,7 @@ export const updateCore = async (options: {
 if (import.meta.main) {
   const { branch, b } = parse(Deno.args);
 
-  updateCore({
+  await updateCore({
     branch: branch ?? b,
     prompt: true,
   });

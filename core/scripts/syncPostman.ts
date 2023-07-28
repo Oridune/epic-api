@@ -3,7 +3,7 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
-import { Server } from "@Core/common/mod.ts";
+import { Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 
 export type PostmanRequestMethods =
@@ -285,7 +285,9 @@ export const syncPostman = async (options: {
 if (import.meta.main) {
   const { key, k, collectionId, c, name, n, version, v } = parse(Deno.args);
 
-  syncPostman({
+  await Loader.load({ includeTypes: ["controllers", "plugins"] });
+
+  await syncPostman({
     key: key ?? k,
     collectionId: collectionId ?? c,
     name: name ?? n,

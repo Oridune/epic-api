@@ -1,0 +1,52 @@
+{
+  "info": {
+    "name": "Epic API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "api",
+      "item": [
+        {
+          "name": "home",
+          "request": {
+            "url": {
+              "raw": "{{host}}/api",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "test",
+          "request": {
+            "url": {
+              "raw": "{{host}}/api/test",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "test"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
