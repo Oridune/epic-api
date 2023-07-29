@@ -16,7 +16,7 @@
     "u-semver": "npm:u-semver@0.7.1",
     "mongoose": "npm:mongoose@7.3.4",
     "ts-reset": "npm:@total-typescript/ts-reset@0.4.2",
-    "validator": "https://deno.land/x/oridune_validator@v0.2.2/mod.ts",
+    "validator": "https://deno.land/x/oridune_validator@v0.2.3/mod.ts",
     "flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
     "oak": "https://deno.land/x/oak@v12.6.0/mod.ts",
