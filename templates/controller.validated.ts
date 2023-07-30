@@ -32,7 +32,7 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_fullNameCamel.query" }
+          { name: "$_nameCamel.query" }
         );
 
         /**
@@ -43,13 +43,13 @@ export default class $_namePascalController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_fullNameCamel.params",
+          name: "$_nameCamel.params",
         });
 
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body({ type: "json" }).value,
-          { name: "$_fullNameCamel.body" }
+          { name: "$_nameCamel.body" }
         );
 
         // Start coding here...
@@ -76,7 +76,7 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_fullNameCamel.query" }
+          { name: "$_nameCamel.query" }
         );
 
         /**
@@ -87,7 +87,7 @@ export default class $_namePascalController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_fullNameCamel.params",
+          name: "$_nameCamel.params",
         });
 
         // Start coding here...
