@@ -30,8 +30,16 @@ export class RateLimitStore {
 }
 
 export const rateLimiter = (options?: RateLimitOptions) => {
-  const Limit = parseInt((options?.limit ?? 50).toString());
-  const WindowMs = parseInt((options?.windowMs ?? 1000).toString());
+  const DefaultLimit = 50;
+  const DefaultWindowMs = 1000;
+
+  const RawLimit = parseInt((options?.limit ?? DefaultLimit).toString());
+  const RawWindowMs = parseInt(
+    (options?.windowMs ?? DefaultWindowMs).toString()
+  );
+
+  const Limit = isNaN(RawLimit) ? DefaultLimit : RawLimit;
+  const WindowMs = isNaN(RawWindowMs) ? DefaultWindowMs : RawWindowMs;
 
   return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
@@ -49,7 +57,7 @@ export const rateLimiter = (options?: RateLimitOptions) => {
     if (ResetRequired) RateLimitStore.delete(ip);
     else RateLimitStore.set(ip, { ...LimitData, count: LimitData.count + 1 });
 
-    const XRateLimitReset = (LimitData.resetOnMs / 1000).toString();
+    const XRateLimitReset = Math.round(LimitData.resetOnMs / 1000).toString();
     const XRateLimitLimit = Limit.toString();
     const XRateLimitRemaining = Math.max(
       Limit - LimitData.count - 1,

@@ -29,7 +29,6 @@ export const prepareAppServer = async () => {
   App.use(Logger.logger);
   App.use(Logger.responseTime);
   App.use(errorHandler());
-
   App.use(gzip());
   App.use(CORS());
   App.use(
