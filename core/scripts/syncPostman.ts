@@ -30,7 +30,7 @@ export type PostmanHeader = Array<{
   disabled?: boolean;
 }>;
 
-export interface PostmanCollectionItemInterface {
+export interface IPostmanCollection {
   name: string;
   request?: {
     auth?: {
@@ -84,7 +84,7 @@ export interface PostmanCollectionItemInterface {
         };
   };
   response?: any[];
-  item?: Array<PostmanCollectionItemInterface>;
+  item?: Array<IPostmanCollection>;
 }
 
 export interface PostmanCollectionInterface {
@@ -93,7 +93,7 @@ export interface PostmanCollectionInterface {
     name: string;
     schema: string;
   };
-  item: Array<PostmanCollectionItemInterface>;
+  item: Array<IPostmanCollection>;
 }
 
 export const syncPostman = async (options: {
@@ -130,7 +130,7 @@ export const syncPostman = async (options: {
 
     await new Server(APIController).prepare(async (routes) => {
       type NestedRequests = {
-        [Key: string]: PostmanCollectionItemInterface[] | NestedRequests;
+        [Key: string]: IPostmanCollection[] | NestedRequests;
       };
 
       const RequestGroups: NestedRequests = {};
@@ -141,13 +141,12 @@ export const syncPostman = async (options: {
         const NormalizeRequest = (
           groups: string[],
           scope: string,
-          request: PostmanCollectionItemInterface,
+          request: IPostmanCollection,
           requestGroups: NestedRequests
         ) => {
           if (!groups.length) {
             requestGroups[scope] = [
-              ...((requestGroups[scope] as PostmanCollectionItemInterface[]) ??
-                []),
+              ...((requestGroups[scope] as IPostmanCollection[]) ?? []),
               request,
             ];
 
@@ -231,7 +230,7 @@ export const syncPostman = async (options: {
 
       const PushRequests = (
         requestGroups: NestedRequests
-      ): PostmanCollectionItemInterface[] => {
+      ): IPostmanCollection[] => {
         const Requests = [];
         for (const [Key, Item] of Object.entries(requestGroups)) {
           if (Item instanceof Array)
@@ -269,13 +268,15 @@ export const syncPostman = async (options: {
         body: JSON.stringify({ collection: PostmanCollectionObject }),
       });
 
-      console.log(
+      console.info(
         "Postman Sync Response:",
         URI,
         Response.status,
         await Response.json()
       );
     }
+
+    return PostmanCollectionObject;
   } catch (error) {
     console.error(error, error.issues);
     throw error;
