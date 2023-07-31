@@ -14,6 +14,7 @@ import {
   RouterContext,
   Status,
 } from "oak";
+import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
@@ -186,6 +187,23 @@ export const startAppServer = async () => {
   return {
     app: App,
     signal: Controller.signal,
+    start: () =>
+      new Promise<ApplicationListenEvent>((resolve) => {
+        App.listen({
+          port: parseInt(Env.getSync("PORT", true) || "8080"),
+          signal: Controller.signal,
+        });
+
+        App.addEventListener("listen", (e) => {
+          console.info(
+            `${Env.getType().toUpperCase()} Server is listening on Port: ${
+              e.port
+            }`
+          );
+
+          resolve(e);
+        });
+      }),
     end: async () => {
       Controller.abort();
 

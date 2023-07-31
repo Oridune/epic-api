@@ -96,12 +96,24 @@ export class Env {
    * @param key Key of the variable
    * @returns
    */
-  static getSync(key: string) {
-    const Data: string | null | undefined = Env.getAll()[key];
+  static getSync(key: string): string;
 
-    if (typeof Data !== "string")
-      throw new Error(`Missing environment variable '${key}'!`);
+  /**
+   * Get a specific environment variable
+   *
+   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   * @param key Key of the variable
+   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined`.
+   * @returns
+   */
+  static getSync(key: string, silent: true): string | undefined;
+  static getSync(key: string, silent?: true) {
+    const Value: string | null | undefined = Env.getAll()[key];
 
-    return Data;
+    if (typeof Value !== "string")
+      if (silent) return;
+      else throw new Error(`Missing environment variable '${key}'!`);
+
+    return Value;
   }
 }

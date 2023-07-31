@@ -20,10 +20,12 @@
     "flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
     "oak": "https://deno.land/x/oak@v12.6.0/mod.ts",
+    "oak/": "https://deno.land/x/oak@v12.6.0/",
     "oak:logger": "https://deno.land/x/oak_logger@1.0.0/mod.ts",
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
-    "oak:testing": "https://deno.land/x/superoak@4.7.0/mod.ts"
+    "oak:testing": "https://deno.land/x/superoak@4.7.0/mod.ts",
+    "expect": "https://deno.land/x/expect@v0.4.0/mod.ts"
   },
   "scopes": {}
 }
