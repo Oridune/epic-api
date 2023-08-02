@@ -43,5 +43,11 @@ export const errorHandler =
       );
 
       respondWith(ctx, ResponseObject);
+
+      if (!Env.is(EnvType.PRODUCTION))
+        console.error(
+          `${ctx.request.method.toUpperCase()}: ${ctx.request.url.pathname}`,
+          error
+        );
     }
   };

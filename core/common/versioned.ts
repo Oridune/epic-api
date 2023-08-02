@@ -9,6 +9,16 @@ export class Versioned {
    * @param handlerObject Request Handler Object
    * @returns
    */
+  static add(version: string | string[], handlerObject: TRequestHandlerObject) {
+    return new Versioned().add(version, handlerObject);
+  }
+
+  /**
+   * Add a request handler version
+   * @param version Version of the API request handler
+   * @param handlerObject Request Handler Object
+   * @returns
+   */
   public add(version: string | string[], handlerObject: TRequestHandlerObject) {
     this.Map.set(version, handlerObject);
     return this;

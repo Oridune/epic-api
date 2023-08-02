@@ -4,6 +4,27 @@ import {
   IRoute,
 } from "./controller/base.ts";
 
+export const comparePaths = (a: string, b: string): number => {
+  // Check if both paths are fixed paths (no params)
+  const IsFixedPathA = !/:/.test(a);
+  const IsFixedPathB = !/:/.test(b);
+
+  // Fixed paths come first
+  if (IsFixedPathA && !IsFixedPathB) return -1;
+  else if (!IsFixedPathA && IsFixedPathB) return 1;
+
+  // Both paths have params, count the number of params in each path
+  const ParamsCountA = (a.match(/:/g) || []).length;
+  const ParamsCountB = (b.match(/:/g) || []).length;
+
+  // Paths with fewer params come first
+  if (ParamsCountA < ParamsCountB) return -1;
+  else if (ParamsCountA > ParamsCountB) return 1;
+
+  // If both have the same number of params, sort them lexicographically
+  return a.localeCompare(b);
+};
+
 export class Server {
   protected Routes: IRoute[] = [];
 
@@ -34,6 +55,8 @@ export class Server {
 
       const RouteOptions = Object.values(controller.getRoutes());
 
+      const Routes: IRoute[] = [];
+
       RouteOptions.forEach((options) => {
         const GroupPath = [...ResolvedGroup, ...ResolvedControllerGroup].join(
           "/"
@@ -48,13 +71,17 @@ export class Server {
         ].join("/");
         const ResolvedEndpoint = Endpoint ? `/${Endpoint}` : "/";
 
-        routes.push({
+        Routes.push({
           group: ResolvedGroupPath,
           scope: options.scope ?? ControllerOptions.name,
           endpoint: ResolvedEndpoint,
           options,
         });
       });
+
+      routes.push(
+        ...Routes.sort((a, b) => comparePaths(a.endpoint, b.endpoint))
+      );
 
       await Promise.all(
         (ControllerOptions.childs instanceof Array
