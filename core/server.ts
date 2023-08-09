@@ -5,6 +5,7 @@ import {
   Response,
   Server,
   Loader,
+  Events,
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "../database.ts";
@@ -133,14 +134,10 @@ export const prepareAppServer = async () => {
               res: ReturnedResponse,
             });
 
-          dispatchEvent(
-            new CustomEvent(`${Route.scope}.${Route.options.name}`, {
-              detail: {
-                ctx: RequestContext,
-                res: ReturnedResponse,
-              },
-            })
-          );
+          Events.dispatchRequestEvent(`${Route.scope}.${Route.options.name}`, {
+            ctx: RequestContext,
+            res: ReturnedResponse,
+          });
 
           if (
             ReturnedResponse instanceof RawResponse ||
