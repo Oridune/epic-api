@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 
-export enum EventChannels {
+export enum EventChannel {
   REQUEST = "request",
   CUSTOM = "custom",
 }
@@ -15,13 +15,13 @@ export type TEventCallback<T> = (
 ) => void;
 
 export class Events {
-  static createEventId(channel: EventChannels, event: string) {
+  static createEventId(channel: EventChannel, event: string) {
     return `epic-api-${channel}-${event}`;
   }
 
   static dispatchRequestEvent(event: string, detail?: any) {
     return dispatchEvent(
-      new CustomEvent(Events.createEventId(EventChannels.REQUEST, event), {
+      new CustomEvent(Events.createEventId(EventChannel.REQUEST, event), {
         detail,
       })
     );
@@ -30,14 +30,14 @@ export class Events {
   static dispatch(event: string, eventInitDict?: CustomEventInit<unknown>) {
     return dispatchEvent(
       new CustomEvent(
-        Events.createEventId(EventChannels.CUSTOM, event),
+        Events.createEventId(EventChannel.CUSTOM, event),
         eventInitDict
       )
     );
   }
 
   static listen<T>(
-    channel: EventChannels,
+    channel: EventChannel,
     event: string,
     callback: TEventCallback<T>,
     options?: boolean | AddEventListenerOptions
@@ -56,7 +56,7 @@ export class Events {
   }
 
   static remove<T>(
-    channel: EventChannels,
+    channel: EventChannel,
     event: string,
     callback: TEventCallback<T>,
     options?: boolean | EventListenerOptions
