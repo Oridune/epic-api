@@ -25,7 +25,8 @@
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
     "oak:testing": "https://deno.land/x/superoak@4.7.0/mod.ts",
-    "expect": "https://deno.land/x/expect@v0.4.0/mod.ts"
+    "expect": "https://deno.land/x/expect@v0.4.0/mod.ts",
+    "redis": "https://deno.land/x/redis@v0.31.0/mod.ts"
   },
   "scopes": {}
 }
