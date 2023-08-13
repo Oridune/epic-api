@@ -74,7 +74,7 @@ export interface IPostmanCollection {
     url:
       | string
       | {
-          raw: string;
+          raw?: string;
           host: string[];
           path: string[];
           query?: Array<{ key: string; value: string }>;
@@ -175,8 +175,9 @@ export const syncPostman = async (options: {
           const Endpoint = join(Host, Route.endpoint)
             .replace(/\\/g, "/")
             .replace("?", "");
+
           const QueryParams = Object.entries<string>(
-            RequestHandler.postman?.query ?? {}
+            RequestHandler.postman?.query?.data ?? {}
           );
 
           NormalizeRequest(
@@ -190,21 +191,53 @@ export const syncPostman = async (options: {
                     Endpoint +
                     (QueryParams.length
                       ? `?${QueryParams.map(
-                          (param) => param[0] + "=" + param[1]
+                          ([key, value]) => key + "=" + value
                         ).join("&")}`
                       : ""),
                   host: [Host],
-                  path: Route.endpoint.replace(/^\//, "").split("/"),
+                  path: Route.endpoint
+                    .split("/")
+                    .filter(Boolean)
+                    .map((path) => path.replace(/\?$/, "")),
                   query: QueryParams.map(([key, value]) => ({ key, value })),
                   variable: Object.entries<string>(
-                    RequestHandler.postman?.params ?? {}
-                  ).map(([key, value]) => ({ key, value })),
+                    RequestHandler.postman?.params?.data ?? {}
+                  ).map(([key, value]) => ({
+                    key,
+                    value,
+                    description: [
+                      RequestHandler.postman?.params?.schema?.properties?.[key]
+                        .description,
+                      RequestHandler.postman?.params?.schema?.requiredProperties?.includes(
+                        key
+                      )
+                        ? undefined
+                        : "(Optional)",
+                    ]
+                      .filter(Boolean)
+                      .join(" "),
+                  })),
                 },
                 method:
                   Route.options.method.toUpperCase() as PostmanRequestMethods,
                 header: Object.entries<string>(
-                  RequestHandler.postman?.headers ?? {}
-                ).map(([key, value]) => ({ key, value, type: "text" })),
+                  RequestHandler.postman?.headers?.data ?? {}
+                ).map(([key, value]) => ({
+                  key,
+                  value,
+                  type: "text",
+                  description: [
+                    RequestHandler.postman?.headers?.schema?.properties?.[key]
+                      .description,
+                    RequestHandler.postman?.headers?.schema?.requiredProperties?.includes(
+                      key
+                    )
+                      ? undefined
+                      : "(Optional)",
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                })),
                 body: RequestHandler.postman?.body
                   ? {
                       mode: "raw",

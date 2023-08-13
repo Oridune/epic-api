@@ -8,9 +8,9 @@
   },
   "importMap": "./import_map.json",
   "tasks": {
-    "start": "ENV_TYPE=production deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./serve.ts",
-    "dev": "ENV_TYPE=development denon run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run ./serve.ts",
-    "test": "ENV_TYPE=test deno test --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run tests",
+    "start": "ENV_TYPE=production deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi ./serve.ts",
+    "dev": "ENV_TYPE=development denon run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi ./serve.ts",
+    "test": "ENV_TYPE=test deno test --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi tests",
 
     "init": "rm -rf .git && git init && deno task create:env -t development,test,production",
     "create:env": "deno run -A ./core/scripts/createEnvironment.ts",

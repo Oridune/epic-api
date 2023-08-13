@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Response,
+  type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 import { Status, type RouterContext } from "oak";
@@ -12,7 +13,7 @@ import e from "validator";
 @Controller("/$_namePath/", { name: "$_nameCamel" })
 export default class $_namePascalController extends BaseController {
   @Post("/")
-  public create() {
+  public create(_: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -24,9 +25,9 @@ export default class $_namePascalController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
-        body: BodySchema.toSample().data,
+        query: QuerySchema.toSample(),
+        params: ParamsSchema.toSample(),
+        body: BodySchema.toSample(),
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -60,7 +61,7 @@ export default class $_namePascalController extends BaseController {
   }
 
   @Get("/")
-  public list() {
+  public list(_: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -69,8 +70,8 @@ export default class $_namePascalController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
+        query: QuerySchema.toSample(),
+        params: ParamsSchema.toSample(),
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
