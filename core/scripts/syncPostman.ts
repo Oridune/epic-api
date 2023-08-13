@@ -252,11 +252,11 @@ export const syncPostman = async (options: {
                     .filter(Boolean)
                     .join(" "),
                 })),
-                body: RequestHandler.postman?.body
+                body: RequestHandler.postman?.body?.data
                   ? {
                       mode: "raw",
                       raw: JSON.stringify(
-                        RequestHandler.postman.body,
+                        RequestHandler.postman.body.data,
                         undefined,
                         2
                       ),
