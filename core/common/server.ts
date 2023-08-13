@@ -21,6 +21,14 @@ export const comparePaths = (a: string, b: string): number => {
   if (ParamsCountA < ParamsCountB) return -1;
   else if (ParamsCountA > ParamsCountB) return 1;
 
+  // Get the length of slashes
+  const SlashCountA = a.split("/").length;
+  const SlashCountB = b.split("/").length;
+
+  // Path with more slashes come first
+  if (SlashCountA > SlashCountB) return -1;
+  else if (SlashCountA < SlashCountB) return 1;
+
   // If both have the same number of params, sort them lexicographically
   return a.localeCompare(b);
 };
