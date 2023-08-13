@@ -199,7 +199,21 @@ export const syncPostman = async (options: {
                     .split("/")
                     .filter(Boolean)
                     .map((path) => path.replace(/\?$/, "")),
-                  query: QueryParams.map(([key, value]) => ({ key, value })),
+                  query: QueryParams.map(([key, value]) => ({
+                    key,
+                    value,
+                    description: [
+                      RequestHandler.postman?.query?.schema?.properties?.[key]
+                        .description,
+                      RequestHandler.postman?.query?.schema?.requiredProperties?.includes(
+                        key
+                      )
+                        ? undefined
+                        : "(Optional)",
+                    ]
+                      .filter(Boolean)
+                      .join(" "),
+                  })),
                   variable: Object.entries<string>(
                     RequestHandler.postman?.params?.data ?? {}
                   ).map(([key, value]) => ({
