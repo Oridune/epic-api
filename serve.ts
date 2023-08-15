@@ -1,10 +1,10 @@
 import { Loader } from "@Core/common/mod.ts";
-import { startAppServer } from "@Core/server.ts";
+import { createAppServer } from "@Core/server.ts";
 
 if (import.meta.main) {
   await Loader.load({ excludeTypes: ["templates"] });
 
-  const { start, end } = await startAppServer();
+  const { start, end } = await createAppServer();
 
   await start();
 

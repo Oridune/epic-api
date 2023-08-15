@@ -172,42 +172,63 @@ export const startBackgroundJobs = async (app: AppServer) => {
   );
 };
 
-export const startAppServer = async () => {
+export const createAppServer = async () => {
   const App = await prepareAppServer();
 
-  await Database.connect();
+  const Context = { jobCleanups: [] as Array<() => any> };
 
-  const JobCleanups = await startBackgroundJobs(App);
+  const AbortControllerObject = new AbortController();
 
-  const Controller = new AbortController();
+  const StartServer = () =>
+    new Promise<ApplicationListenEvent>((resolve) => {
+      (async () => {
+        await Database.connect();
 
-  return {
-    app: App,
-    signal: Controller.signal,
-    start: () =>
-      new Promise<ApplicationListenEvent>((resolve) => {
+        Context.jobCleanups = await startBackgroundJobs(App);
+
         App.listen({
           port: parseInt(Env.getSync("PORT", true) || "8080"),
-          signal: Controller.signal,
+          signal: AbortControllerObject.signal,
         });
 
-        App.addEventListener("listen", (e) => {
+        const listenHandler = (e: ApplicationListenEvent) => {
           console.info(
             `${Env.getType().toUpperCase()} Server is listening on Port: ${
               e.port
             }`
           );
 
+          App.removeEventListener("listen", listenHandler as any);
+
           resolve(e);
-        });
-      }),
-    end: async () => {
-      Controller.abort();
+        };
 
-      await Promise.all(JobCleanups.map((_) => _()));
-      await Database.disconnect();
+        App.addEventListener("listen", listenHandler);
+      })();
+    });
 
-      console.info("Application terminated successfully!");
-    },
+  const EndServer = async () => {
+    AbortControllerObject.abort();
+
+    await Promise.all(Context.jobCleanups.map((_) => _()));
+    await Database.disconnect();
+
+    console.info("Server terminated successfully!");
+  };
+
+  const RestartServer = async () => {
+    await EndServer();
+
+    console.info("Restarting Server...");
+
+    return await StartServer();
+  };
+
+  return {
+    app: App,
+    signal: AbortControllerObject.signal,
+    start: StartServer,
+    end: EndServer,
+    restart: RestartServer,
   };
 };

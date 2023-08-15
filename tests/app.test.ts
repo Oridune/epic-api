@@ -1,5 +1,5 @@
 import { Loader } from "@Core/common/mod.ts";
-import { startAppServer } from "@Core/server.ts";
+import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
 
 Deno.test({
@@ -7,11 +7,13 @@ Deno.test({
   async fn(t) {
     await Loader.load({ excludeTypes: ["templates"] });
 
-    const { start, end } = await startAppServer();
+    const { start, end, restart } = await createAppServer();
 
     const { port } = await start();
 
     const APIHost = `http://localhost:${port}`;
+
+    await restart();
 
     await t.step("GET / Should return 404 not found", async () => {
       const Response = await fetch(new URL("/", APIHost));
