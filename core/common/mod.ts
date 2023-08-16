@@ -8,3 +8,4 @@ export * from "./server.ts";
 export * from "./versioned.ts";
 export * from "./response.ts";
 export * from "./redis.ts";
+export * from "./transaction.ts";
