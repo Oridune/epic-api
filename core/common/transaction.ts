@@ -19,7 +19,9 @@ export class Transaction {
   protected State = TransactionExecutionState.WAITING;
   protected Callbacks: Array<TransactionCallback<any>> = [];
 
-  constructor() {}
+  static add<State extends object>(callback: TransactionCallback<State>) {
+    return new Transaction().add<State>(callback);
+  }
 
   public add<State extends object>(callback: TransactionCallback<State>) {
     if (this.State === TransactionExecutionState.EXECUTING)
