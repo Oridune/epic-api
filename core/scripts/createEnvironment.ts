@@ -32,6 +32,9 @@ export const createEnvironment = async (options: {
     const EnvironmentDir = join(Deno.cwd(), "./env/");
     const GlobalEnvironmentFilePath = join(EnvironmentDir, ".env");
 
+    if (!(await exists(EnvironmentDir)))
+      await Deno.mkdir(EnvironmentDir, { recursive: true });
+
     if (!(await exists(GlobalEnvironmentFilePath)))
       await Deno.writeTextFile(
         GlobalEnvironmentFilePath,
@@ -50,9 +53,6 @@ export const createEnvironment = async (options: {
         }))
       )
         return;
-
-      if (!(await exists(EnvironmentDir)))
-        await Deno.mkdir(EnvironmentDir, { recursive: true });
 
       const Content = Object.keys(Options.variables).reduce(
         (content, key) =>
