@@ -8,7 +8,7 @@ export interface ITransactionContext<State> {
   state: State;
 }
 
-export type NextFunction = () => Promise<void>;
+export type NextFunction = (state?: Record<string, any>) => Promise<unknown>;
 
 export type TransactionCallback<State> = (
   context: ITransactionContext<State>,
@@ -45,11 +45,14 @@ export class Transaction {
       state: {},
     };
 
-    const Next = async () => {
+    const Next: NextFunction = async (state) => {
       if (Context.index < this.Callbacks.length) {
         const Callback = this.Callbacks[Context.index];
+
+        Context.state = { ...Context.state, ...state };
         Context.index++;
-        await Callback(Context, Next);
+
+        return await Callback(Context, Next);
       }
     };
 
