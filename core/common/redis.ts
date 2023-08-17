@@ -14,5 +14,5 @@ export const GlobalRedisClient = RedisConnectionString
       hostname,
       port,
       password,
-    })
+    }).catch(console.error)
   : undefined;
