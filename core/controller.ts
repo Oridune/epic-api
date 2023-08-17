@@ -7,6 +7,8 @@ import {
   Versioned,
   Response,
 } from "@Core/common/mod.ts";
+import { GlobalRedisClient } from "@Core/common/redis.ts";
+import { Database } from "../database.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -30,7 +32,14 @@ export class APIController extends BaseController {
   @Get("/")
   public home() {
     return () => {
-      return Response.message("Hurry! The API is online!");
+      return Response.message("Hurry! The API is online!").data({
+        database: {
+          connected: Database.isConnected(),
+        },
+        redis: {
+          connected: !!GlobalRedisClient?.isConnected,
+        },
+      });
     };
   }
 

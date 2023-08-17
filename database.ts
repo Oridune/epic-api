@@ -8,6 +8,14 @@ export class Database {
   static connection?: typeof mongoose;
 
   /**
+   * Is database connected?
+   * @returns
+   */
+  static isConnected() {
+    return Database.connection?.connection.readyState === 1;
+  }
+
+  /**
    * Get current database connection
    * @returns
    */
