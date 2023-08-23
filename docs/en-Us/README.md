@@ -12,29 +12,17 @@ Epic API (epic-api) is a robust framework for developing efficient and scalable 
 
 Epic API framework runs on the Deno.js runtime. You are required to have Deno.js installed on your machine in order to start working. [See how to install Deno.js](https://deno.com/manual/getting\_started/installation)
 
-### Installation
+### Manual Installation
 
-To get started, there is no requirement for CLI installation. Simply clone the Epic API repository from GitHub onto your local machine and initiate your work promptly.
+To get started with manual installation, Simply clone the Epic API repository from GitHub onto your local machine and initiate your work promptly.
 
 ```bash
 # Clone the repository
 git clone https://github.com/Oridune/epic-api.git my-new-app
+
+# Initialize Project
+deno task init
 ```
-
-### Environment Variables
-
-When developing any application, it is an excellent practice to manage your environment variables in a professional manner. Similarly, when working with Epic API, once you've cloned the repository, you must set up the environment variables before you start working!
-
-Epic API supports 3 environment types **Development**, **Test,** and **Production**. You are required to execute the following command if the environment files don't already exist:
-
-```bash
-# Execute the built-in Deno task
-deno task create:env -t development,test,production --encryptionKey=123457890 --dbConnectionString="mongodb://localhost:27017/epic-api"Note: You can pass the environment variables directly in the command to auto populate into the environment files for example --encryptionKey=123 or --foo=bar.
-```
-
-{% hint style="info" %}
-**Note:** You can pass the environment variables directly in the command to auto-populate into the environment files. For example `--encryptionKey=123` or `--foo=bar`.
-{% endhint %}
 
 Once you have setup everything correctly, run the following command to start the API server:
 
@@ -44,4 +32,3 @@ deno task dev
 ```
 
 Open your browser and navigate to [http://localhost:3742](http://localhost:3742).
-
