@@ -21,16 +21,9 @@ import {
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
-import Manager from "@Core/common/manager.ts";
 import { type RouterContext } from "oak";
 
-@Controller("/users/", {
-  name: "users",
-
-  /** Do not edit this code */
-  childs: () => Manager.getModules("controllers", import.meta.url),
-  /** --------------------- */
-})
+@Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   @Get("/")
   public list() {
@@ -79,17 +72,10 @@ import {
   Response,
   type IRequestContext,
 } from "@Core/common/mod.ts";
-import Manager from "@Core/common/manager.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/users/", {
-  name: "users",
-
-  /** Do not edit this code */
-  childs: () => Manager.getModules("controllers", import.meta.url),
-  /** --------------------- */
-})
+@Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   @Post("/")
   public create() {
@@ -104,9 +90,9 @@ export default class UsersController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
-        body: BodySchema.toSample().data,
+        query: QuerySchema.toSample(),
+        params: ParamsSchema.toSample(),
+        body: BodySchema.toSample(),
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -149,8 +135,8 @@ export default class UsersController extends BaseController {
 
     return {
       postman: {
-        query: QuerySchema.toSample().data,
-        params: ParamsSchema.toSample().data,
+        query: QuerySchema.toSample(),
+        params: ParamsSchema.toSample(),
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -195,29 +181,6 @@ This property is returned as the metadata of this controller's request. You may 
 Defining the data shapes during development is a headache! And this is where `validator` got you covered! The `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
 {% endhint %}
 
-### Create a Child-Controller
-
-A child-controller exposes routes under a parent-controller. For example, A user may have a post associated with it. To handle this scenario, we create a child-controller.
-
-Use the following command to create a child-controller `posts` under the parent-controller `users`:
-
-```bash
-# Execute the built-in Deno task
-deno task create:module -t controller -n posts --template validated.ts --parent users.ts
-```
-
-This command will generate a similar controller as above, but it will be named as `controllers/users.posts.ts` (child-controller) instead of `controllers/posts.ts` that is considered as a parent-controller instead of a child-controller and will be invalid in the current scenario.
-
-This is how your folder structure and the `.sequence.json` file are going to look:
-
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>This is how your .sequence.json file will look like.</p></figcaption></figure>
-
-{% hint style="info" %}
-The routes for this child-controller will be accessible on the following endpoint: `{{host}}/api/users/posts/`
-{% endhint %}
-
-Now that we have a basic knowledge of how to create controllers and how they are structured in Epic API, it is time to delve into the specifics. You may have noticed certain components in the above controllers, some of which you may be familiar with, while others may be new. Let us now explore the constituent elements of controllers that enable their functionality.
-
 ### Controller Components
 
 See the following part of the code:
@@ -249,9 +212,7 @@ Let's suppose we are working on a controller file called `controllers/users.ts`,
 ```typescript
 import { BaseController, Controller } from "@Core/common/mod.ts";
 
-@Controller("/users/", {
-    name: "users"
-})
+@Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {}
 ```
 {% endcode %}
@@ -278,9 +239,7 @@ Now that we have a working controller. Let's continue adding a `GET` route to th
 ```typescript
 import { BaseController, Controller, Get, Response } from "@Core/common/mod.ts";
 
-@Controller("/users/", {
-  name: "users",
-})
+@Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   static UsersList: { username: string; password: string }[] = [];
 
@@ -308,6 +267,10 @@ export default class UsersController extends BaseController {
 {% endcode %}
 
 In this code, we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` a module. Then we created a service method `getUsers` for the `UsersController` class. And then, we created a `list` method decorated with the `Get` decorator on the `UsersController` a class that returns a request handler function. You will write your fetch users logic in this handler and return a `Response` instance accordingly.
+
+{% hint style="info" %}
+You can either return a request handler function directly from the `list` method or you can also return an object which contains a property `handler` which will be the request handler function. This object will also allow you to pass extra information like you've seen `postman` property in the above examples.
+{% endhint %}
 
 Now spin up the server with the following command:
 
@@ -337,9 +300,7 @@ import {
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/users/", {
-  name: "users",
-})
+@Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   static UsersList: { username: string; password: string }[] = [];
 
