@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
 import { Env, EnvType } from "@Core/common/env.ts";
+import mongoose from "mongoose";
 
 export class Database {
   /**

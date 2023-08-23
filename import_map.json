@@ -5,7 +5,6 @@
     "@Models/": "./models/",
     "@Jobs/": "./jobs/",
     "@Middlewares/": "./middlewares/",
-
     "collections/": "https://deno.land/std@0.161.0/collections/",
     "stringcase/": "https://deno.land/x/case@2.1.1/",
     "pluralize": "https://deno.land/x/deno_plural@2.0.0/mod.ts",

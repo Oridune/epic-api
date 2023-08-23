@@ -1,31 +1,13 @@
 import { parse } from "flags";
-import { join } from "path";
 import e from "validator";
 
 import { Select, Confirm } from "cliffy:prompt";
+import { PluginSource, addPlugin } from "@Core/scripts/addPlugin.ts";
+import { removePlugin } from "@Core/scripts/removePlugin.ts";
 import { Loader } from "@Core/common/loader.ts";
 
-import { updatePluginDeclarationFile } from "./addPlugin.ts";
-
-export const removePluginFromImportMap = async (name: string) => {
-  const ImportMapPath = join(Deno.cwd(), "import_map.json");
-
-  const ImportMap = (
-    await import(`file:///${ImportMapPath}`, {
-      assert: { type: "json" },
-    })
-  ).default;
-
-  delete ImportMap.imports?.[`@Plugins/${name}/`];
-  delete ImportMap.scopes?.[`./plugins/${name}/`];
-
-  await Deno.writeTextFile(
-    ImportMapPath,
-    JSON.stringify(ImportMap, undefined, 2)
-  );
-};
-
-export const removePlugin = async (options: {
+export const updatePlugin = async (options: {
+  source?: PluginSource;
   name: string | string[];
   prompt?: boolean;
 }) => {
@@ -37,13 +19,16 @@ export const removePlugin = async (options: {
     const Options = await e
       .object(
         {
+          source: e
+            .optional(e.enum(Object.values(PluginSource)))
+            .default(PluginSource.GIT),
           name: e
             .optional(e.array(e.in(PluginsList), { cast: true, splitter: "," }))
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? [
                     await Select.prompt({
-                      message: "Choose the plugin to be deleted",
+                      message: "Choose the plugin to be updated",
                       options: PluginsList,
                     }),
                   ]
@@ -58,29 +43,18 @@ export const removePlugin = async (options: {
       if (
         options.prompt &&
         !(await Confirm.prompt({
-          message: `Do you really want to delete the plugin(s) '${Options.name.join(
+          message: `Do you really want to update the plugin(s) '${Options.name.join(
             ", "
           )}'?`,
         }))
       )
         return;
 
-      for (const PluginName of Options.name) {
-        const PluginPath = join(Deno.cwd(), "plugins", PluginName);
-
-        await Loader.getSequence("plugins")?.set((_) => {
-          _.delete(PluginName);
-          return _;
-        });
-
-        await removePluginFromImportMap(PluginName);
-        await updatePluginDeclarationFile();
-
-        await Deno.remove(PluginPath, { recursive: true });
-      }
+      await removePlugin({ name: Options.name });
+      await addPlugin({ source: Options.source, name: Options.name });
     } else throw new Error(`The plugin name(s) is missing.`);
 
-    console.info("Plugin(s) removed successfully!");
+    console.info("Plugin(s) updated successfully!");
   } catch (error) {
     console.error(error, error.issues);
     throw error;
@@ -88,11 +62,12 @@ export const removePlugin = async (options: {
 };
 
 if (import.meta.main) {
-  const { name, n } = parse(Deno.args);
+  const { source, s, name, n } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
 
-  await removePlugin({
+  await updatePlugin({
+    source: source ?? s,
     name: name ?? n,
     prompt: true,
   });

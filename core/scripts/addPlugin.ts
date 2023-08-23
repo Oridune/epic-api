@@ -201,8 +201,8 @@ export const addPlugin = async (options: {
                 // Do nothing...
               }
 
-            console.info("Plugin has been added successfully!");
-          } else throw new Error("We were unable to add this plugin!");
+            console.info("Plugin(s) added successfully!");
+          } else throw new Error("We were unable to add plugin(s)!");
 
           Process.close();
         } else throw new Error(`Oops! Something went wrong!`);

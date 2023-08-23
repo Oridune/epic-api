@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { join, dirname } from "path";
 
 export interface ISequence {
