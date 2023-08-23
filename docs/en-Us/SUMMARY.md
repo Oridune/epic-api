@@ -1,7 +1,7 @@
 # Table of contents
 
 * [Getting started](README.md)
-* [Environment Variables](environment-variables.md)
+* [Environment variables](environment-variables.md)
 * [Project structure](project-structure.md)
 * [Testing](testing.md)
 
