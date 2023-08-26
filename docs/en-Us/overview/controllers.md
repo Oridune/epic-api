@@ -19,6 +19,7 @@ import {
   BaseController,
   Get,
   Response,
+  type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 import { type RouterContext } from "oak";
@@ -26,7 +27,7 @@ import { type RouterContext } from "oak";
 @Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   @Get("/")
-  public list() {
+  public list(_: IRoute) {
     // This is a factory method that returns a request handler.
     // Write any validation schemas or meta logic here.
     // Information returned from this function can be used to generate docs etc.
@@ -70,6 +71,7 @@ import {
   Get,
   Post,
   Response,
+  type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 import { Status, type RouterContext } from "oak";
@@ -78,7 +80,7 @@ import e from "validator";
 @Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   @Post("/")
-  public create() {
+  public create(_: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -126,7 +128,7 @@ export default class UsersController extends BaseController {
   }
 
   @Get("/")
-  public list() {
+  public list(_: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -192,6 +194,7 @@ import {
   Get,
   Post,
   Response,
+  type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 ```
@@ -295,6 +298,7 @@ import {
   Get,
   Post,
   Response,
+  type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
 import { Status, type RouterContext } from "oak";
@@ -311,7 +315,7 @@ export default class UsersController extends BaseController {
   };
 
   @Get("/")
-  public list() {
+  public list(_: IRoute) {
     // Return a request handler function.
     return () => {
       // You will write your fetch users logic here.
@@ -328,7 +332,7 @@ export default class UsersController extends BaseController {
   }
 
   @Post("/")
-  public create() {
+  public create(_: IRoute) {
     // Create a body validator schema.
     const BodySchema = e.object({
       username: e.string(),
