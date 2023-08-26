@@ -3,6 +3,7 @@
 * [Getting started](README.md)
 * [Environment variables](environment-variables.md)
 * [Project structure](project-structure.md)
+* [Architecture](architecture.md)
 * [Testing](testing.md)
 
 ## OVERVIEW
@@ -16,8 +17,6 @@
 
 ## Techniques
 
-* [Architecture](techniques/architecture.md)
-* [Configuration](techniques/configuration.md)
 * [Validations](techniques/validations.md)
 * [Versioning](techniques/versioning.md)
 
