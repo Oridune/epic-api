@@ -4,7 +4,7 @@ description: Execute a specific job (task) when your application starts.
 
 # Jobs
 
-In Epic API, jobs allow developers to register various services, schedule tasks, or modify server instances.
+In Epic API, jobs allow developers to register various services, schedule tasks, or modify server instances on a global level of the application.
 
 You can execute the following command to create a job:
 
