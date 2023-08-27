@@ -69,7 +69,7 @@ export default class $_namePascalController extends BaseController {
     // Define Params Schema
     const ParamsSchema = e.object({});
 
-    return new Versioned().add("1.0.0", {
+    return Versioned.add("1.0.0", {
       postman: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),

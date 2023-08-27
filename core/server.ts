@@ -217,9 +217,9 @@ export const createAppServer = async () => {
   };
 
   const RestartServer = async () => {
-    await EndServer();
-
     console.info("Restarting Server...");
+
+    await EndServer();
 
     return await StartServer();
   };
