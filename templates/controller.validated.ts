@@ -13,7 +13,7 @@ import e from "validator";
 @Controller("/$_namePath/", { name: "$_nameCamel" })
 export default class $_namePascalController extends BaseController {
   @Post("/")
-  public create(_: IRoute) {
+  public create(route: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -33,7 +33,7 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_nameCamel.query" }
+          { name: `${route.scope}.query` }
         );
 
         /**
@@ -44,13 +44,13 @@ export default class $_namePascalController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_nameCamel.params",
+          name: `${route.scope}.params`,
         });
 
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body({ type: "json" }).value,
-          { name: "$_nameCamel.body" }
+          { name: `${route.scope}.body` }
         );
 
         // Start coding here...
@@ -61,7 +61,7 @@ export default class $_namePascalController extends BaseController {
   }
 
   @Get("/")
-  public list(_: IRoute) {
+  public list(route: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -77,7 +77,7 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "$_nameCamel.query" }
+          { name: `${route.scope}.query` }
         );
 
         /**
@@ -88,7 +88,7 @@ export default class $_namePascalController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "$_nameCamel.params",
+          name: `${route.scope}.params`,
         });
 
         // Start coding here...
