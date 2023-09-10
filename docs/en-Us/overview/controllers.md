@@ -80,7 +80,7 @@ import e from "validator";
 @Controller("/users/", { name: "users" })
 export default class UsersController extends BaseController {
   @Post("/")
-  public create(_: IRoute) {
+  public create(route: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -100,7 +100,7 @@ export default class UsersController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "users.query" }
+          { name: `${route.scope}.query` }
         );
 
         /**
@@ -111,13 +111,13 @@ export default class UsersController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "users.params",
+          name: `${route.scope}.params`,
         });
 
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body({ type: "json" }).value,
-          { name: "users.body" }
+          { name: `${route.scope}.body` }
         );
 
         // Start coding here...
@@ -128,7 +128,7 @@ export default class UsersController extends BaseController {
   }
 
   @Get("/")
-  public list(_: IRoute) {
+  public list(route: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -144,7 +144,7 @@ export default class UsersController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: "users.query" }
+          { name: `${route.scope}.query` }
         );
 
         /**
@@ -155,7 +155,7 @@ export default class UsersController extends BaseController {
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: "users.params",
+          name: `${route.scope}.params`,
         });
 
         // Start coding here...
@@ -315,7 +315,7 @@ export default class UsersController extends BaseController {
   };
 
   @Get("/")
-  public list(_: IRoute) {
+  public list(route: IRoute) {
     // Return a request handler function.
     return () => {
       // You will write your fetch users logic here.
@@ -332,7 +332,7 @@ export default class UsersController extends BaseController {
   }
 
   @Post("/")
-  public create(_: IRoute) {
+  public create(route: IRoute) {
     // Create a body validator schema.
     const BodySchema = e.object({
       username: e.string(),
@@ -343,7 +343,8 @@ export default class UsersController extends BaseController {
     return async (ctx: IRequestContext<RouterContext<string>>) => {
       // Validate user data
       const User = await BodySchema.validate(
-        await ctx.router.request.body({ type: "json" }).value
+        await ctx.router.request.body({ type: "json" }).value,
+        { name: `${route.scope}.body` }
       );
 
       // Create user

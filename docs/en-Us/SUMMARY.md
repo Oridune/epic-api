@@ -23,11 +23,11 @@
 ## Utilities
 
 * [Postman](utilities/postman.md)
-* [Caching](utilities/caching.md)
 
 ## Examples
 
 * [Authentication](examples/authentication.md)
 * [Authorization](examples/authorization.md)
+* [Caching](examples/caching.md)
 * [Replace MongoDB with TypeORM](examples/replace-mongodb-with-typeorm.md)
 * [Serve Static Website](examples/serve-static-website.md)
