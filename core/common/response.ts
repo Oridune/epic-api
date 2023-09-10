@@ -1,10 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 
-export interface ResponseMessage {
-  message: string;
-  [K: string]: any;
-}
-
 export class RawResponse {
   protected StatusCode = 200;
   protected Headers = new Headers();
@@ -132,14 +127,27 @@ export class RawResponse {
   }
 }
 
-export class Response {
+export interface ResponseMessage {
+  message: string;
+  [K: string]: any;
+}
+
+export interface ResponseBody<D, M> {
+  status: boolean;
+  messages?: Array<ResponseMessage>;
+  data?: D;
+  metadata?: M;
+  errorStack?: string;
+}
+
+export class Response<D = Record<string, any>, M = Record<string, any>> {
   protected StatusCode = 200;
   protected Headers = new Headers();
 
   protected Status = true;
   protected Messages?: ResponseMessage[];
-  protected Data?: any;
-  protected Metadata?: any;
+  protected Data?: D;
+  protected Metadata?: M;
   protected ErrorStack?: string;
 
   /**
@@ -283,7 +291,7 @@ export class Response {
     return new Response().errorStack(stack);
   }
 
-  constructor(data?: any, metadata?: Record<string, any>) {
+  constructor(data?: any, metadata?: M) {
     if (data) this.data(data);
     if (metadata) this.metadata(metadata);
   }
@@ -363,7 +371,7 @@ export class Response {
    * @param metadata Optionally pass a metadata object.
    * @returns
    */
-  public data(data: Record<string, any>, metadata?: Record<string, any>) {
+  public data(data: D, metadata?: M) {
     if (typeof data === "object") this.Data = data;
     if (typeof metadata === "object") this.Metadata = metadata;
     return this;
@@ -374,7 +382,7 @@ export class Response {
    * @param metadata
    * @returns
    */
-  public metadata(metadata: Record<string, any>) {
+  public metadata(metadata: M) {
     if (typeof metadata === "object") this.Metadata = metadata;
     return this;
   }
@@ -409,7 +417,7 @@ export class Response {
    * Converts the current response object to a normalized body.
    * @returns
    */
-  public getBody() {
+  public getBody(): ResponseBody<D, M> {
     return {
       status: this.Status,
       messages: this.Messages,
