@@ -7,8 +7,8 @@ import {
   Versioned,
   Response,
 } from "@Core/common/mod.ts";
-import { GlobalRedisClient } from "@Core/common/redis.ts";
 import { Database } from "../database.ts";
+import { Store } from "../store.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -37,7 +37,7 @@ export class APIController extends BaseController {
           connected: Database.isConnected(),
         },
         redis: {
-          connected: !!GlobalRedisClient?.isConnected,
+          connected: Store.isConnected(),
         },
       });
     };

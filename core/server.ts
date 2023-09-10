@@ -9,6 +9,7 @@ import {
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "../database.ts";
+import { Store } from "../store.ts";
 import {
   Application as AppServer,
   Router as AppRouter,
@@ -177,14 +178,17 @@ export const createAppServer = async () => {
 
   const Context = { jobCleanups: [] as Array<() => any> };
 
-  const AbortControllerObject = new AbortController();
+  let AbortControllerObject: AbortController | undefined;
 
   const StartServer = () =>
     new Promise<ApplicationListenEvent>((resolve) => {
       (async () => {
+        await Store.connect();
         await Database.connect();
 
         Context.jobCleanups = await startBackgroundJobs(App);
+
+        AbortControllerObject = new AbortController();
 
         App.listen({
           port: parseInt(Env.getSync("PORT", true) || "8080"),
@@ -208,10 +212,15 @@ export const createAppServer = async () => {
     });
 
   const EndServer = async () => {
-    AbortControllerObject.abort();
+    AbortControllerObject?.abort();
 
-    await Promise.all(Context.jobCleanups.map((_) => _()));
-    await Database.disconnect();
+    try {
+      await Promise.all(Context.jobCleanups.map((_) => _()));
+      await Database.disconnect();
+      await Store.disconnect();
+    } catch (error) {
+      console.error(error);
+    }
 
     console.info("Server terminated successfully!");
   };
@@ -226,7 +235,6 @@ export const createAppServer = async () => {
 
   return {
     app: App,
-    signal: AbortControllerObject.signal,
     start: StartServer,
     end: EndServer,
     restart: RestartServer,

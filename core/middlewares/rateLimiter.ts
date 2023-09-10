@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { Context, Status } from "oak";
-import { GlobalRedisClient, Env, EnvType } from "@Core/common/mod.ts";
+import { Env, EnvType } from "@Core/common/mod.ts";
+import { Store } from "../../store.ts";
 
 export type RateLimitOptions = {
   onRateLimit?: (
@@ -11,68 +12,6 @@ export type RateLimitOptions = {
   limit?: number | string;
   windowMs?: number | string;
 };
-
-export type RateLimitData = { timestamp: number; count: number };
-
-export class RateLimitStore {
-  static Store = GlobalRedisClient ?? new Map<string, RateLimitData>();
-
-  static async inc(ip: string, windowMs: number): Promise<RateLimitData> {
-    if (RateLimitStore.Store instanceof Map) {
-      const ExistingData = RateLimitStore.Store.get(ip);
-      const DefaultData = {
-        timestamp: Date.now(),
-        count: 0,
-      };
-      const Data = ExistingData ?? DefaultData;
-
-      const IsExpired = Date.now() > Data.timestamp + windowMs;
-
-      if (IsExpired) {
-        RateLimitStore.Store.delete(ip);
-        return DefaultData;
-      }
-
-      Data.count++;
-
-      if (!ExistingData) RateLimitStore.Store.set(ip, Data);
-
-      return Data;
-    } else {
-      const TimestampKey = `${Env.getType()}:rateLimiter:${ip}:timestamp`;
-      const CountKey = `${Env.getType()}:rateLimiter:${ip}:count`;
-
-      const ExistingData = await Promise.all([
-        RateLimitStore.Store.get(TimestampKey),
-        RateLimitStore.Store.incr(CountKey),
-      ]);
-      const RawTimestamp = ExistingData[0];
-      const Timestamp = RawTimestamp ? parseInt(RawTimestamp) : Date.now();
-
-      const IsExpired = Date.now() > Timestamp + windowMs;
-
-      if (IsExpired) {
-        await RateLimitStore.Store.del(TimestampKey, CountKey);
-        return {
-          timestamp: Date.now(),
-          count: 0,
-        };
-      }
-
-      if (!RawTimestamp) {
-        RateLimitStore.Store.expire(CountKey, windowMs / 1000);
-        RateLimitStore.Store.set(TimestampKey, Date.now(), {
-          ex: windowMs / 1000,
-        });
-      }
-
-      return {
-        timestamp: Timestamp,
-        count: ExistingData[1],
-      };
-    }
-  }
-}
 
 export const rateLimiter = (options?: RateLimitOptions) => {
   const DefaultLimit = 50;
@@ -92,23 +31,21 @@ export const rateLimiter = (options?: RateLimitOptions) => {
   ) => {
     const { ip } = ctx.request;
 
-    const LimitData = await RateLimitStore.inc(ip, WindowMs);
+    const Count = await Store.incr(ip, { expiresInMs: WindowMs });
+    const CountTimestamp = (await Store.timestamp(ip)) ?? Date.now();
 
     const XRateLimitReset = Math.round(
-      (LimitData.timestamp + WindowMs) / 1000
+      (CountTimestamp + WindowMs) / 1000
     ).toString();
     const XRateLimitLimit = Limit.toString();
-    const XRateLimitRemaining = Math.max(
-      Limit - LimitData.count - 1,
-      0
-    ).toString();
+    const XRateLimitRemaining = Math.max(Limit - Count - 1, 0).toString();
     const ErrorProps = {
       "X-Rate-Limit-Reset": XRateLimitReset,
       "X-Rate-Limit-Limit": XRateLimitLimit,
       "X-Rate-Limit-Remaining": XRateLimitRemaining,
     };
 
-    if (LimitData.count >= Limit) {
+    if (Count >= Limit) {
       ctx.response.status = Status.TooManyRequests;
 
       if (typeof options?.onRateLimit === "function")
