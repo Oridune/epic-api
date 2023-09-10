@@ -42,7 +42,6 @@ export class Store {
 
   /**
    * This method is called when attempted to connect to the caching server
-   * @returns
    */
   static async connect() {
     if (!Store.redis && RedisConnectionString) {
@@ -63,11 +62,20 @@ export class Store {
     }
   }
 
+  /**
+   * Disconnect the caching server
+   */
   static disconnect() {
     if (Store.redis && Store.isConnected()) Store.redis.disconnect();
     delete Store.redis;
   }
 
+  /**
+   * Set a value in the store
+   * @param key
+   * @param value
+   * @param options
+   */
   static async set(
     key: string,
     value: unknown,
@@ -99,6 +107,11 @@ export class Store {
     }
   }
 
+  /**
+   * Get a value from the store
+   * @param key
+   * @returns
+   */
   static async get<T extends unknown>(key: string): Promise<T | null> {
     if (Store.redis)
       return (Store.deserialize(await Store.redis.get(key)) as T) ?? null;
@@ -114,6 +127,11 @@ export class Store {
     return (RawValue?.value as T) ?? null;
   }
 
+  /**
+   * Get a created-on timestamp of the value
+   * @param key
+   * @returns
+   */
   static async timestamp(key: string) {
     if (Store.redis) {
       const RawValue = await Store.redis.get(`${key}:timestamp`);
@@ -123,11 +141,22 @@ export class Store {
     return Store.map.get(key)?.timestamp ?? null;
   }
 
+  /**
+   * Check if a key exists
+   * @param key
+   * @returns
+   */
   static async has(key: string) {
     if (Store.redis) return !!(await Store.redis.exists(key));
     return Store.map.has(key);
   }
 
+  /**
+   * Creates/Increments a value and returns it
+   * @param key
+   * @param options
+   * @returns
+   */
   static async incr(
     key: string,
     options?: { incrBy?: number; expiresInMs?: number }
@@ -156,6 +185,10 @@ export class Store {
     return Count;
   }
 
+  /**
+   * Delete the keys from store
+   * @param keys
+   */
   static async del(...keys: string[]) {
     if (Store.redis)
       await Store.redis.del(...keys, ...keys.map((key) => `${key}:timestamp`));

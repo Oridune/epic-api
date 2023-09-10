@@ -26,7 +26,6 @@ export class Database {
 
   /**
    * This method is called when attempted to connect to the database
-   * @returns
    */
   static async connect() {
     // You can modify this function to connect to a different database...
@@ -43,7 +42,6 @@ export class Database {
 
   /**
    * Disconnect the database
-   * @returns
    */
   static async disconnect() {
     // You can modify this function to connect to a different database...
