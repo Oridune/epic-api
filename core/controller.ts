@@ -7,6 +7,7 @@ import {
   Versioned,
   Response,
   Store,
+  Env,
 } from "@Core/common/mod.ts";
 import { Database } from "../database.ts";
 
@@ -33,6 +34,7 @@ export class APIController extends BaseController {
   public home() {
     return () => {
       return Response.message("Hurry! The API is online!").data({
+        environment: Env.getType(),
         database: {
           connected: Database.isConnected(),
         },

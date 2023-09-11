@@ -1,4 +1,4 @@
-import { Loader, StoreType } from "@Core/common/mod.ts";
+import { EnvType, Loader, StoreType } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
 import e from "validator";
@@ -42,6 +42,7 @@ Deno.test({
           status: e.boolean(),
           messages: e.array(e.object({ message: e.string() })),
           data: e.object({
+            environment: e.in(Object.values(EnvType)),
             database: e.object({
               connected: e.boolean(),
             }),
@@ -71,6 +72,7 @@ Deno.test({
             status: e.boolean(),
             messages: e.array(e.object({ message: e.string() })),
             data: e.object({
+              environment: e.in(Object.values(EnvType)),
               database: e.object({
                 connected: e.boolean(),
               }),
