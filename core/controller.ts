@@ -8,7 +8,7 @@ import {
   Response,
 } from "@Core/common/mod.ts";
 import { Database } from "../database.ts";
-import { Store } from "../store.ts";
+import { Store, StoreType } from "../store.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -36,7 +36,8 @@ export class APIController extends BaseController {
         database: {
           connected: Database.isConnected(),
         },
-        redis: {
+        store: {
+          type: Store.type,
           connected: Store.isConnected(),
         },
       });

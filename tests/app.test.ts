@@ -3,6 +3,8 @@ import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
 import e from "validator";
 
+import { StoreType } from "../store.ts";
+
 Deno.test({
   name: "Basic Flow Test",
   async fn(t) {
@@ -45,7 +47,8 @@ Deno.test({
             database: e.object({
               connected: e.boolean(),
             }),
-            redis: e.object({
+            store: e.object({
+              type: e.in(Object.values(StoreType)),
               connected: e.boolean(),
             }),
           }),
@@ -73,7 +76,8 @@ Deno.test({
               database: e.object({
                 connected: e.boolean(),
               }),
-              redis: e.object({
+              store: e.object({
+                type: e.in(Object.values(StoreType)),
                 connected: e.boolean(),
               }),
             }),

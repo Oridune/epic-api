@@ -16,15 +16,6 @@ export class Database {
   }
 
   /**
-   * Get current database connection
-   * @returns
-   */
-  static get() {
-    if (!Database.connection) throw new Error(`Database not connected yet!`);
-    return Database.connection;
-  }
-
-  /**
    * This method is called when attempted to connect to the database
    */
   static async connect() {
@@ -47,7 +38,7 @@ export class Database {
     // You can modify this function to connect to a different database...
 
     // Disconnect the database
-    await Database.get().disconnect();
+    await Database.connection?.disconnect();
 
     // Delete connection object
     delete Database.connection;

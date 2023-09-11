@@ -1,9 +1,15 @@
 import { Env } from "@Core/common/env.ts";
 import { Redis } from "redis";
 
-const RedisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
+export enum StoreType {
+  MAP = "map",
+  REDIS = "redis",
+  DENO_KV = "deno-kv",
+}
 
 export class Store {
+  static type = Env.getSync("STORE_TYPE", true) ?? StoreType.MAP;
+  static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
   static map = new Map<
     string,
     {
@@ -12,7 +18,6 @@ export class Store {
       expiresOnMs?: number;
     }
   >();
-
   static redis?: Redis;
 
   private static serialize(value: unknown) {
@@ -37,28 +42,41 @@ export class Store {
    * @returns
    */
   static isConnected() {
-    return !!Store.redis && !["end", "close"].includes(Store.redis.status);
+    switch (Store.type) {
+      case StoreType.REDIS:
+        return !!Store.redis && !["end", "close"].includes(Store.redis.status);
+
+      default:
+        return false;
+    }
   }
 
   /**
    * This method is called when attempted to connect to the caching server
    */
   static async connect() {
-    if (!Store.redis && RedisConnectionString) {
-      const { hostname, port, pathname, username, password } = new URL(
-        RedisConnectionString.replace("redis://", "http://")
-      );
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis && Store.redisConnectionString) {
+          const { hostname, port, pathname, username, password } = new URL(
+            Store.redisConnectionString.replace("redis://", "http://")
+          );
 
-      Store.redis = new Redis({
-        lazyConnect: true,
-        host: hostname,
-        port,
-        db: parseInt(pathname.split("/").filter(Boolean)[0]),
-        username,
-        password,
-      });
+          Store.redis = new Redis({
+            lazyConnect: true,
+            host: hostname,
+            port,
+            db: parseInt(pathname.split("/").filter(Boolean)[0]),
+            username,
+            password,
+          });
 
-      await Store.redis.connect();
+          await Store.redis.connect();
+        }
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -66,8 +84,17 @@ export class Store {
    * Disconnect the caching server
    */
   static disconnect() {
-    if (Store.redis && Store.isConnected()) Store.redis.disconnect();
-    delete Store.redis;
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (Store.redis && Store.isConnected()) {
+          Store.redis.disconnect();
+          delete Store.redis;
+        }
+        break;
+
+      default:
+        break;
+    }
   }
 
   /**
@@ -81,29 +108,37 @@ export class Store {
     value: unknown,
     options?: { expiresInMs?: number }
   ) {
-    if (Store.redis) {
-      await Promise.all([
-        Store.redis.set(`${key}:timestamp`, Date.now()),
-        Store.redis.set(key, Store.serialize(value)),
-      ]);
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
 
-      if (typeof options?.expiresInMs === "number") {
-        const ExpiresIn = options.expiresInMs / 1000;
         await Promise.all([
-          Store.redis.expire(`${key}:timestamp`, ExpiresIn),
-          Store.redis.expire(key, ExpiresIn),
+          Store.redis.set(`${key}:timestamp`, Date.now()),
+          Store.redis.set(key, Store.serialize(value)),
         ]);
-      }
-    } else {
-      const CurrentTime = Date.now();
-      Store.map.set(key, {
-        value,
-        timestamp: CurrentTime,
-        expiresOnMs:
-          typeof options?.expiresInMs === "number"
-            ? CurrentTime + options?.expiresInMs
-            : undefined,
-      });
+
+        if (typeof options?.expiresInMs === "number") {
+          const ExpiresIn = options.expiresInMs / 1000;
+          await Promise.all([
+            Store.redis.expire(`${key}:timestamp`, ExpiresIn),
+            Store.redis.expire(key, ExpiresIn),
+          ]);
+        }
+        break;
+
+      default:
+        {
+          const CurrentTime = Date.now();
+          Store.map.set(key, {
+            value,
+            timestamp: CurrentTime,
+            expiresOnMs:
+              typeof options?.expiresInMs === "number"
+                ? CurrentTime + options?.expiresInMs
+                : undefined,
+          });
+        }
+        break;
     }
   }
 
@@ -113,18 +148,24 @@ export class Store {
    * @returns
    */
   static async get<T extends unknown>(key: string): Promise<T | null> {
-    if (Store.redis)
-      return (Store.deserialize(await Store.redis.get(key)) as T) ?? null;
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
 
-    const RawValue = Store.map.get(key);
+        return (Store.deserialize(await Store.redis.get(key)) as T) ?? null;
 
-    if (
-      typeof RawValue?.expiresOnMs === "number" &&
-      Date.now() >= RawValue.expiresOnMs
-    )
-      return null;
+      default: {
+        const RawValue = Store.map.get(key);
 
-    return (RawValue?.value as T) ?? null;
+        if (
+          typeof RawValue?.expiresOnMs === "number" &&
+          Date.now() >= RawValue.expiresOnMs
+        )
+          return null;
+
+        return (RawValue?.value as T) ?? null;
+      }
+    }
   }
 
   /**
@@ -133,12 +174,17 @@ export class Store {
    * @returns
    */
   static async timestamp(key: string) {
-    if (Store.redis) {
-      const RawValue = await Store.redis.get(`${key}:timestamp`);
-      return RawValue ? parseInt(RawValue) : null;
-    }
+    switch (Store.type) {
+      case StoreType.REDIS: {
+        if (!Store.redis) throw new Error(`No redis connection!`);
 
-    return Store.map.get(key)?.timestamp ?? null;
+        const RawValue = await Store.redis.get(`${key}:timestamp`);
+        return RawValue ? parseInt(RawValue) : null;
+      }
+
+      default:
+        return Store.map.get(key)?.timestamp ?? null;
+    }
   }
 
   /**
@@ -147,8 +193,15 @@ export class Store {
    * @returns
    */
   static async has(key: string) {
-    if (Store.redis) return !!(await Store.redis.exists(key));
-    return Store.map.has(key);
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
+
+        return !!(await Store.redis.exists(key));
+
+      default:
+        return Store.map.has(key);
+    }
   }
 
   /**
@@ -161,28 +214,34 @@ export class Store {
     key: string,
     options?: { incrBy?: number; expiresInMs?: number }
   ) {
-    if (Store.redis) {
-      const [, Count] = await Promise.all([
-        Store.redis.set(`${key}:timestamp`, Date.now()),
-        Store.redis.incrby(key, options?.incrBy ?? 1),
-      ]);
+    switch (Store.type) {
+      case StoreType.REDIS: {
+        if (!Store.redis) throw new Error(`No redis connection!`);
 
-      if (typeof options?.expiresInMs === "number") {
-        const ExpiresIn = options.expiresInMs / 1000;
-        await Promise.all([
-          Store.redis.expire(`${key}:timestamp`, ExpiresIn),
-          Store.redis.expire(key, ExpiresIn),
+        const [, Count] = await Promise.all([
+          Store.redis.set(`${key}:timestamp`, Date.now()),
+          Store.redis.incrby(key, options?.incrBy ?? 1),
         ]);
+
+        if (typeof options?.expiresInMs === "number") {
+          const ExpiresIn = options.expiresInMs / 1000;
+          await Promise.all([
+            Store.redis.expire(`${key}:timestamp`, ExpiresIn),
+            Store.redis.expire(key, ExpiresIn),
+          ]);
+        }
+
+        return Count;
       }
 
-      return Count;
+      default: {
+        const Count = ((await Store.get<number>(key)) ?? 0) + 1;
+
+        await Store.set(key, Count);
+
+        return Count;
+      }
     }
-
-    const Count = ((await Store.get<number>(key)) ?? 0) + 1;
-
-    await Store.set(key, Count);
-
-    return Count;
   }
 
   /**
@@ -190,8 +249,19 @@ export class Store {
    * @param keys
    */
   static async del(...keys: string[]) {
-    if (Store.redis)
-      await Store.redis.del(...keys, ...keys.map((key) => `${key}:timestamp`));
-    else for (const Key of keys) Store.map.delete(Key);
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
+
+        await Store.redis.del(
+          ...keys,
+          ...keys.map((key) => `${key}:timestamp`)
+        );
+        break;
+
+      default:
+        for (const Key of keys) Store.map.delete(Key);
+        break;
+    }
   }
 }
