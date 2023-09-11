@@ -1,9 +1,7 @@
-import { Loader } from "@Core/common/mod.ts";
+import { Loader, StoreType } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
 import e from "validator";
-
-import { StoreType } from "../store.ts";
 
 Deno.test({
   name: "Basic Flow Test",

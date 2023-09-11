@@ -1,4 +1,4 @@
-import { Env } from "@Core/common/env.ts";
+import { Env } from "./env.ts";
 import { Redis } from "redis";
 
 export enum StoreType {
@@ -7,18 +7,22 @@ export enum StoreType {
   DENO_KV = "deno-kv",
 }
 
+export interface StoreItem {
+  value: unknown;
+  timestamp: number;
+  expiresOnMs?: number;
+}
+
 export class Store {
   static type = Env.getSync("STORE_TYPE", true) ?? StoreType.MAP;
   static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
-  static map = new Map<
-    string,
-    {
-      value: unknown;
-      timestamp: number;
-      expiresOnMs?: number;
-    }
-  >();
+  static denoKvConnectionString = Env.getSync(
+    "DENO_KV_CONNECTION_STRING",
+    true
+  );
+  static map = new Map<string, StoreItem>();
   static redis?: Redis;
+  static denoKv?: Deno.Kv;
 
   private static serialize(value: unknown) {
     return JSON.stringify({ __value: value });
@@ -45,6 +49,9 @@ export class Store {
     switch (Store.type) {
       case StoreType.REDIS:
         return !!Store.redis && !["end", "close"].includes(Store.redis.status);
+
+      case StoreType.DENO_KV:
+        return Store.denoKv instanceof Deno.Kv;
 
       default:
         return false;
@@ -75,6 +82,11 @@ export class Store {
         }
         break;
 
+      case StoreType.DENO_KV:
+        if (!(Store.denoKv instanceof Deno.Kv))
+          Store.denoKv = await Deno.openKv(Store.denoKvConnectionString);
+        break;
+
       default:
         break;
     }
@@ -89,6 +101,13 @@ export class Store {
         if (Store.redis && Store.isConnected()) {
           Store.redis.disconnect();
           delete Store.redis;
+        }
+        break;
+
+      case StoreType.DENO_KV:
+        if (Store.denoKv) {
+          Store.denoKv.close();
+          delete Store.denoKv;
         }
         break;
 
@@ -126,6 +145,22 @@ export class Store {
         }
         break;
 
+      case StoreType.DENO_KV:
+        {
+          if (!Store.denoKv) throw new Error(`Deno Kv is not connected!`);
+
+          const CurrentTime = Date.now();
+          await Store.denoKv.set(["store", key], {
+            value,
+            timestamp: CurrentTime,
+            expiresOnMs:
+              typeof options?.expiresInMs === "number"
+                ? CurrentTime + options?.expiresInMs
+                : undefined,
+          });
+        }
+        break;
+
       default:
         {
           const CurrentTime = Date.now();
@@ -154,17 +189,79 @@ export class Store {
 
         return (Store.deserialize(await Store.redis.get(key)) as T) ?? null;
 
+      case StoreType.DENO_KV: {
+        if (!Store.denoKv) throw new Error(`Deno Kv is not connected!`);
+
+        const RawValue = (await Store.denoKv.get<StoreItem>(["store", key]))
+          .value;
+
+        if (
+          typeof RawValue?.expiresOnMs === "number" &&
+          Date.now() >= RawValue.expiresOnMs
+        ) {
+          Store.denoKv.delete(["store", key]);
+          return null;
+        }
+
+        return (RawValue?.value as T) ?? null;
+      }
+
       default: {
         const RawValue = Store.map.get(key);
 
         if (
           typeof RawValue?.expiresOnMs === "number" &&
           Date.now() >= RawValue.expiresOnMs
-        )
+        ) {
+          Store.map.delete(key);
           return null;
+        }
 
         return (RawValue?.value as T) ?? null;
       }
+    }
+  }
+
+  /**
+   * Delete the keys from store
+   * @param keys
+   */
+  static async del(...keys: string[]) {
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
+
+        await Store.redis.del(
+          ...keys,
+          ...keys.map((key) => `${key}:timestamp`)
+        );
+        break;
+
+      default:
+        for (const Key of keys) Store.map.delete(Key);
+        break;
+    }
+  }
+
+  /**
+   * Check if a key exists
+   * @param key
+   * @returns
+   */
+  static async has(key: string) {
+    switch (Store.type) {
+      case StoreType.REDIS:
+        if (!Store.redis) throw new Error(`No redis connection!`);
+
+        return !!(await Store.redis.exists(key));
+
+      case StoreType.DENO_KV:
+        if (!Store.denoKv) throw new Error(`Deno Kv is not connected!`);
+
+        return !!(await Store.get(key));
+
+      default:
+        return Store.map.has(key);
     }
   }
 
@@ -182,25 +279,16 @@ export class Store {
         return RawValue ? parseInt(RawValue) : null;
       }
 
+      case StoreType.DENO_KV: {
+        if (!Store.denoKv) throw new Error(`Deno Kv is not connected!`);
+
+        const RawValue = (await Store.denoKv.get<StoreItem>(["store", key]))
+          .value;
+        return RawValue?.timestamp ?? null;
+      }
+
       default:
         return Store.map.get(key)?.timestamp ?? null;
-    }
-  }
-
-  /**
-   * Check if a key exists
-   * @param key
-   * @returns
-   */
-  static async has(key: string) {
-    switch (Store.type) {
-      case StoreType.REDIS:
-        if (!Store.redis) throw new Error(`No redis connection!`);
-
-        return !!(await Store.redis.exists(key));
-
-      default:
-        return Store.map.has(key);
     }
   }
 
@@ -237,31 +325,10 @@ export class Store {
       default: {
         const Count = ((await Store.get<number>(key)) ?? 0) + 1;
 
-        await Store.set(key, Count);
+        await Store.set(key, Count, options);
 
         return Count;
       }
-    }
-  }
-
-  /**
-   * Delete the keys from store
-   * @param keys
-   */
-  static async del(...keys: string[]) {
-    switch (Store.type) {
-      case StoreType.REDIS:
-        if (!Store.redis) throw new Error(`No redis connection!`);
-
-        await Store.redis.del(
-          ...keys,
-          ...keys.map((key) => `${key}:timestamp`)
-        );
-        break;
-
-      default:
-        for (const Key of keys) Store.map.delete(Key);
-        break;
     }
   }
 }

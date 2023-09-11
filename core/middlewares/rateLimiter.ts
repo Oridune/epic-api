@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { Context, Status } from "oak";
-import { Env, EnvType } from "@Core/common/mod.ts";
-import { Store } from "../../store.ts";
+import { Env, EnvType, Store } from "@Core/common/mod.ts";
 
 export type RateLimitOptions = {
   onRateLimit?: (

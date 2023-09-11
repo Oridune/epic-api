@@ -6,9 +6,9 @@ import {
   Get,
   Versioned,
   Response,
+  Store,
 } from "@Core/common/mod.ts";
 import { Database } from "../database.ts";
-import { Store, StoreType } from "../store.ts";
 
 @Controller("/api/", {
   name: "api",
