@@ -15,14 +15,31 @@ export type TransactionCallback<State> = (
   next: NextFunction
 ) => Promise<void> | void;
 
+/**
+ * Transaction class lets you execute multiple transactions scattered in the project as a single transaction.
+ * 
+ * If one of the transactions failed, other transactions will also fail.
+
+ * For example: If a user deletion is triggered, and somewhere in the code there is a logic that need be successfully executed if a user is deleted, this class makes sure that the user is not deleted until that code is executed successfully.
+ */
 export class Transaction {
   protected State = TransactionExecutionState.WAITING;
   protected Callbacks: Array<TransactionCallback<any>> = [];
 
+  /**
+   * Add a transaction callback to the transaction queue
+   * @param callback
+   * @returns
+   */
   static add<State extends object>(callback: TransactionCallback<State>) {
     return new Transaction().add<State>(callback);
   }
 
+  /**
+   * Add a transaction callback to the transaction queue
+   * @param callback
+   * @returns
+   */
   public add<State extends object>(callback: TransactionCallback<State>) {
     if (this.State === TransactionExecutionState.EXECUTING)
       throw new Error(
@@ -34,6 +51,10 @@ export class Transaction {
     return this;
   }
 
+  /**
+   * Execute all queued transactions
+   * @returns
+   */
   public async exec() {
     if (this.State === TransactionExecutionState.EXECUTING) {
       console.warn("Transaction is already being executed!");

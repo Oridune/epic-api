@@ -14,11 +14,26 @@ export type TEventCallback<T> = (
   event: CustomEvent<T>
 ) => void;
 
+/**
+ * Events class is specifically created to reduce the complexity of event system in javascript and provide more developer friendly experience.
+ */
 export class Events {
+  /**
+   * Creates the identifier for an event on a specific channel
+   * @param channel Target channel
+   * @param event Type of the event
+   * @returns
+   */
   static createEventId(channel: EventChannel, event: string) {
     return `epic-api-${channel}-${event}`;
   }
 
+  /**
+   * Triggers api request related events specifically
+   * @param event Type of event to be triggered
+   * @param detail
+   * @returns
+   */
   static dispatchRequestEvent(event: string, detail?: any) {
     return dispatchEvent(
       new CustomEvent(Events.createEventId(EventChannel.REQUEST, event), {
@@ -27,6 +42,12 @@ export class Events {
     );
   }
 
+  /**
+   * Dispatch a custom event
+   * @param event Type of event to be triggered
+   * @param eventInitDict Custom event options
+   * @returns
+   */
   static dispatch(event: string, eventInitDict?: CustomEventInit<unknown>) {
     return dispatchEvent(
       new CustomEvent(
@@ -36,35 +57,54 @@ export class Events {
     );
   }
 
+  /**
+   * Listen system event(s) on different channels
+   * @param channel Specify the channel to listen on
+   * @param event Type of event(s) to listen
+   * @param callback This callback is called everytime the event(s) is/are triggered.
+   * @param options
+   * @returns
+   */
   static listen<T>(
     channel: EventChannel,
-    event: string,
+    event: string | string[],
     callback: TEventCallback<T>,
     options?: boolean | AddEventListenerOptions
   ) {
     const Listener: IListener = {
-      remove: () => Events.remove(channel, event, callback, options),
+      remove: (opts) => Events.remove(channel, event, callback, opts),
     };
 
-    addEventListener(
-      Events.createEventId(channel, event),
-      callback.bind(Listener) as () => void,
-      options
+    (event instanceof Array ? event : [event]).map((ev) =>
+      addEventListener(
+        Events.createEventId(channel, ev),
+        callback.bind(Listener) as () => void,
+        options
+      )
     );
 
     return Listener;
   }
 
+  /**
+   * Removes any event listeners that are registered
+   * @param channel From which channel to be removed
+   * @param event Type of event(s) to be removed
+   * @param callback Provide the reference to the callback of the removable event(s)
+   * @param options
+   */
   static remove<T>(
     channel: EventChannel,
-    event: string,
+    event: string | string[],
     callback: TEventCallback<T>,
     options?: boolean | EventListenerOptions
   ) {
-    return removeEventListener(
-      Events.createEventId(channel, event),
-      callback as () => void,
-      options
+    (event instanceof Array ? event : [event]).map((ev) =>
+      removeEventListener(
+        Events.createEventId(channel, ev),
+        callback as () => void,
+        options
+      )
     );
   }
 }
