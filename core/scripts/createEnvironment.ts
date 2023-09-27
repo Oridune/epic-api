@@ -54,7 +54,11 @@ export const createEnvironment = async (options: {
       )
         return;
 
-      const Content = Object.keys(Options.variables).reduce(
+      const Content = Object.keys({
+        port: 3742,
+        envType: Type,
+        ...Options.variables,
+      }).reduce(
         (content, key) =>
           ["string", "number"].includes(typeof Options.variables[key])
             ? content.replace(
