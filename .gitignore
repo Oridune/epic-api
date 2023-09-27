@@ -77,5 +77,6 @@ env/
 _temp/
 .coverage/
 .temp/
+.terraform/
 env/
 deno.lock
