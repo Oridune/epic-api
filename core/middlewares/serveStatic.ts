@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { send, Context } from "oak";
+import { send, Context, Status } from "oak";
 import { join } from "path";
 
 export const serveStatic = (prefix: string, path: string) => {
@@ -20,12 +20,21 @@ export const serveStatic = (prefix: string, path: string) => {
     const Prefix = new RegExp(`^/${prefix}/?`);
 
     if (Prefix.test(ctx.request.url.pathname)) {
-      const SendOptions = { root: join(path, "www"), index: "index.html" };
-      await send(
-        ctx,
-        ctx.request.url.pathname.replace(Prefix, "/"),
-        SendOptions
-      ).catch(() => send(ctx, "/", SendOptions));
+      const IndexFile = "index.html";
+      const SendOptions = { root: join(path, "www"), index: IndexFile };
+      const FilePath = ctx.request.url.pathname.replace(Prefix, "/");
+
+      await send(ctx, FilePath, SendOptions).catch(() =>
+        send(ctx, "/", SendOptions).catch(() => {
+          const IsNotFound = !["/", IndexFile].includes(FilePath);
+          ctx.throw(
+            IsNotFound ? Status.NotFound : Status.Forbidden,
+            IsNotFound
+              ? `File not found! Invalid path '${FilePath}'.`
+              : undefined
+          );
+        })
+      );
     } else await next();
   };
 };
