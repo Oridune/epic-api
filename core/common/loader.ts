@@ -16,16 +16,18 @@ export class Sequence {
     await Deno.writeTextFile(this.Path, JSON.stringify(this.toJSON(), null, 2));
   }
 
-  constructor(type: string, path: string, data: ISequence) {
+  constructor(type: string, path: string, data: ISequence | string[]) {
     this.Type = type;
     this.Path = path;
     this.Includes = new Set(
-      data.sequence instanceof Array
+      data instanceof Array
+        ? data
+        : data.sequence instanceof Array
         ? data.sequence.filter((_) => typeof _ === "string")
         : []
     );
     this.Excludes = new Set(
-      data.excludes instanceof Array
+      !(data instanceof Array) && data.excludes instanceof Array
         ? data.excludes.filter((_) => typeof _ === "string")
         : []
     );
