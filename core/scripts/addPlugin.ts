@@ -189,6 +189,7 @@ export const addPlugin = async (options: {
               ".git",
               "core",
               "env",
+              "terraform",
               "database.ts",
               "serve.ts",
             ])
