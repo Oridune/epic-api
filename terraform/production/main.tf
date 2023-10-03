@@ -7,7 +7,7 @@ resource "aws_lightsail_container_service" "epic-api-production" {
 resource "aws_lightsail_container_service_deployment_version" "epic-api-production_deployment" {
   container {
     container_name = "epic-api-production"
-    image          = "oridune/epic-api:v1.0.0"
+    image          = var.container_image
 
     environment = local.dot_env
 
