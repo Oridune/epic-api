@@ -70,7 +70,10 @@ export type TRequestHandlerReturn =
   | Versioned
   | Promise<TRequestHandler | TRequestHandlerObject | Versioned>;
 
-export type TRequestHandlerFactory = (route: IRoute) => TRequestHandlerReturn;
+export type TRequestHandlerFactory = (
+  route: IRoute,
+  ...params: any
+) => TRequestHandlerReturn;
 
 export type TBuildRequestHandlerResult = {
   version: string;
