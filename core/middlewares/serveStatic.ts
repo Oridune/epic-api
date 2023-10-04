@@ -1,19 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
 import { send, Context, Status } from "oak";
-import { join } from "path";
 
-export const serveStatic = (prefix: string, path: string) => {
-  console.info(
-    "Static:",
-    "\t",
-    prefix.toUpperCase(),
-    "\t\t",
-    `/${prefix}/`,
-    "\t\t",
-    path
-  );
-
-  return async (
+export const serveStatic =
+  (prefix: string, root: string) =>
+  async (
     ctx: Context<Record<string, any>, Record<string, any>>,
     next: () => Promise<unknown>
   ) => {
@@ -21,7 +11,7 @@ export const serveStatic = (prefix: string, path: string) => {
 
     if (Prefix.test(ctx.request.url.pathname)) {
       const IndexFile = "index.html";
-      const SendOptions = { root: join(path, "www"), index: IndexFile };
+      const SendOptions = { root, index: IndexFile };
       const FilePath = ctx.request.url.pathname.replace(Prefix, "/");
 
       await send(ctx, FilePath, SendOptions).catch(() =>
@@ -37,4 +27,3 @@ export const serveStatic = (prefix: string, path: string) => {
       );
     } else await next();
   };
-};

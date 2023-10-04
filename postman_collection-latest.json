@@ -8,25 +8,6 @@
       "name": "api",
       "item": [
         {
-          "name": "home",
-          "request": {
-            "url": {
-              "raw": "{{host}}/api",
-              "host": [
-                "{{host}}"
-              ],
-              "path": [
-                "api"
-              ],
-              "query": [],
-              "variable": []
-            },
-            "method": "GET",
-            "header": []
-          },
-          "response": []
-        },
-        {
           "name": "test",
           "request": {
             "url": {
@@ -37,6 +18,25 @@
               "path": [
                 "api",
                 "test"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "home",
+          "request": {
+            "url": {
+              "raw": "{{host}}/api",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api"
               ],
               "query": [],
               "variable": []

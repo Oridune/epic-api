@@ -30,7 +30,7 @@ export const Route =
   // deno-lint-ignore no-explicit-any
   (target: any, key: string, desc: IRouteHandlerDescriptor) => {
     if (!options?.disabled)
-      if (typeof target === "object") {
+      if (["object", "function"].includes(typeof target)) {
         // Resolve Prototype
         if (target.toString().substring(0, 5) !== "class")
           target = target.constructor;
@@ -102,7 +102,10 @@ export const Route =
 
           ControllerConstructor.setRoutes(ControllerRoutes);
         }
-      } else throw new Error(`Invalid route target!`);
+      } else
+        throw new Error(
+          `Invalid route decorator target ${target} of type ${typeof target}!`
+        );
   };
 
 // Available Request Method Decorators

@@ -16,6 +16,7 @@ import {
   RouterContext,
   Status,
 } from "oak";
+import { join } from "path";
 import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
@@ -42,13 +43,36 @@ export const prepareAppServer = async () => {
   );
   App.use(requestId());
 
+  const UITableData: Array<{
+    Type: string;
+    UI: string;
+    Endpoint: string;
+    Root: string;
+  }> = [];
+
+  const ServeStatic = (details: { name: string; path: string }) => {
+    const Root = join(details.path, "www");
+
+    UITableData.push({
+      Type: "Static",
+      UI: details.name.toUpperCase(),
+      Endpoint: `/${details.name}/`,
+      Root,
+    });
+
+    App.use(serveStatic(details.name, Root));
+  };
+
   for (const [, SubLoader] of Loader.getLoaders() ?? [])
     for (const UI of SubLoader.tree.get("public")?.sequence.listDetailed() ??
       [])
-      if (UI.enabled) App.use(serveStatic(UI.name, UI.path));
+      if (UI.enabled) ServeStatic(UI);
 
   for (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
-    if (UI.enabled) App.use(serveStatic(UI.name, UI.path));
+    if (UI.enabled) ServeStatic(UI);
+
+  // Log UI list
+  if (UITableData.length) console.table(UITableData);
 
   for (const [, SubLoader] of Loader.getLoaders() ?? [])
     for (const [, Middleware] of SubLoader.tree.get("middlewares")?.modules ??
@@ -75,14 +99,20 @@ export const prepareAppServer = async () => {
       if (typeof Hook.object.default === "object")
         Hooks.push(Hook.object.default);
 
+    const RoutesTableData: Array<{
+      Type: string;
+      Method: string;
+      Permission: string;
+      Endpoint: string;
+    }> = [];
+
     for (const Route of routes) {
-      console.info(
-        "Endpoint:",
-        "\t",
-        Route.options.method.toUpperCase(),
-        "\t\t",
-        Route.endpoint
-      );
+      RoutesTableData.push({
+        Type: "Endpoint",
+        Method: Route.options.method.toUpperCase(),
+        Permission: `${Route.scope}.${Route.options.name}`,
+        Endpoint: Route.endpoint,
+      });
 
       const ControllerOptions = Route.options.controller.getOptions();
       const Middlewares = [
@@ -148,6 +178,9 @@ export const prepareAppServer = async () => {
         }
       );
     }
+
+    // Log routes list
+    if (RoutesTableData.length) console.table(RoutesTableData);
   });
 
   App.use(Router.routes());

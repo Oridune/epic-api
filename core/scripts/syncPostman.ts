@@ -134,8 +134,21 @@ export const syncPostman = async (options: {
       };
 
       const RequestGroups: NestedRequests = {};
+      const RoutesTableData: Array<{
+        Type: string;
+        Method: string;
+        Permission: string;
+        Endpoint: string;
+      }> = [];
 
       for (const Route of routes) {
+        RoutesTableData.push({
+          Type: "Endpoint",
+          Method: Route.options.method.toUpperCase(),
+          Permission: `${Route.scope}.${Route.options.name}`,
+          Endpoint: Route.endpoint,
+        });
+
         const Groups = Route.group.split("/").filter(Boolean);
 
         const NormalizeRequest = (
@@ -274,6 +287,9 @@ export const syncPostman = async (options: {
           );
         }
       }
+
+      // Log routes list
+      if (RoutesTableData) console.table(RoutesTableData);
 
       const PushRequests = (
         requestGroups: NestedRequests
