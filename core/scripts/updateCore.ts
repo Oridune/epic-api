@@ -134,12 +134,16 @@ export const updateCore = async (options: {
           }
 
       // Create/Update Files
-      for (const Glob of ["core/**/*", "templates/**/*", "serve.ts"].map(
-        (pattern) =>
-          expandGlob(pattern, {
-            root: TempPath,
-            globstar: true,
-          })
+      for (const Glob of [
+        "core/**/*",
+        "docs/**/*",
+        "templates/**/*",
+        "serve.ts",
+      ].map((pattern) =>
+        expandGlob(pattern, {
+          root: TempPath,
+          globstar: true,
+        })
       ))
         for await (const Entry of Glob)
           if (!Entry.isDirectory) {
