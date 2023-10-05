@@ -188,6 +188,7 @@ export const addPlugin = async (options: {
             for (const EntryName of [
               ".git",
               "core",
+              "docs",
               "env",
               "terraform",
               "database.ts",
