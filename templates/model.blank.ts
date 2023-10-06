@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 
-export interface I$_namePascal extends mongoose.Document {
+export interface I$_namePascal {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type I$_namePascalDocument = I$_namePascal & mongoose.Document;
 
 export const $_namePascalSchema = new mongoose.Schema<I$_namePascal>(
   {},
