@@ -24,10 +24,10 @@ resource "aws_lightsail_container_service_deployment_version" "epic-api-producti
 
     health_check {
       healthy_threshold   = 2
-      unhealthy_threshold = 2
-      timeout_seconds     = 2
-      interval_seconds    = 5
-      path                = "/"
+      unhealthy_threshold = 3
+      timeout_seconds     = 15
+      interval_seconds    = 30
+      path                = "/api/"
       success_codes       = "200-499"
     }
   }
