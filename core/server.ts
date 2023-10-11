@@ -57,7 +57,7 @@ export const prepareAppServer = async () => {
       Type: "Static",
       UI: details.name.toUpperCase(),
       Endpoint: `/${details.name}/`,
-      Root,
+      Root: Root.replace(Deno.cwd(), "").replace(/\\/g, "/"),
     });
 
     App.use(serveStatic(details.name, Root));
