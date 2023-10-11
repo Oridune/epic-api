@@ -56,4 +56,32 @@ export class Database {
     // Delete connection object
     delete Database.connection;
   }
+
+  /**
+   * Helper method to execute database transactions
+   * @param callback Execute your queries in this callback
+   * @param session Optionally pass an external (parent) session
+   * @returns
+   */
+  static async transaction<T extends Promise<unknown>>(
+    callback: (session?: mongoose.mongo.ClientSession) => T,
+    session?: mongoose.mongo.ClientSession
+  ) {
+    const Session = session ?? (await mongoose.startSession());
+
+    try {
+      Session.startTransaction();
+
+      const Results = await callback(Session);
+
+      await Session.commitTransaction();
+
+      return Results;
+    } catch (error) {
+      await Session.abortTransaction();
+      throw error;
+    } finally {
+      await Session.endSession();
+    }
+  }
 }
