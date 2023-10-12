@@ -64,7 +64,7 @@ export class Database {
    * @returns
    */
   static async transaction<T extends Promise<unknown>>(
-    callback: (session?: mongoose.mongo.ClientSession) => T,
+    callback: (session: mongoose.mongo.ClientSession) => T,
     session?: mongoose.mongo.ClientSession
   ) {
     const Session = session ?? (await mongoose.startSession());
