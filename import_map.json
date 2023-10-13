@@ -1,5 +1,6 @@
 {
   "imports": {
+    "@Database": "./database.ts",
     "@Core/": "./core/",
     "@Controllers/": "./controllers/",
     "@Models/": "./models/",
