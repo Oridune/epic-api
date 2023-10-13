@@ -9,7 +9,7 @@ import {
   Store,
   Env,
 } from "@Core/common/mod.ts";
-import { Database } from "../database.ts";
+import { Database } from "@Database";
 
 @Controller("/api/", {
   name: "api",

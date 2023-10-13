@@ -9,7 +9,7 @@ import {
   Store,
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
-import { Database } from "../database.ts";
+import { Database } from "@Database";
 import {
   Application as AppServer,
   Router as AppRouter,
