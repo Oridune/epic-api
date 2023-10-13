@@ -12,7 +12,7 @@ export class Database {
    * @returns
    */
   static isConnected() {
-    return Database.connection?.connection.readyState === 1;
+    return this.connection?.connection.readyState === 1;
   }
 
   /**
@@ -27,11 +27,11 @@ export class Database {
       "mongodb://localhost:27017/epic-api";
 
     // Assign the database connection object
-    Database.connection = await mongoose.connect(ConnectionString);
+    this.connection = await mongoose.connect(ConnectionString);
 
     if (!Env.is(EnvType.PRODUCTION)) {
       // Enable mongoose logs in development
-      Database.connection.set("debug", true);
+      this.connection.set("debug", true);
 
       // Parse Connection String
       const ParsedConnectionString = new URL(ConnectionString);
@@ -51,10 +51,10 @@ export class Database {
     // You can modify this function to connect to a different database...
 
     // Disconnect the database
-    await Database.connection?.disconnect();
+    await this.connection?.disconnect();
 
     // Delete connection object
-    delete Database.connection;
+    delete this.connection;
   }
 
   /**
