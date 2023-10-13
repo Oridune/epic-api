@@ -67,6 +67,8 @@ export class Database {
     callback: (session: mongoose.mongo.ClientSession) => T,
     session?: mongoose.mongo.ClientSession
   ) {
+    if (session) return callback(session);
+
     const Session = session ?? (await mongoose.startSession());
 
     try {
