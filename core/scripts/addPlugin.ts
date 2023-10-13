@@ -62,7 +62,7 @@ export const addPluginToImportMap = async (
   for (const Key of PluginImportKeys.filter(
     (key) => !ImportKeys.includes(key) || /@(-?\w+\/?)+/.test(key)
   ))
-    if (!/^@(Plugin|Core)\/.*/.test(Key)) {
+    if (!/^@(Database|Plugin|Core)\/.*/.test(Key)) {
       const TempPath = PluginImportMap.imports?.[Key];
 
       let ResolvedPath = TempPath;
