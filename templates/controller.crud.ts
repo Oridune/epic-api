@@ -196,7 +196,7 @@ export default class $_namePascalController extends BaseController {
           $_namePascalListQuery.limit(Query.limit);
 
         return Response.data({
-          count: Query.includeTotalCount
+          totalCount: Query.includeTotalCount
             ? //? Make sure to pass any limiting conditions for count if needed.
               await $_namePascalModel.count()
             : undefined,
