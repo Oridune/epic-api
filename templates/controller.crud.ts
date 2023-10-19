@@ -108,11 +108,15 @@ export default class $_namePascalController extends BaseController {
           { name: `${route.scope}.body` }
         );
 
-        return Response.data(
-          await $_namePascalModel.findByIdAndUpdate(Params.id, Body, {
-            new: true,
-          })
+        const $_namePascalUpdated = await $_namePascalModel.findByIdAndUpdate(
+          Params.id,
+          Body,
+          { new: true }
         );
+
+        if (!$_namePascalUpdated) throw e.error(`Updating failed!`);
+
+        return Response.data($_namePascalUpdated);
       },
     });
   }
