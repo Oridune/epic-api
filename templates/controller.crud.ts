@@ -114,7 +114,11 @@ export default class $_namePascalController extends BaseController {
           { new: true }
         );
 
-        if (!$_namePascalUpdated) throw e.error(`Updating failed!`);
+        if (!$_namePascalUpdated)
+          ctx.router.throw(
+            Status.NotFound,
+            "Updating failed! Target not found."
+          );
 
         return Response.data($_namePascalUpdated);
       },
