@@ -58,9 +58,9 @@ export default class $_namePascalController extends BaseController {
           { name: `${route.scope}.body` }
         );
 
-        const $_namePascal = await new $_namePascalModel(Body).save();
-
-        return Response.statusCode(Status.Created).data($_namePascal);
+        return Response.statusCode(Status.Created).data(
+          await new $_namePascalModel(Body).save()
+        );
       },
     });
   }
@@ -141,6 +141,7 @@ export default class $_namePascalController extends BaseController {
             e.record(e.number({ cast: true }).min(-1).max(1), { cast: true })
           )
           .default({ _id: -1 }),
+        includeTotalCount: e.optional(e.boolean({ cast: true })),
       },
       { allowUnexpectedProps: true }
     );
@@ -195,6 +196,10 @@ export default class $_namePascalController extends BaseController {
           $_namePascalListQuery.limit(Query.limit);
 
         return Response.data({
+          count: Query.includeTotalCount
+            ? //? Make sure to pass any limiting conditions for count if needed.
+              await $_namePascalModel.count()
+            : undefined,
           results: await $_namePascalListQuery.sort(Query.sort as any),
         });
       },
