@@ -145,11 +145,13 @@ export default class $_namePascalController extends BaseController {
             e.record(e.number({ cast: true }).min(-1).max(1), { cast: true })
           )
           .default({ _id: -1 }),
-        includeTotalCount: e
-          .optional(e.boolean({ cast: true }))
-          .describe(
-            "If `true` is passed, the system will return a total items count for pagination purpose."
-          ),
+        includeTotalCount: e.optional(
+          e
+            .boolean({ cast: true })
+            .describe(
+              "If `true` is passed, the system will return a total items count for pagination purpose."
+            )
+        ),
       },
       { allowUnexpectedProps: true }
     );

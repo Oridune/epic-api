@@ -91,6 +91,7 @@ export interface PostmanCollectionInterface {
   info: {
     _postman_id?: string;
     name: string;
+    description?: string;
     schema: string;
   };
   item: Array<IPostmanCollection>;
@@ -100,6 +101,7 @@ export const syncPostman = async (options: {
   key?: string;
   collectionId?: string;
   name?: string;
+  description?: string;
   version?: string;
 }) => {
   try {
@@ -108,6 +110,7 @@ export const syncPostman = async (options: {
         key: e.optional(e.string()),
         collectionId: e.optional(e.string()),
         name: e.optional(e.string()),
+        description: e.optional(e.string()),
         version: e.optional(e.string()).default("latest"),
       })
       .validate(options);
@@ -122,6 +125,7 @@ export const syncPostman = async (options: {
     const PostmanCollectionObject: PostmanCollectionInterface = {
       info: {
         name: Options.name ?? Config.name ?? Options.collectionId,
+        description: Options.description ?? Config.description,
         schema:
           "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       },
@@ -216,13 +220,13 @@ export const syncPostman = async (options: {
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.query?.schema?.properties?.[key]
-                        .description,
                       RequestHandler.postman?.query?.schema?.requiredProperties?.includes(
                         key
                       )
                         ? undefined
                         : "(Optional)",
+                      RequestHandler.postman?.query?.schema?.properties?.[key]
+                        .description,
                     ]
                       .filter(Boolean)
                       .join(" "),
@@ -233,13 +237,13 @@ export const syncPostman = async (options: {
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.params?.schema?.properties?.[key]
-                        .description,
                       RequestHandler.postman?.params?.schema?.requiredProperties?.includes(
                         key
                       )
                         ? undefined
                         : "(Optional)",
+                      RequestHandler.postman?.params?.schema?.properties?.[key]
+                        .description,
                     ]
                       .filter(Boolean)
                       .join(" "),
@@ -254,13 +258,13 @@ export const syncPostman = async (options: {
                   value,
                   type: "text",
                   description: [
-                    RequestHandler.postman?.headers?.schema?.properties?.[key]
-                      .description,
                     RequestHandler.postman?.headers?.schema?.requiredProperties?.includes(
                       key
                     )
                       ? undefined
                       : "(Optional)",
+                    RequestHandler.postman?.headers?.schema?.properties?.[key]
+                      .description,
                   ]
                     .filter(Boolean)
                     .join(" "),
@@ -347,7 +351,8 @@ export const syncPostman = async (options: {
 };
 
 if (import.meta.main) {
-  const { key, k, collectionId, c, name, n, version, v } = parse(Deno.args);
+  const { key, k, collectionId, c, name, d, description, n, version, v } =
+    parse(Deno.args);
 
   await Loader.load({ includeTypes: ["controllers", "plugins"] });
 
@@ -355,6 +360,7 @@ if (import.meta.main) {
     key: key ?? k,
     collectionId: collectionId ?? c,
     name: name ?? n,
+    description: description ?? d,
     version: version ?? v,
   });
 }
