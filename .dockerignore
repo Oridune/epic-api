@@ -79,3 +79,4 @@ _temp/
 .temp/
 .terraform/
 terraform/
+*.tfvars

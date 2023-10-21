@@ -78,5 +78,6 @@ _temp/
 .coverage/
 .temp/
 .terraform/
+*.tfvars
 env/
 deno.lock
