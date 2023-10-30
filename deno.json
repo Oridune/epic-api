@@ -1,4 +1,5 @@
 {
+  "template": "default-v1",
   "id": "epic-api",
   "name": "Epic API",
   "description": "A powerful API built with the Epic API Framework.",

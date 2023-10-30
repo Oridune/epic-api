@@ -6,9 +6,18 @@ import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
 
+export const getDenoConfig = async () => {
+  const MainConfigPath = join(Deno.cwd(), "deno.json");
+
+  return (
+    await import(`file:///${MainConfigPath}`, {
+      assert: { type: "json" },
+    })
+  ).default;
+};
+
 export const mergeConfig = async (dir: string) => {
   const TempConfigPath = join(dir, "deno.json");
-  const MainConfigPath = join(Deno.cwd(), "deno.json");
 
   const TempConfig = (
     await import(`file:///${TempConfigPath}`, {
@@ -16,11 +25,7 @@ export const mergeConfig = async (dir: string) => {
     })
   ).default;
 
-  const MainConfig = (
-    await import(`file:///${MainConfigPath}`, {
-      assert: { type: "json" },
-    })
-  ).default;
+  const MainConfig = await getDenoConfig();
 
   const ResultConfig = deepMerge(MainConfig, TempConfig);
 
@@ -35,7 +40,7 @@ export const mergeConfig = async (dir: string) => {
   delete ResultConfig.donate;
 
   await Deno.writeTextFile(
-    MainConfigPath,
+    join(Deno.cwd(), "deno.json"),
     JSON.stringify(
       {
         ...MainConfig,
@@ -70,13 +75,17 @@ export const mergeImports = async (dir: string) => {
 };
 
 export const updateCore = async (options: {
-  branch?: string;
+  template?: string;
   prompt?: boolean;
 }) => {
   try {
     const Options = await e
       .object(
-        { branch: e.optional(e.string()).default("master") },
+        {
+          template: e
+            .optional(e.string())
+            .default(async () => (await getDenoConfig()).template ?? "master"),
+        },
         { allowUnexpectedProps: true }
       )
       .validate(options);
@@ -94,13 +103,14 @@ export const updateCore = async (options: {
     if (await exists(TempPath))
       await Deno.remove(TempPath, { recursive: true });
 
+    // deno-lint-ignore no-deprecated-deno-api
     const Process = Deno.run({
       cmd: [
         "git",
         "clone",
         "--single-branch",
         "--branch",
-        Options.branch,
+        Options.template,
         GitRepoUrl.toString(),
         TempPath,
       ],
@@ -184,10 +194,10 @@ export const updateCore = async (options: {
 };
 
 if (import.meta.main) {
-  const { branch, b } = parse(Deno.args);
+  const { template, t } = parse(Deno.args);
 
   await updateCore({
-    branch: branch ?? b,
+    template: template ?? t,
     prompt: true,
   });
 }

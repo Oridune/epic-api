@@ -14,6 +14,7 @@ import { Status, type RouterContext } from "oak";
 import e from "validator";
 
 import { $_namePascalModel } from "@Models/$_name.ts";
+import { ObjectId } from "mongo";
 
 @Controller("/$_namePath/", { name: "$_nameCamel" })
 export default class $_namePascalController extends BaseController {
@@ -59,7 +60,7 @@ export default class $_namePascalController extends BaseController {
         );
 
         return Response.statusCode(Status.Created).data(
-          await new $_namePascalModel(Body).save()
+          await $_namePascalModel.create(Body)
         );
       },
     });
@@ -108,10 +109,9 @@ export default class $_namePascalController extends BaseController {
           { name: `${route.scope}.body` }
         );
 
-        const $_namePascalUpdated = await $_namePascalModel.findByIdAndUpdate(
+        const $_namePascalUpdated = await $_namePascalModel.updateAndFindOne(
           Params.id,
-          Body,
-          { new: true }
+          Body
         );
 
         if (!$_namePascalUpdated)
@@ -185,19 +185,14 @@ export default class $_namePascalController extends BaseController {
         });
 
         const $_namePascalListQuery = $_namePascalModel.find({
-          ...(Query.search
-            ? {
-                $text: {
-                  $search: Query.search,
-                },
-              }
-            : {}),
           ...(Params.id ? { _id: Params.id } : {}),
           createdAt: {
             $gt: Query.range[0],
             $lt: Query.range[1],
           },
         });
+
+        if (Query.search) $_namePascalListQuery.search(Query.search);
 
         if (typeof Query.offset === "number")
           $_namePascalListQuery.skip(Query.offset);
@@ -220,7 +215,7 @@ export default class $_namePascalController extends BaseController {
   public delete(route: IRoute) {
     // Define Params Schema
     const ParamsSchema = e.object({
-      id: e.optional(e.string()),
+      id: e.if(ObjectId.isValid),
     });
 
     return Versioned.add("1.0.0", {
@@ -233,7 +228,7 @@ export default class $_namePascalController extends BaseController {
           name: `${route.scope}.params`,
         });
 
-        await $_namePascalModel.deleteOne({ _id: Params.id });
+        await $_namePascalModel.deleteOne(Params.id);
 
         return Response.true();
       },
