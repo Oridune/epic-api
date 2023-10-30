@@ -1,5 +1,6 @@
-import { Env, EnvType } from "@Core/common/env.ts";
 import { Mongo } from "mongo";
+import { Env, EnvType } from "@Core/common/env.ts";
+import { Store } from "@Core/common/store.ts";
 
 export class Database {
   /**
@@ -28,6 +29,12 @@ export class Database {
 
     // Assign the database connection object
     await this.connection.connect(ConnectionString);
+
+    // Setup Caching
+    this.connection.setCachingMethods(
+      (key, value, ttl) => Store.set(key, value, { expiresInMs: ttl * 1000 }),
+      (key) => Store.get(key)
+    );
 
     if (!Env.is(EnvType.PRODUCTION)) {
       // Enable mongoose logs in development
