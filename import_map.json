@@ -13,7 +13,8 @@
     "path": "https://deno.land/std@0.196.0/path/mod.ts",
     "fs": "https://deno.land/std@0.196.0/fs/mod.ts",
     "reflect": "https://deno.land/x/reflect_metadata@v0.1.12/mod.ts",
-    "validator": "https://deno.land/x/oridune_validator@v0.2.19/mod.ts",
+    "mongo": "https://deno.land/x/oridune_mongo@v0.0.13/mod.ts",
+    "validator": "https://deno.land/x/oridune_mongo@v0.0.13/validator.ts",
     "flags": "https://deno.land/std@0.164.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
     "oak": "https://deno.land/x/oak@v12.6.0/mod.ts",
@@ -23,7 +24,6 @@
     "oak:compress": "https://deno.land/x/oak_compress@v0.0.2/mod.ts",
     "expect": "https://deno.land/x/expect@v0.4.0/mod.ts",
     "u-semver": "npm:u-semver@^0.7.1",
-    "mongo": "https://deno.land/x/oridune_mongo@v0.0.2/mod.ts",
     "ts-reset": "npm:@total-typescript/ts-reset@^0.4.2",
     "redis": "npm:ioredis@^5.3.2"
   },

@@ -1,6 +1,7 @@
 import { EnvType, Loader, StoreType } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
+import { Database } from "@Database";
 import e from "validator";
 
 Deno.test({
@@ -9,6 +10,9 @@ Deno.test({
     await Loader.load({ excludeTypes: ["templates"] });
 
     const { start, end, restart } = await createAppServer();
+
+    // Database Cleanup
+    Database.connection.post("connect", () => Database.connection.drop());
 
     const { port } = await start();
 

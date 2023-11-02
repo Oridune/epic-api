@@ -33,7 +33,8 @@ export class Database {
     // Setup Caching
     this.connection.setCachingMethods(
       (key, value, ttl) => Store.set(key, value, { expiresInMs: ttl * 1000 }),
-      (key) => Store.get(key)
+      (key) => Store.get(key),
+      (key) => Store.del(key)
     );
 
     if (!Env.is(EnvType.PRODUCTION)) {
@@ -54,11 +55,11 @@ export class Database {
   /**
    * Disconnect the database
    */
-  static disconnect() {
+  static async disconnect() {
     // You can modify this function to connect to a different database...
 
     // Disconnect the database
-    this.connection.disconnect();
+    await this.connection.disconnect();
   }
 
   /**
