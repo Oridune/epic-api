@@ -64,11 +64,12 @@ export const prepareAppServer = async () => {
   };
 
   for (const [, SubLoader] of Loader.getLoaders() ?? [])
-    for (const UI of SubLoader.tree.get("public")?.sequence.listDetailed() ??
-      [])
+    for (const [, UI] of SubLoader.tree
+      .get("public")
+      ?.sequence.listDetailed() ?? [])
       if (UI.enabled) ServeStatic(UI);
 
-  for (const UI of Loader.getSequence("public")?.listDetailed() ?? [])
+  for (const [, UI] of Loader.getSequence("public")?.listDetailed() ?? [])
     if (UI.enabled) ServeStatic(UI);
 
   // Log UI list

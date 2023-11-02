@@ -1,9 +1,19 @@
 // deno-lint-ignore-file no-explicit-any
 import { join, dirname } from "path";
 
+export type TSequenceProps = Record<string, Record<string, string>>;
+
 export interface ISequence {
   sequence?: string[];
   excludes?: string[];
+  sequenceProps?: TSequenceProps;
+}
+
+export interface ISequenceDetail {
+  name: string;
+  path: string;
+  enabled: boolean;
+  props: TSequenceProps[string];
 }
 
 export class Sequence {
@@ -11,14 +21,22 @@ export class Sequence {
   protected Path: string;
   protected Includes: Set<string>;
   protected Excludes: Set<string>;
+  protected SequenceProps: TSequenceProps;
 
   protected async persist() {
     await Deno.writeTextFile(this.Path, JSON.stringify(this.toJSON(), null, 2));
   }
 
+  protected pickObjectProperties<T extends object>(obj: T, props: Set<string>) {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([key]) => props.has(key))
+    );
+  }
+
   constructor(type: string, path: string, data: ISequence | string[]) {
     this.Type = type;
     this.Path = path;
+
     this.Includes = new Set(
       data instanceof Array
         ? data
@@ -26,11 +44,17 @@ export class Sequence {
         ? data.sequence.filter((_) => typeof _ === "string")
         : []
     );
+
     this.Excludes = new Set(
       !(data instanceof Array) && data.excludes instanceof Array
         ? data.excludes.filter((_) => typeof _ === "string")
         : []
     );
+
+    this.SequenceProps =
+      !(data instanceof Array) && typeof data.sequenceProps === "object"
+        ? this.pickObjectProperties(data.sequenceProps, this.Includes)
+        : {};
   }
 
   /**
@@ -62,16 +86,30 @@ export class Sequence {
     return List;
   }
 
+  public getDetailed(name: string): ISequenceDetail | null {
+    if (!this.Includes.has(name)) return null;
+
+    return {
+      name,
+      path: join(dirname(this.Path), name),
+      enabled: !this.Excludes.has(name),
+      props: this.SequenceProps[name],
+    };
+  }
+
   /**
    * Lists all sequence items in detail
    * @returns
    */
   public listDetailed() {
-    return Array.from(this.Includes).map((name) => ({
-      name,
-      path: join(dirname(this.Path), name),
-      enabled: !this.Excludes.has(name),
-    }));
+    const DetailsMap = new Map<string, ISequenceDetail>();
+
+    for (const Name of this.Includes) {
+      const Detail = this.getDetailed(Name);
+      if (Detail) DetailsMap.set(Name, Detail);
+    }
+
+    return DetailsMap;
   }
 
   /**
@@ -91,6 +129,11 @@ export class Sequence {
         : this.Includes;
 
     await this.persist();
+  }
+
+  public async add(name: string, props?: Record<string, string>) {
+    if (typeof props === "object") this.SequenceProps[name] = props;
+    await this.set((_) => _.add(name));
   }
 
   /**
@@ -149,6 +192,10 @@ export class Sequence {
     return {
       sequence: Array.from(this.Includes),
       excludes: Array.from(this.Excludes),
+      sequenceProps: this.pickObjectProperties(
+        this.SequenceProps,
+        this.Includes
+      ),
     };
   }
 }

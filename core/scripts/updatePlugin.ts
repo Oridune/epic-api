@@ -50,8 +50,15 @@ export const updatePlugin = async (options: {
       )
         return;
 
-      await removePlugin({ name: Options.name });
-      await addPlugin({ source: Options.source, name: Options.name });
+      const PluginDetails = await removePlugin({ name: Options.name });
+
+      for (const PluginDetail of PluginDetails)
+        await addPlugin({
+          source: PluginDetail.props.source as PluginSource,
+          name: `${PluginDetail.name}${
+            PluginDetail.props.branch ? `:${PluginDetail.props.branch}` : ""
+          }`,
+        });
     } else throw new Error(`The plugin name(s) is missing.`);
 
     console.info("Plugin(s) updated successfully!");

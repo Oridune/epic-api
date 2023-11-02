@@ -3,7 +3,7 @@ import { join } from "path";
 import e from "validator";
 
 import { Select, Confirm } from "cliffy:prompt";
-import { Loader } from "@Core/common/loader.ts";
+import { Loader, ISequenceDetail } from "@Core/common/loader.ts";
 
 import { updatePluginDeclarationFile } from "./addPlugin.ts";
 
@@ -54,6 +54,8 @@ export const removePlugin = async (options: {
       )
       .validate(options);
 
+    const PluginDetails: ISequenceDetail[] = [];
+
     if (Options.name) {
       if (
         options.prompt &&
@@ -63,15 +65,22 @@ export const removePlugin = async (options: {
           )}'?`,
         }))
       )
-        return;
+        return PluginDetails;
 
       for (const PluginName of Options.name) {
         const PluginPath = join(Deno.cwd(), "plugins", PluginName);
 
-        await Loader.getSequence("plugins")?.set((_) => {
-          _.delete(PluginName);
-          return _;
-        });
+        const PluginDetail =
+          Loader.getSequence("plugins")?.getDetailed(PluginName);
+
+        if (PluginDetail) {
+          PluginDetails.push(PluginDetail);
+
+          await Loader.getSequence("plugins")?.set((_) => {
+            _.delete(PluginName);
+            return _;
+          });
+        }
 
         await removePluginFromImportMap(PluginName);
         await updatePluginDeclarationFile();
@@ -81,6 +90,8 @@ export const removePlugin = async (options: {
     } else throw new Error(`The plugin name(s) is missing.`);
 
     console.info("Plugin(s) removed successfully!");
+
+    return PluginDetails;
   } catch (error) {
     console.error(error, error.issues);
     throw error;

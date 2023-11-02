@@ -146,7 +146,9 @@ export const addPlugin = async (options: {
     if (Options.name) {
       const PluginsDir = join(Deno.cwd(), "plugins");
 
-      for (const PluginName of Options.name) {
+      for (const PluginId of Options.name) {
+        const [PluginName, Branch] = PluginId.split(":");
+
         let ResolvePluginName = PluginName;
         let Process:
           | Deno.Process<{
@@ -169,8 +171,16 @@ export const addPlugin = async (options: {
 
         // Clone Repository from Git.
         if (Options.source === PluginSource.GIT)
+          // deno-lint-ignore no-deprecated-deno-api
           Process = Deno.run({
-            cmd: ["git", "clone", GitRepoUrl.toString(), ResolvePluginName],
+            cmd: [
+              "git",
+              "clone",
+              "--single-branch",
+              ...(Branch ? ["--branch", Branch] : []),
+              GitRepoUrl.toString(),
+              ResolvePluginName,
+            ],
             cwd: PluginsDir,
           });
 
@@ -178,9 +188,10 @@ export const addPlugin = async (options: {
           const Status = await Process.status();
 
           if (Status.success) {
-            await Loader.getSequence("plugins")?.set((_) =>
-              _.add(ResolvePluginName)
-            );
+            await Loader.getSequence("plugins")?.add(ResolvePluginName, {
+              source: Options.source,
+              branch: Branch,
+            });
 
             await addPluginToImportMap(ResolvePluginName);
             await updatePluginDeclarationFile();
