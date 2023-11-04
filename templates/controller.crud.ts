@@ -12,9 +12,9 @@ import {
 } from "@Core/common/mod.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
+import { ObjectId } from "mongo";
 
 import { $_namePascalModel } from "@Models/$_name.ts";
-import { ObjectId } from "mongo";
 
 @Controller("/$_namePath/", { name: "$_nameCamel" })
 export default class $_namePascalController extends BaseController {
@@ -184,15 +184,15 @@ export default class $_namePascalController extends BaseController {
           name: `${route.scope}.params`,
         });
 
-        const $_namePascalListQuery = $_namePascalModel.find({
-          ...(Params.id ? { _id: Params.id } : {}),
-          createdAt: {
-            $gt: Query.range[0],
-            $lt: Query.range[1],
-          },
-        });
-
-        if (Query.search) $_namePascalListQuery.search(Query.search);
+        const $_namePascalListQuery = $_namePascalModel
+          .search(Query.search)
+          .filter({
+            ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
+            createdAt: {
+              $gt: new Date(Query.range[0]),
+              $lt: new Date(Query.range[1]),
+            },
+          });
 
         if (typeof Query.offset === "number")
           $_namePascalListQuery.skip(Query.offset);
