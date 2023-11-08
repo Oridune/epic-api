@@ -68,5 +68,5 @@ export class Database {
    * @param session Optionally pass an external (parent) session
    * @returns
    */
-  static transaction = Mongo.transaction;
+  static transaction = Mongo.transaction.bind(Mongo);
 }
