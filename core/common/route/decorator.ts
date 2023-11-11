@@ -42,7 +42,7 @@ export const Route =
           const Factory = desc.value;
           const Name = options?.name ?? key;
 
-          ControllerRoutes[Name] = {
+          ControllerRoutes[`${method}:${Name}`] = {
             name: Name,
             description: options?.description,
             scope: options?.scope,
