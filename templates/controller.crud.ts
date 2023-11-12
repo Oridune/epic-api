@@ -138,8 +138,8 @@ export default class $_namePascalController extends BaseController {
             e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true })
           )
           .default([Date.now() - 86400000 * 7, Date.now()]),
-        offset: e.optional(e.number({ cast: true }).min(0)),
-        limit: e.optional(e.number({ cast: true })),
+        offset: e.optional(e.number({ cast: true }).min(0)).default(0),
+        limit: e.optional(e.number({ cast: true }).max(2000)).default(2000),
         sort: e
           .optional(
             e.record(e.number({ cast: true }).min(-1).max(1), { cast: true })
@@ -192,19 +192,16 @@ export default class $_namePascalController extends BaseController {
               $gt: new Date(Query.range[0]),
               $lt: new Date(Query.range[1]),
             },
-          });
-
-        if (typeof Query.offset === "number")
-          $_namePascalListQuery.skip(Query.offset);
-
-        if (typeof Query.limit === "number")
-          $_namePascalListQuery.limit(Query.limit);
+          })
+          .skip(Query.offset)
+          .limit(Query.limit);
 
         return Response.data({
           totalCount: Query.includeTotalCount
             ? //? Make sure to pass any limiting conditions for count if needed.
               await $_namePascalModel.count()
             : undefined,
+          // deno-lint-ignore no-explicit-any
           results: await $_namePascalListQuery.sort(Query.sort as any),
         });
       },
