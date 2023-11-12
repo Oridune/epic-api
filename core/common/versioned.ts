@@ -24,6 +24,29 @@ export class Versioned {
     return this;
   }
 
+  /**
+   * Add metadata to the handlerObject(s) of the existing request handler version(s)
+   * @param metadata An object to be merged or a function which returns handlerObject
+   * @returns
+   */
+  public setMetadata(
+    metadata:
+      | Record<string, unknown>
+      | ((handlerObject: TRequestHandlerObject) => TRequestHandlerObject)
+  ) {
+    let MetadataKeys: string[];
+
+    for (const [Version, handlerObject] of this.Map)
+      if (typeof metadata === "function")
+        this.Map.set(Version, metadata(handlerObject));
+      else
+        (MetadataKeys ??= Object.keys(metadata)).forEach((key) => {
+          handlerObject[key] = metadata[key];
+        });
+
+    return this;
+  }
+
   public toMap() {
     return this.Map;
   }
