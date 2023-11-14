@@ -133,11 +133,9 @@ export default class $_namePascalController extends BaseController {
     const QuerySchema = e.object(
       {
         search: e.optional(e.string()),
-        range: e
-          .optional(
-            e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true })
-          )
-          .default([Date.now() - 86400000 * 7, Date.now()]),
+        range: e.optional(
+          e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true })
+        ),
         offset: e.optional(e.number({ cast: true }).min(0)).default(0),
         limit: e.optional(e.number({ cast: true }).max(2000)).default(2000),
         sort: e
@@ -188,10 +186,14 @@ export default class $_namePascalController extends BaseController {
           .search(Query.search)
           .filter({
             ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
-            createdAt: {
-              $gt: new Date(Query.range[0]),
-              $lt: new Date(Query.range[1]),
-            },
+            ...(Query.range instanceof Array
+              ? {
+                  createdAt: {
+                    $gt: new Date(Query.range[0]),
+                    $lt: new Date(Query.range[1]),
+                  },
+                }
+              : {}),
           })
           .skip(Query.offset)
           .limit(Query.limit);
