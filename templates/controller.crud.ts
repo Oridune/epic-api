@@ -196,15 +196,15 @@ export default class $_namePascalController extends BaseController {
               : {}),
           })
           .skip(Query.offset)
-          .limit(Query.limit);
+          .limit(Query.limit)
+          .sort(Query.sort);
 
         return Response.data({
           totalCount: Query.includeTotalCount
             ? //? Make sure to pass any limiting conditions for count if needed.
               await $_namePascalModel.count()
             : undefined,
-          // deno-lint-ignore no-explicit-any
-          results: await $_namePascalListQuery.sort(Query.sort as any),
+          results: await $_namePascalListQuery,
         });
       },
     });
