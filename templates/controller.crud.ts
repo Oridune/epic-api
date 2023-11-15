@@ -143,6 +143,9 @@ export default class $_namePascalController extends BaseController {
             e.record(e.number({ cast: true }).min(-1).max(1), { cast: true })
           )
           .default({ _id: -1 }),
+        project: e.optional(
+          e.record(e.number({ cast: true }).min(0).max(1), { cast: true })
+        ),
         includeTotalCount: e.optional(
           e
             .boolean({ cast: true })
@@ -199,6 +202,8 @@ export default class $_namePascalController extends BaseController {
           .limit(Query.limit)
           .sort(Query.sort);
 
+        if (Query.project) $_namePascalListQuery.project(Query.project);
+
         return Response.data({
           totalCount: Query.includeTotalCount
             ? //? Make sure to pass any limiting conditions for count if needed.
@@ -214,7 +219,7 @@ export default class $_namePascalController extends BaseController {
   public delete(route: IRoute) {
     // Define Params Schema
     const ParamsSchema = e.object({
-      id: e.if(ObjectId.isValid),
+      id: e.string(),
     });
 
     return Versioned.add("1.0.0", {
