@@ -332,6 +332,13 @@ export class Store {
     }
   }
 
+  /**
+   * A utility method to cache any computed results and make the process faster.
+   * @param key
+   * @param callback
+   * @param expiresInMs
+   * @returns
+   */
   static async cache<T>(key: string, callback: () => T, expiresInMs?: number) {
     const Value = (await this.get<T>(key)) ?? (await callback());
 
