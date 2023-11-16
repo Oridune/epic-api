@@ -331,4 +331,12 @@ export class Store {
       }
     }
   }
+
+  static async cache<T>(key: string, callback: () => T, expiresInMs?: number) {
+    const Value = (await this.get<T>(key)) ?? (await callback());
+
+    await this.set(key, Value, { expiresInMs });
+
+    return Value;
+  }
 }
