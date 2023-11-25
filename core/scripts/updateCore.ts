@@ -121,6 +121,9 @@ export const updateCore = async (options: {
     if (Status.success) {
       Process.close();
 
+      // Set of files that should not be updated because the are created just now...
+      const CreatedFiles = new Set<string>();
+
       // Create Files
       for (const Glob of ["**/**/*"].map((pattern) =>
         expandGlob(pattern, {
@@ -141,10 +144,13 @@ export const updateCore = async (options: {
             });
 
             await Deno.copyFile(SourcePath, TargetPath);
+
+            CreatedFiles.add(TargetPath);
           }
 
       // Create/Update Files
       for (const Glob of [
+        ".vscode/epic.code-snippets",
         "core/**/*",
         "docs/**/*",
         "templates/**/*",
@@ -161,11 +167,16 @@ export const updateCore = async (options: {
             const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
             const TargetDirectory = dirname(TargetPath);
 
-            await Deno.mkdir(TargetDirectory, { recursive: true }).catch(() => {
-              // Do nothing...
-            });
+            // If file is not already created just now than create/update...
+            if (!CreatedFiles.has(TargetPath)) {
+              await Deno.mkdir(TargetDirectory, { recursive: true }).catch(
+                () => {
+                  // Do nothing...
+                }
+              );
 
-            await Deno.copyFile(SourcePath, TargetPath);
+              await Deno.copyFile(SourcePath, TargetPath);
+            }
           }
 
       // Update Docs File
