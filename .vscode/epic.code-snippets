@@ -1,0 +1,57 @@
+{
+  "create-request": {
+    "scope": "typescript",
+    "description": "Generates a simple epic request snippet.",
+    "prefix": ["req"],
+    "body": [
+      "@${1|Get,Post,Put,Patch,Delete|}(\"/\")",
+      "public ${2:create}(_: IRoute) {",
+      "\treturn (ctx: IRequestContext<RouterContext<string>>) => {",
+      "\t\t$3\n",
+      "\t\treturn Response.status(true);",
+      "\t}",
+      "}"
+    ]
+  },
+  "create-request-full": {
+    "scope": "typescript",
+    "description": "Generates a full epic request snippet.",
+    "prefix": ["reqf"],
+    "body": [
+      "@${1|Get,Post,Put,Patch,Delete|}(\"/\")",
+      "public ${2:create}(route: IRoute) {",
+      "\t// Define Query Schema",
+      "\tconst QuerySchema = e.object({}, { allowUnexpectedProps: true });\n",
+      "\t// Define Params Schema",
+      "\tconst ParamsSchema = e.object({});\n",
+      "\t// Define Body Schema",
+      "\tconst BodySchema = e.object({});\n",
+      "\treturn new Versioned().add(\"1.0.0\", {",
+      "\t\tpostman: {",
+      "\t\t\tquery: QuerySchema.toSample(),",
+      "\t\t\tparams: ParamsSchema.toSample(),",
+      "\t\t\tbody: BodySchema.toSample(),",
+      "\t\t},",
+      "\t\thandler: async (ctx: IRequestContext<RouterContext<string>>) => {",
+      "\t\t\t// Query Validation",
+      "\t\t\tconst Query = await QuerySchema.validate(",
+      "\t\t\t\tObject.fromEntries(ctx.router.request.url.searchParams),",
+      "\t\t\t\t{ name: `${route.scope}.query` }",
+      "\t\t\t);\n",
+      "\t\t\t// Params Validation",
+      "\t\t\tconst Params = await ParamsSchema.validate(ctx.router.params, {",
+      "\t\t\t\tname: `${route.scope}.params`,",
+      "\t\t\t});\n",
+      "\t\t\t// Body Validation",
+      "\t\t\tconst Body = await BodySchema.validate(",
+      "\t\t\t\tawait ctx.router.request.body({ type: \"json\" }).value,",
+      "\t\t\t\t{ name: `${route.scope}.body` }",
+      "\t\t\t);\n",
+      "\t\t\t$3\n",
+      "\t\t\treturn Response.status(true);",
+      "\t\t}",
+      "\t});",
+      "}"
+    ]
+  }
+}
