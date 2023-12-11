@@ -7,5 +7,5 @@ export * from "./loader.ts";
 export * from "./server.ts";
 export * from "./versioned.ts";
 export * from "./response.ts";
-export * from "./transaction.ts";
+export * from "./transactionQueue.ts";
 export * from "./store.ts";
