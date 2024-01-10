@@ -80,3 +80,9 @@ _temp/
 .terraform/
 terraform/
 *.tfvars
+
+public/*/*
+!public/*/www/
+
+plugins/*/*/public/*/*
+!plugins/*/*/public/*/www/
