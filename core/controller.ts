@@ -47,7 +47,10 @@ export class APIController extends BaseController {
   }
 
   @Get("/test/")
-  public test() {
+  public async test() {
+    // Simulate some slow task...
+    await new Promise((_) => setTimeout(_, 3000));
+
     return new Versioned()
       .add(["0.0.1", "1.0.0"], {
         handler: ({ version }: { version: string }) => {
@@ -59,7 +62,7 @@ export class APIController extends BaseController {
       .add(["1.0.2", "1.0.5"], {
         handler: ({ version }: { version: string }) => {
           return Response.message(
-            `Another test was successful from API version ${version}!`
+            `Latest test was successful from API version ${version}!`
           );
         },
       });

@@ -1,7 +1,9 @@
 import {
   BaseController,
-  IRouteOptions,
-  TRequestHandlerFactory,
+  type IRouteOptions,
+  type TRequestHandler,
+  type TRequestHandlerFactory,
+  type TRequestHandlerObject,
 } from "../controller/base.ts";
 import { Versioned } from "../versioned.ts";
 import { semverResolve } from "../semver.ts";
@@ -42,6 +44,12 @@ export const Route =
           const Factory = desc.value;
           const Name = options?.name ?? key;
 
+          let FactoryResults:
+            | TRequestHandlerObject
+            | TRequestHandler
+            | Versioned
+            | undefined;
+
           ControllerRoutes[`${method}:${Name}`] = {
             name: Name,
             description: options?.description,
@@ -49,7 +57,10 @@ export const Route =
             method,
             path,
             buildRequestHandler: async (route, options) => {
-              const Handler = await Factory(route);
+              const Handler = await (async () => {
+                if (options?.fresh) return await Factory(route);
+                return (FactoryResults ??= await Factory(route));
+              })();
 
               if (Handler instanceof Versioned) {
                 if (!options?.version) return;
@@ -89,7 +100,7 @@ export const Route =
                 };
               else if (
                 typeof Handler === "object" &&
-                typeof Handler.handler === "function"
+                typeof Handler?.handler === "function"
               )
                 return {
                   version: "latest",

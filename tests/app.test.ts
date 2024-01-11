@@ -102,7 +102,7 @@ Deno.test({
         expect(Response.headers.get("Content-Type")).toMatch(/json/);
         expect(Response.status).toBe(200);
         expect(await Response.text()).toMatch(
-          /Another test was successful from API version 1.0.5!/
+          /Latest test was successful from API version 1.0.5!/
         );
       }
     );
