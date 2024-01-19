@@ -31,11 +31,17 @@ export class Database {
     await this.connection.connect(ConnectionString);
 
     // Setup Caching
-    this.connection.setCachingMethods(
-      (key, value, ttl) => Store.set(key, value, { expiresInMs: ttl * 1000 }),
-      (key) => Store.get(key),
-      (key) => Store.del(key)
-    );
+    this.connection.setCachingMethods({
+      provider: Store.type,
+      setter: (key, value, ttl) =>
+        Store.set(
+          key,
+          value,
+          typeof ttl === "number" ? { expiresInMs: ttl * 1000 } : {}
+        ),
+      getter: (key) => Store.get(key),
+      deleter: (key) => Store.del(key),
+    });
 
     if (!Env.is(EnvType.PRODUCTION)) {
       // Enable mongoose logs in development
