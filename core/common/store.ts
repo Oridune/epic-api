@@ -266,7 +266,7 @@ export class Store {
   }
 
   /**
-   * Get a created-on timestamp of the value
+   * Get the created-on timestamp of a store value
    * @param key
    * @returns
    */
@@ -340,9 +340,14 @@ export class Store {
    * @returns
    */
   static async cache<T>(key: string, callback: () => T, expiresInMs?: number) {
-    const Value = (await this.get<T>(key)) ?? (await callback());
+    const Cached = await this.get<T>(key);
 
-    await this.set(key, Value, { expiresInMs });
+    if (Cached !== null) return Cached;
+
+    const Value = await callback();
+
+    if (![null, undefined].includes(Value as any))
+      await this.set(key, Value, { expiresInMs });
 
     return Value;
   }
