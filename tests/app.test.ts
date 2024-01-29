@@ -20,6 +20,25 @@ Deno.test({
 
     await restart();
 
+    const ResponseSchema = e.object(
+      {
+        status: e.boolean(),
+        messages: e.array(e.object({ message: e.string() })),
+        data: e.object({
+          environment: e.in(Object.values(EnvType)),
+          database: e.object({
+            connected: e.boolean(),
+          }),
+          store: e.object({
+            type: e.in(Object.values(StoreType)),
+            connected: e.boolean(),
+          }),
+        }),
+        metrics: e.record(e.any()),
+      },
+      { cast: true }
+    );
+
     await t.step("GET / Should return 404 not found", async () => {
       const Response = await fetch(new URL("/", APIHost));
 
@@ -41,22 +60,7 @@ Deno.test({
       expect(Response.headers.get("Content-Type")).toMatch(/json/);
       expect(Response.status).toBe(200);
 
-      await e
-        .object({
-          status: e.boolean(),
-          messages: e.array(e.object({ message: e.string() })),
-          data: e.object({
-            environment: e.in(Object.values(EnvType)),
-            database: e.object({
-              connected: e.boolean(),
-            }),
-            store: e.object({
-              type: e.in(Object.values(StoreType)),
-              connected: e.boolean(),
-            }),
-          }),
-        })
-        .validate(JSON.parse(await Response.text()));
+      await ResponseSchema.validate(JSON.parse(await Response.text()));
     });
 
     await t.step(
@@ -71,22 +75,12 @@ Deno.test({
         expect(Response.headers.get("Content-Type")).toMatch(/json/);
         expect(Response.status).toBe(200);
 
-        await e
-          .object({
-            status: e.boolean(),
-            messages: e.array(e.object({ message: e.string() })),
-            data: e.object({
-              environment: e.in(Object.values(EnvType)),
-              database: e.object({
-                connected: e.boolean(),
-              }),
-              store: e.object({
-                type: e.in(Object.values(StoreType)),
-                connected: e.boolean(),
-              }),
-            }),
-          })
-          .validate(JSON.parse(await Response.text()));
+        const Body = await Response.text();
+
+        await ResponseSchema.validate(Body).catch((error) => {
+          console.error(error);
+          throw error;
+        });
       }
     );
 

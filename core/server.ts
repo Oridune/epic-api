@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   Env,
+  EnvType,
   RawResponse,
   Response,
   Server,
@@ -10,12 +11,7 @@ import {
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "@Database";
-import {
-  Application as AppServer,
-  Router as AppRouter,
-  RouterContext,
-  Status,
-} from "oak";
+import { Application as AppServer, Router as AppRouter, Status } from "oak";
 import { join } from "path";
 import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
@@ -30,8 +26,20 @@ export const prepareAppServer = async () => {
   const App = new AppServer();
   const Router = new AppRouter();
 
-  App.use(Logger.logger);
-  App.use(Logger.responseTime);
+  if (!Env.is(EnvType.PRODUCTION)) {
+    App.use(async ({ state, response }, next) => {
+      state._requestStartedAt = Date.now();
+
+      await next();
+
+      response.headers.set(
+        "X-Response-Time",
+        `${Date.now() - state._requestStartedAt}ms`
+      );
+    });
+    App.use(Logger.logger);
+  }
+
   App.use(errorHandler());
   App.use(gzip());
   App.use(CORS());
@@ -128,14 +136,14 @@ export const prepareAppServer = async () => {
 
       Router[Route.options.method as "get"](
         Route.endpoint,
-        async (ctx: RouterContext<string>, next: () => Promise<unknown>) => {
+        async (ctx, next) => {
           ctx.state.requestId = ctx.state["X-Request-ID"];
           ctx.state.requestName = Route.options.name;
 
           await next();
         },
         ...Middlewares,
-        async (ctx: RouterContext<string>) => {
+        async (ctx) => {
           const TargetVersion =
             ctx.request.headers.get("x-app-version") ?? "latest";
           const RequestContext = {
@@ -156,9 +164,16 @@ export const prepareAppServer = async () => {
 
           RequestContext.version = version ?? RequestContext.version;
 
+          ctx.state._handleStartedAt = Date.now();
+
           const ReturnedResponse = await RequestHandler?.handler.bind(
             RequestHandler
           )(RequestContext);
+
+          if (ReturnedResponse instanceof Response)
+            ReturnedResponse.metrics({
+              handledInMs: Date.now() - ctx.state._handleStartedAt,
+            });
 
           for (const Hook of Hooks)
             await Hook?.post?.(Route.scope, Route.options.name, {

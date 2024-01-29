@@ -132,12 +132,19 @@ export interface ResponseMessage {
   [K: string]: any;
 }
 
+export interface ResponseMetrics {
+  handledInMs?: number;
+  respondInMs?: number;
+  [K: string]: any;
+}
+
 export interface ResponseBody<D, M> {
   status: boolean;
   messages?: Array<ResponseMessage>;
   data?: D;
   metadata?: M;
   errorStack?: string;
+  metrics?: ResponseMetrics;
 }
 
 export class Response<D = Record<string, any>, M = Record<string, any>> {
@@ -149,6 +156,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
   protected Data?: D;
   protected Metadata?: M;
   protected ErrorStack?: string;
+  protected Metrics?: ResponseMetrics;
 
   /**
    * Create a raw response object
@@ -260,7 +268,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @param messages
    * @returns
    */
-  static messages(messages: ResponseMessage[]) {
+  static messages(messages: (ResponseMessage | string)[]) {
     return new Response().messages(messages);
   }
 
@@ -360,8 +368,14 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @param messages
    * @returns
    */
-  public messages(messages: ResponseMessage[]) {
-    this.Messages = messages;
+  public messages(messages: (ResponseMessage | string)[]) {
+    const Messages: ResponseMessage[] = messages.map((msg) =>
+      typeof msg === "string" ? { message: msg } : msg
+    );
+
+    if (this.Messages instanceof Array) this.Messages.push(...Messages);
+    else this.Messages = Messages;
+
     return this;
   }
 
@@ -373,7 +387,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    */
   public data(data: D, metadata?: M) {
     if (typeof data === "object") this.Data = data;
-    if (typeof metadata === "object") this.Metadata = metadata;
+    if (typeof metadata === "object") this.metadata(metadata);
     return this;
   }
 
@@ -383,7 +397,9 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @returns
    */
   public metadata(metadata: M) {
-    if (typeof metadata === "object") this.Metadata = metadata;
+    if (typeof metadata === "object")
+      this.Metadata = { ...this.Metadata, ...metadata };
+
     return this;
   }
 
@@ -394,6 +410,18 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    */
   public errorStack(stack: string) {
     if (typeof stack === "string") this.ErrorStack = stack;
+    return this;
+  }
+
+  /**
+   * Set the response metrics on your response
+   * @param metrics Response metrics includes performce, stats etc.
+   * @returns
+   */
+  public metrics(metrics: ResponseMetrics) {
+    if (typeof metrics === "object")
+      this.Metrics = { ...this.Metrics, ...metrics };
+
     return this;
   }
 
@@ -424,6 +452,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
       data: this.Data,
       metadata: this.Metadata,
       errorStack: this.ErrorStack,
+      metrics: this.Metrics,
     };
   }
 }

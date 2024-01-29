@@ -7,6 +7,9 @@ export const respondWith = (
   ctx: Context<Record<string, any>, Record<string, any>>,
   response: Response | RawResponse
 ) => {
+  if (response instanceof Response)
+    response.metrics({ respondInMs: Date.now() - ctx.state._requestStartedAt });
+
   // Append headers
   response.getHeaders().forEach((v, k) => ctx.response.headers.append(k, v));
 
@@ -32,13 +35,17 @@ export const errorHandler =
           : error instanceof ValidationException
           ? Status.BadRequest
           : Status.InternalServerError;
-        const ResponseObject = Response.statusCode(StatusCode)
-          .messages(error.issues ?? [{ message: error.message }])
-          .errorStack(
-            !Env.is(EnvType.PRODUCTION) && StatusCode > 499
-              ? error.stack
-              : undefined
-          );
+
+        const ResponseObject = Response.statusCode(StatusCode).messages(
+          error.issues ?? [{ message: error.message }]
+        );
+
+        if (!Env.is(EnvType.PRODUCTION) && StatusCode > 499) {
+          if (error.stack !== undefined) ResponseObject.errorStack(error.stack);
+
+          if (error.cause !== undefined)
+            ResponseObject.metadata({ cause: error.cause });
+        }
 
         Object.entries<string>(error).forEach(
           ([key, value]) =>
@@ -48,10 +55,14 @@ export const errorHandler =
         respondWith(ctx, ResponseObject);
       }
 
-      if (!Env.is(EnvType.PRODUCTION))
+      if (!Env.is(EnvType.PRODUCTION)) {
         console.error(
           `${ctx.request.method.toUpperCase()}: ${ctx.request.url.pathname}`,
           error
         );
+
+        if (error.cause !== undefined)
+          console.info("Error Cause:", error.cause);
+      }
     }
   };
