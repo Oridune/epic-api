@@ -10,7 +10,7 @@ Epic API (epic-api) is a robust framework for developing efficient and scalable 
 
 ### Requirements
 
-Epic API framework runs on the Deno.js runtime. You are required to have Deno.js installed on your machine in order to start working. [See how to install Deno.js](https://deno.com/manual/getting\_started/installation)
+Epic API framework runs on the Deno.js runtime. You are required to have Deno.js installed on your machine to start working. [See how to install Deno.js](https://deno.com/manual/getting\_started/installation)
 
 ### Manual Installation
 
@@ -18,13 +18,13 @@ To get started with manual installation, Simply clone the Epic API repository fr
 
 ```bash
 # Clone the repository
-git clone https://github.com/Oridune/epic-api.git my-new-app
+git clone -b default-v1 https://github.com/Oridune/epic-api.git my-new-app
 
 # Initialize Project
 deno task init
 ```
 
-Once you have setup everything correctly, run the following command to start the API server:
+Once you have set everything correctly, run the following command to start the API server:
 
 ```bash
 # Execute the built-in Deno task
