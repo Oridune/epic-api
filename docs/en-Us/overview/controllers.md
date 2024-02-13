@@ -284,7 +284,7 @@ deno task dev
 
 Now if we test our endpoint in the Postman, we get the following result:
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 #### Step 3:
 
@@ -367,7 +367,7 @@ Now if we test our endpoint in the Postman, we get the following result:
 
 Let's try to execute the previous route again and we get the following result:
 
-<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 Congratulations! You have successfully created your first Epic API :tada:
 
