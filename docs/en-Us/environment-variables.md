@@ -4,13 +4,13 @@ description: Setup environment variables on your project.
 
 # Environment variables
 
-When developing any application, it is an excellent practice to manage your environment variables in a professional manner. Similarly, when working with Epic API, once you've cloned the repository, you must set up the environment variables before you start working!
+When developing any application, it is an excellent practice to manage your environment variables professionally. Similarly, when working with Epic API, once you've cloned the repository, you must set up the environment variables before you start working!
 
 Epic API supports 3 environment types **Development**, **Test,** and **Production**. You are required to execute the following command if the environment files don't already exist:
 
 ```bash
 # Execute the built-in Deno task
-deno task create:env -t development,test,production --encryptionKey=123457890 --dbConnectionString="mongodb://localhost:27017/epic-api"Note: You can pass the environment variables directly in the command to auto populate into the environment files for example --encryptionKey=123 or --foo=bar.
+deno task create:env -t development,test,production --randomString=123457890 --dbConnectionString="mongodb://localhost:27017/epic-api"
 ```
 
 {% hint style="info" %}
