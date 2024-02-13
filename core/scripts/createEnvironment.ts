@@ -25,21 +25,23 @@ export const createEnvironment = async (options: {
             .default(() => Deno.readTextFile(join(Deno.cwd(), ".sample.env"))),
           variables: e.record(e.or([e.string(), e.number()])),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
     const EnvironmentDir = join(Deno.cwd(), "./env/");
     const GlobalEnvironmentFilePath = join(EnvironmentDir, ".env");
 
-    if (!(await exists(EnvironmentDir)))
+    if (!(await exists(EnvironmentDir))) {
       await Deno.mkdir(EnvironmentDir, { recursive: true });
+    }
 
-    if (!(await exists(GlobalEnvironmentFilePath)))
+    if (!(await exists(GlobalEnvironmentFilePath))) {
       await Deno.writeTextFile(
         GlobalEnvironmentFilePath,
-        "# Put your global environment variables here."
+        "# Put your global environment variables here.",
       );
+    }
 
     // Generate a 30 character random string
     const RandomString = [...crypto.getRandomValues(new Uint32Array(30))]
@@ -54,30 +56,36 @@ export const createEnvironment = async (options: {
         options.prompt &&
         (await exists(EnvironmentFilePath)) &&
         !(await Confirm.prompt({
-          message: `Are you sure you want to re-create the environment file '${EnvironmentFileName}'?`,
+          message:
+            `Are you sure you want to re-create the environment file '${EnvironmentFileName}'?`,
         }))
-      )
+      ) {
         return;
+      }
 
-      const Content = Object.keys({
+      // Prepare variables for injection...
+      const Variables = {
         port: 3742,
         envType: Type,
         randomString: RandomString,
         ...Options.variables,
-      }).reduce(
-        (content, key) =>
-          ["string", "number"].includes(typeof Options.variables[key])
+      };
+
+      // Inject variables
+      const Content = Object.entries(Variables).reduce(
+        (content, [key, value]) =>
+          ["string", "number"].includes(typeof value)
             ? content.replace(
-                new RegExp(`{{\\s*${key}\\s*}}`, "g"),
-                Options.variables[key].toString()
-              )
+              new RegExp(`{{\\s*${key}\\s*}}`, "g"),
+              value.toString(),
+            )
             : content,
-        Options.content
+        Options.content,
       );
 
       await Deno.writeTextFile(
         EnvironmentFilePath,
-        Content.replace(/# This file is just a sample.*/, "").trim()
+        Content.replace(/# This file is just a sample.*/, "").trim(),
       );
     }
 
