@@ -29,12 +29,13 @@ export default class UsersController extends BaseController {
   @Get("/")
   public list(_: IRoute) {
     // This is a factory method that returns a request handler.
-    // Write any validation schemas or meta logic here.
+    // This scope is executed just once in the server's lifecycle.
+    // Write any validation schemas or metalogic here.
     // Information returned from this function can be used to generate docs etc.
   
     return (ctx: IRequestContext<RouterContext<string>>) => {
-      // This function actually handles the request!
-      // Start coding here...
+      // This function handles all the requests received from the clients!
+      // Write your request handler code here...
 
       return Response.status(true);
     };
@@ -53,12 +54,20 @@ Use the following command to create your first controller in the project:
 deno task create:module -t controller -n users --template validated.ts
 ```
 
+***
+
+{% hint style="success" %}
+**Pro Tip**
+
+For creating a new module, you can also use `deno task create` as an alternative to `deno task create:module`. This can simplify the command while achieving the same result.
+{% endhint %}
+
 This command will create a new file in the `controllers/` directory and also adds `users.ts` in the `.sequence.json` file.
 
 You may have noticed the flag `--template` , which is set to `validated.ts`. This flag tells the script to create a controller with a validation-included controller boilerplate in the `templates/controller.validated.ts` file, so you don't have to write the validation code from scratch!
 
 {% hint style="info" %}
-**Note:** Epic API has a built-in validation library called `validator`. The API of this library is almost the same as [Zod](https://zod.dev/)! But it is extended with some extra features to level up the power of Epic API. [See here](../techniques/validations.md).
+**Note:** Epic API has a built-in validation library called `validator`. The API of this library is almost the same as [Zod](https://zod.dev/)! However, it is extended with some extra features to level up the power of Epic API. [See here](../techniques/validations.md).
 {% endhint %}
 
 This is what the generated controller looks like:
@@ -169,13 +178,19 @@ export default class UsersController extends BaseController {
 ```
 {% endcode %}
 
+{% hint style="success" %}
+**Tip for VS Code users!**
+
+You type `req` or `reqf` and press enter in the VS Code to automatically generate the controller method!
+{% endhint %}
+
 Please don't get panic looking at this big code! You will understand everything in a bit... :smile:
 
 {% hint style="info" %}
 The routes for this controller will be accessible on the following endpoint: `{{host}}/api/users/`
 {% endhint %}
 
-{% hint style="info" %}
+{% hint style="success" %}
 **Did you notice the postman property?**
 
 This property is returned as the metadata of this controller's request. You may pass a sample data shape to this property so that the postman can document what information shape this route accepts! [See how it works](../utilities/postman.md).
@@ -199,7 +214,7 @@ import {
 } from "@Core/common/mod.ts";
 ```
 
-This code imports some components from `@Core/common/mod.ts`. These components are used to create a working controller. The followings are some important components exported by `@Core/common/mod.ts` module:
+This code imports some components from `@Core/common/mod.ts`. These components are used to create a working controller. The following are some important components exported by `@Core/common/mod.ts` module:
 
 <table><thead><tr><th width="205.33333333333331">Component</th><th width="172">Type</th><th>Description</th></tr></thead><tbody><tr><td>BaseController</td><td>Class</td><td>Every controller class is required to extend BaseController</td></tr><tr><td>Controller</td><td>Decorator</td><td>Use this decorator to define a controller</td></tr><tr><td>Get</td><td>Decorator</td><td>Used to define a <code>GET</code> route on a controller class method</td></tr><tr><td>Post</td><td>Decorator</td><td>Define a <code>POST</code> route</td></tr><tr><td>Patch</td><td>Decorator</td><td>Define a <code>PATCH</code> route</td></tr><tr><td>Put</td><td>Decorator</td><td>Define a <code>PUT</code> route</td></tr><tr><td>Delete</td><td>Decorator</td><td>Define a <code>DELETE</code> route</td></tr><tr><td>Options</td><td>Decorator</td><td>Define an <code>OPTIONS</code> route</td></tr><tr><td>Route</td><td>Decorator</td><td>Define a route with any above method.</td></tr><tr><td>Response</td><td>Class</td><td>Every route method returns an object that contains a route handler function, and this route handler function should return a Response class instance or a <code>void</code>.</td></tr></tbody></table>
 
@@ -272,7 +287,7 @@ export default class UsersController extends BaseController {
 In this code, we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` a module. Then we created a service method `getUsers` for the `UsersController` class. And then, we created a `list` method decorated with the `Get` decorator on the `UsersController` a class that returns a request handler function. You will write your fetch users logic in this handler and return a `Response` instance accordingly.
 
 {% hint style="info" %}
-You can either return a request handler function directly from the `list` method or you can also return an object which contains a property `handler` which will be the request handler function. This object will also allow you to pass extra information like you've seen `postman` property in the above examples.
+You can either return a request handler function directly from the `list` method or you can also return an object that contains a property `handler` which will be the request handler function. This object will also allow you to pass extra information like you've seen `postman` property in the above examples.
 {% endhint %}
 
 Now spin up the server with the following command:
