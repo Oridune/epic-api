@@ -24,7 +24,7 @@ export class Database {
 
     // Resolve Connection String
     const ConnectionString =
-      (await Env.get("DATABASE_CONNECTION_STRING", true)) ??
+      (await Env.get("DATABASE_CONNECTION_STRING", true)) ||
       "mongodb://localhost:27017/epic-api";
 
     // Assign the database connection object
@@ -37,7 +37,7 @@ export class Database {
         Store.set(
           key,
           value,
-          typeof ttl === "number" ? { expiresInMs: ttl * 1000 } : {}
+          typeof ttl === "number" ? { expiresInMs: ttl * 1000 } : {},
         ),
       getter: (key) => Store.get(key),
       deleter: (key) => Store.del(key),
@@ -53,7 +53,7 @@ export class Database {
       // Log database host
       console.info(
         "Database Host Connected:",
-        ParsedConnectionString.hostname + ParsedConnectionString.pathname
+        ParsedConnectionString.hostname + ParsedConnectionString.pathname,
       );
     }
   }

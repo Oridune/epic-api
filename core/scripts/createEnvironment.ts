@@ -65,8 +65,8 @@ export const createEnvironment = async (options: {
 
       // Prepare variables for injection...
       const Variables = {
-        port: 3742,
         envType: Type,
+        port: 3742,
         randomString: RandomString,
         ...Options.variables,
       };
@@ -85,7 +85,10 @@ export const createEnvironment = async (options: {
 
       await Deno.writeTextFile(
         EnvironmentFilePath,
-        Content.replace(/# This file is just a sample.*/, "").trim(),
+        Content.replace(/# This file is just a sample.*/, "").replace(
+          /{{\s*(\w+)\s*}}/g,
+          "",
+        ).trim(),
       );
     }
 
