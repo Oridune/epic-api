@@ -81,3 +81,4 @@ _temp/
 *.tfvars
 env/
 deno.lock
+postman_collection-*.json

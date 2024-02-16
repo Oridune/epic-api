@@ -80,6 +80,7 @@ _temp/
 .terraform/
 terraform/
 *.tfvars
+postman_collection-*.json
 
 public/*/*
 !public/*/www/
