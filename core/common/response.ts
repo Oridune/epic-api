@@ -149,7 +149,9 @@ export interface ResponseBody<D, M> {
 
 export class Response<D = Record<string, any>, M = Record<string, any>> {
   protected StatusCode = 200;
-  protected Headers = new Headers();
+  protected Headers = new Headers({
+    "Content-Type": "application/json",
+  });
 
   protected Status = true;
   protected Messages?: ResponseMessage[];
@@ -397,8 +399,9 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @returns
    */
   public metadata(metadata: M) {
-    if (typeof metadata === "object")
+    if (typeof metadata === "object") {
       this.Metadata = { ...this.Metadata, ...metadata };
+    }
 
     return this;
   }
@@ -419,8 +422,9 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @returns
    */
   public metrics(metrics: ResponseMetrics) {
-    if (typeof metrics === "object")
+    if (typeof metrics === "object") {
       this.Metrics = { ...this.Metrics, ...metrics };
+    }
 
     return this;
   }
