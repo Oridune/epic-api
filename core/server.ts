@@ -2,11 +2,11 @@
 import {
   Env,
   EnvType,
+  Events,
+  Loader,
   RawResponse,
   Response,
   Server,
-  Loader,
-  Events,
   Store,
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
@@ -17,6 +17,7 @@ import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
+import { responseTime } from "@Core/middlewares/responseTime.ts";
 import { errorHandler, respondWith } from "@Core/middlewares/errorHandler.ts";
 import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
@@ -26,17 +27,9 @@ export const prepareAppServer = async () => {
   const App = new AppServer();
   const Router = new AppRouter();
 
+  App.use(responseTime());
+
   if (!Env.is(EnvType.PRODUCTION)) {
-    App.use(async ({ state, response }, next) => {
-      state._requestStartedAt = Date.now();
-
-      await next();
-
-      response.headers.set(
-        "X-Response-Time",
-        `${Date.now() - state._requestStartedAt}ms`
-      );
-    });
     App.use(Logger.logger);
   }
 
@@ -47,7 +40,7 @@ export const prepareAppServer = async () => {
     rateLimiter({
       limit: await Env.get("RATE_LIMITER_LIMIT", true),
       windowMs: await Env.get("RATE_LIMITER_WINDOW_MS", true),
-    })
+    }),
   );
   App.use(requestId());
 
@@ -71,27 +64,39 @@ export const prepareAppServer = async () => {
     App.use(serveStatic(details.name, Root));
   };
 
-  for (const [, SubLoader] of Loader.getLoaders() ?? [])
-    for (const [, UI] of SubLoader.tree
-      .get("public")
-      ?.sequence.listDetailed() ?? [])
+  for (const [, SubLoader] of Loader.getLoaders() ?? []) {
+    for (
+      const [, UI] of SubLoader.tree
+        .get("public")
+        ?.sequence.listDetailed() ?? []
+    ) {
       if (UI.enabled) ServeStatic(UI);
+    }
+  }
 
-  for (const [, UI] of Loader.getSequence("public")?.listDetailed() ?? [])
+  for (const [, UI] of Loader.getSequence("public")?.listDetailed() ?? []) {
     if (UI.enabled) ServeStatic(UI);
+  }
 
   // Log UI list
   if (UITableData.length) console.table(UITableData);
 
-  for (const [, SubLoader] of Loader.getLoaders() ?? [])
-    for (const [, Middleware] of SubLoader.tree.get("middlewares")?.modules ??
-      [])
-      if (typeof Middleware.object.default === "function")
+  for (const [, SubLoader] of Loader.getLoaders() ?? []) {
+    for (
+      const [, Middleware] of SubLoader.tree.get("middlewares")?.modules ??
+        []
+    ) {
+      if (typeof Middleware.object.default === "function") {
         App.use(await Middleware.object.default());
+      }
+    }
+  }
 
-  for (const [, Middleware] of Loader.getModules("middlewares") ?? [])
-    if (typeof Middleware.object.default === "function")
+  for (const [, Middleware] of Loader.getModules("middlewares") ?? []) {
+    if (typeof Middleware.object.default === "function") {
       App.use(await Middleware.object.default());
+    }
+  }
 
   await new Server(APIController).prepare(async (routes) => {
     const Hooks: Array<{
@@ -99,14 +104,19 @@ export const prepareAppServer = async () => {
       post?: (...args: any[]) => Promise<void>;
     }> = [];
 
-    for (const [, SubLoader] of Loader.getLoaders() ?? [])
-      for (const [, Hook] of SubLoader.tree.get("hooks")?.modules ?? [])
-        if (typeof Hook.object.default === "object")
+    for (const [, SubLoader] of Loader.getLoaders() ?? []) {
+      for (const [, Hook] of SubLoader.tree.get("hooks")?.modules ?? []) {
+        if (typeof Hook.object.default === "object") {
           Hooks.push(Hook.object.default);
+        }
+      }
+    }
 
-    for (const [, Hook] of Loader.getModules("hooks") ?? [])
-      if (typeof Hook.object.default === "object")
+    for (const [, Hook] of Loader.getModules("hooks") ?? []) {
+      if (typeof Hook.object.default === "object") {
         Hooks.push(Hook.object.default);
+      }
+    }
 
     const RoutesTableData: Array<{
       Type: string;
@@ -144,8 +154,8 @@ export const prepareAppServer = async () => {
         },
         ...Middlewares,
         async (ctx) => {
-          const TargetVersion =
-            ctx.request.headers.get("x-app-version") ?? "latest";
+          const TargetVersion = ctx.request.headers.get("x-app-version") ??
+            "latest";
           const RequestContext = {
             requestedVersion: TargetVersion,
             version: TargetVersion,
@@ -154,8 +164,9 @@ export const prepareAppServer = async () => {
             options: Route.options,
           };
 
-          for (const Hook of Hooks)
+          for (const Hook of Hooks) {
             await Hook.pre?.(Route.scope, Route.options.name, RequestContext);
+          }
 
           const { version, object: RequestHandler } =
             (await Route.options.buildRequestHandler(Route, {
@@ -167,19 +178,21 @@ export const prepareAppServer = async () => {
           ctx.state._handleStartedAt = Date.now();
 
           const ReturnedResponse = await RequestHandler?.handler.bind(
-            RequestHandler
+            RequestHandler,
           )(RequestContext);
 
-          if (ReturnedResponse instanceof Response)
+          if (ReturnedResponse instanceof Response) {
             ReturnedResponse.metrics({
               handledInMs: Date.now() - ctx.state._handleStartedAt,
             });
+          }
 
-          for (const Hook of Hooks)
+          for (const Hook of Hooks) {
             await Hook?.post?.(Route.scope, Route.options.name, {
               ctx: RequestContext,
               res: ReturnedResponse,
             });
+          }
 
           Events.dispatchRequestEvent(`${Route.scope}.${Route.options.name}`, {
             ctx: RequestContext,
@@ -189,9 +202,10 @@ export const prepareAppServer = async () => {
           if (
             ReturnedResponse instanceof RawResponse ||
             ReturnedResponse instanceof Response
-          )
+          ) {
             respondWith(ctx, ReturnedResponse);
-        }
+          }
+        },
       );
     }
 
@@ -209,16 +223,20 @@ export const prepareAppServer = async () => {
 export const startBackgroundJobs = async (app: AppServer) => {
   const Jobs: Array<(app: AppServer) => Promise<() => Promise<void>>> = [];
 
-  for (const [, SubLoader] of Loader.getLoaders() ?? [])
-    for (const [, Job] of SubLoader.tree.get("jobs")?.modules ?? [])
-      if (typeof Job.object.default === "function")
+  for (const [, SubLoader] of Loader.getLoaders() ?? []) {
+    for (const [, Job] of SubLoader.tree.get("jobs")?.modules ?? []) {
+      if (typeof Job.object.default === "function") {
         Jobs.push(Job.object.default);
+      }
+    }
+  }
 
-  for (const [, Job] of Loader.getModules("jobs") ?? [])
+  for (const [, Job] of Loader.getModules("jobs") ?? []) {
     if (typeof Job.object.default === "function") Jobs.push(Job.object.default);
+  }
 
   return (await Promise.all(Jobs.map((_) => _(app)))).filter(
-    (_) => typeof _ === "function"
+    (_) => typeof _ === "function",
   );
 };
 
@@ -246,9 +264,7 @@ export const createAppServer = async () => {
 
         const listenHandler = (e: ApplicationListenEvent) => {
           console.info(
-            `${Env.getType().toUpperCase()} Server is listening on Port: ${
-              e.port
-            }`
+            `${Env.getType().toUpperCase()} Server is listening on Port: ${e.port}`,
           );
 
           App.removeEventListener("listen", listenHandler as any);
