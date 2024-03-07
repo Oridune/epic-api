@@ -1,5 +1,5 @@
 import e, { inferInput, inferOutput } from "validator";
-import { Mongo, ObjectId, InputDocument, OutputDocument } from "mongo";
+import { InputDocument, Mongo, ObjectId, OutputDocument } from "mongo";
 
 export const $_namePascalSchema = () =>
   e.object({
@@ -15,7 +15,10 @@ export type T$_namePascalOutput = OutputDocument<
   inferOutput<typeof $_namePascalSchema>
 >;
 
-export const $_namePascalModel = Mongo.model("$_nameKebab", $_namePascalSchema);
+export const $_namePascalModel = Mongo.model(
+  "$_namePascal",
+  $_namePascalSchema,
+);
 
 $_namePascalModel.pre("update", (details) => {
   details.updates.$set = {
