@@ -74,14 +74,14 @@ export interface IPostmanCollection {
     url:
       | string
       | {
-          raw?: string;
-          host: string[];
-          path: string[];
-          query?: Array<{ key: string; value: string }>;
-          variable?: Array<{ key: string; value: string }>;
-          protocol?: "http" | "https";
-          port?: string;
-        };
+        raw?: string;
+        host: string[];
+        path: string[];
+        query?: Array<{ key: string; value: string }>;
+        variable?: Array<{ key: string; value: string }>;
+        protocol?: "http" | "https";
+        port?: string;
+      };
   };
   response?: any[];
   item?: Array<IPostmanCollection>;
@@ -124,7 +124,7 @@ export const syncPostman = async (options: {
     // Create Empty Collection
     const PostmanCollectionObject: PostmanCollectionInterface = {
       info: {
-        name: Options.name ?? Config.name ?? Options.collectionId,
+        name: Options.name ?? Config.title ?? Options.collectionId,
         description: Options.description ?? Config.description,
         schema:
           "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -159,7 +159,7 @@ export const syncPostman = async (options: {
           groups: string[],
           scope: string,
           request: IPostmanCollection,
-          requestGroups: NestedRequests
+          requestGroups: NestedRequests,
         ) => {
           if (!groups.length) {
             requestGroups[scope] = [
@@ -176,7 +176,7 @@ export const syncPostman = async (options: {
             groups,
             scope,
             request,
-            (requestGroups[Group] as NestedRequests) ?? {}
+            (requestGroups[Group] as NestedRequests) ?? {},
           );
 
           return requestGroups;
@@ -194,7 +194,7 @@ export const syncPostman = async (options: {
             .replace("?", "");
 
           const QueryParams = Object.entries<string>(
-            RequestHandler.postman?.query?.data ?? {}
+            RequestHandler.postman?.query?.data ?? {},
           );
 
           NormalizeRequest(
@@ -204,12 +204,13 @@ export const syncPostman = async (options: {
               name: Route.options.name,
               request: {
                 url: {
-                  raw:
-                    Endpoint +
+                  raw: Endpoint +
                     (QueryParams.length
-                      ? `?${QueryParams.map(
-                          ([key, value]) => key + "=" + value
-                        ).join("&")}`
+                      ? `?${
+                        QueryParams.map(
+                          ([key, value]) => key + "=" + value,
+                        ).join("&")
+                      }`
                       : ""),
                   host: [Host],
                   path: Route.endpoint
@@ -220,9 +221,10 @@ export const syncPostman = async (options: {
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.query?.schema?.requiredProperties?.includes(
-                        key
-                      )
+                      RequestHandler.postman?.query?.schema?.requiredProperties
+                          ?.includes(
+                            key,
+                          )
                         ? undefined
                         : "(Optional)",
                       RequestHandler.postman?.query?.schema?.properties?.[key]
@@ -232,14 +234,15 @@ export const syncPostman = async (options: {
                       .join(" "),
                   })),
                   variable: Object.entries<string>(
-                    RequestHandler.postman?.params?.data ?? {}
+                    RequestHandler.postman?.params?.data ?? {},
                   ).map(([key, value]) => ({
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.params?.schema?.requiredProperties?.includes(
-                        key
-                      )
+                      RequestHandler.postman?.params?.schema?.requiredProperties
+                          ?.includes(
+                            key,
+                          )
                         ? undefined
                         : "(Optional)",
                       RequestHandler.postman?.params?.schema?.properties?.[key]
@@ -249,18 +252,19 @@ export const syncPostman = async (options: {
                       .join(" "),
                   })),
                 },
-                method:
-                  Route.options.method.toUpperCase() as PostmanRequestMethods,
+                method: Route.options.method
+                  .toUpperCase() as PostmanRequestMethods,
                 header: Object.entries<string>(
-                  RequestHandler.postman?.headers?.data ?? {}
+                  RequestHandler.postman?.headers?.data ?? {},
                 ).map(([key, value]) => ({
                   key,
                   value,
                   type: "text",
                   description: [
-                    RequestHandler.postman?.headers?.schema?.requiredProperties?.includes(
-                      key
-                    )
+                    RequestHandler.postman?.headers?.schema?.requiredProperties
+                        ?.includes(
+                          key,
+                        )
                       ? undefined
                       : "(Optional)",
                     RequestHandler.postman?.headers?.schema?.properties?.[key]
@@ -271,23 +275,23 @@ export const syncPostman = async (options: {
                 })),
                 body: RequestHandler.postman?.body?.data
                   ? {
-                      mode: "raw",
-                      raw: JSON.stringify(
-                        RequestHandler.postman.body.data,
-                        undefined,
-                        2
-                      ),
-                      options: {
-                        raw: {
-                          language: "json",
-                        },
+                    mode: "raw",
+                    raw: JSON.stringify(
+                      RequestHandler.postman.body.data,
+                      undefined,
+                      2,
+                    ),
+                    options: {
+                      raw: {
+                        language: "json",
                       },
-                    }
+                    },
+                  }
                   : undefined,
               },
               response: [],
             },
-            RequestGroups
+            RequestGroups,
           );
         }
       }
@@ -296,20 +300,21 @@ export const syncPostman = async (options: {
       if (RoutesTableData) console.table(RoutesTableData);
 
       const PushRequests = (
-        requestGroups: NestedRequests
+        requestGroups: NestedRequests,
       ): IPostmanCollection[] => {
         const Requests = [];
         for (const [Key, Item] of Object.entries(requestGroups)) {
-          if (Item instanceof Array)
+          if (Item instanceof Array) {
             Requests.push({
               name: Key,
               item: Item,
             });
-          else
+          } else {
             Requests.push({
               name: Key,
               item: PushRequests(Item),
             });
+          }
         }
 
         return Requests;
@@ -320,12 +325,12 @@ export const syncPostman = async (options: {
 
     await Deno.writeTextFile(
       `postman_collection-${Options.version}.json`,
-      JSON.stringify(PostmanCollectionObject, undefined, 2)
+      JSON.stringify(PostmanCollectionObject, undefined, 2),
     );
 
     if (Options.collectionId && Options.key) {
-      const URI =
-        "https://api.getpostman.com/collections/" + Options.collectionId;
+      const URI = "https://api.getpostman.com/collections/" +
+        Options.collectionId;
       const Response = await fetch(URI, {
         method: "PUT",
         headers: {
@@ -339,7 +344,7 @@ export const syncPostman = async (options: {
         "Postman Sync Response:",
         URI,
         Response.status,
-        await Response.json()
+        await Response.json(),
       );
     }
 
