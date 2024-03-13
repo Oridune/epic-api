@@ -1,7 +1,7 @@
 import { parse } from "flags";
-import { join, dirname } from "path";
+import { dirname, join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
-import { expandGlob, exists } from "fs";
+import { exists, expandGlob } from "fs";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
@@ -31,7 +31,7 @@ export const mergeConfig = async (dir: string) => {
 
   delete ResultConfig.id;
   delete ResultConfig.version;
-  delete ResultConfig.name;
+  delete ResultConfig.title;
   delete ResultConfig.description;
   delete ResultConfig.homepage;
   delete ResultConfig.icon;
@@ -47,8 +47,8 @@ export const mergeConfig = async (dir: string) => {
         ...ResultConfig,
       },
       undefined,
-      2
-    )
+      2,
+    ),
   );
 };
 
@@ -70,7 +70,7 @@ export const mergeImports = async (dir: string) => {
 
   await Deno.writeTextFile(
     MainImportsPath,
-    JSON.stringify(deepMerge(MainImports, TempImports), undefined, 2)
+    JSON.stringify(deepMerge(MainImports, TempImports), undefined, 2),
   );
 };
 
@@ -86,22 +86,25 @@ export const updateCore = async (options: {
             .optional(e.string())
             .default(async () => (await getDenoConfig()).template ?? "master"),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
     if (
       options.prompt &&
       !(await Confirm.prompt({
-        message: `Updating the core will overwrite any changes made to the core and template files! Are you sure you want to continue?`,
+        message:
+          `Updating the core will overwrite any changes made to the core and template files! Are you sure you want to continue?`,
       }))
-    )
+    ) {
       return;
+    }
 
     const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
     const TempPath = join(Deno.cwd(), "_temp");
 
-    if (await exists(TempPath))
+    if (await exists(TempPath)) {
       await Deno.remove(TempPath, { recursive: true });
+    }
 
     // deno-lint-ignore no-deprecated-deno-api
     const Process = Deno.run({
@@ -125,13 +128,15 @@ export const updateCore = async (options: {
       const CreatedFiles = new Set<string>();
 
       // Create Files
-      for (const Glob of ["**/**/*"].map((pattern) =>
-        expandGlob(pattern, {
-          root: TempPath,
-          globstar: true,
-        })
-      ))
-        for await (const Entry of Glob)
+      for (
+        const Glob of ["**/**/*"].map((pattern) =>
+          expandGlob(pattern, {
+            root: TempPath,
+            globstar: true,
+          })
+        )
+      ) {
+        for await (const Entry of Glob) {
           if (!Entry.isDirectory) {
             const SourcePath = Entry.path;
             const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
@@ -147,21 +152,25 @@ export const updateCore = async (options: {
 
             CreatedFiles.add(TargetPath);
           }
+        }
+      }
 
       // Create/Update Files
-      for (const Glob of [
-        ".vscode/epic.code-snippets",
-        "core/**/*",
-        "docs/**/*",
-        "templates/**/*",
-        "serve.ts",
-      ].map((pattern) =>
-        expandGlob(pattern, {
-          root: TempPath,
-          globstar: true,
-        })
-      ))
-        for await (const Entry of Glob)
+      for (
+        const Glob of [
+          ".vscode/epic.code-snippets",
+          "core/**/*",
+          "docs/**/*",
+          "templates/**/*",
+          "serve.ts",
+        ].map((pattern) =>
+          expandGlob(pattern, {
+            root: TempPath,
+            globstar: true,
+          })
+        )
+      ) {
+        for await (const Entry of Glob) {
           if (!Entry.isDirectory) {
             const SourcePath = Entry.path;
             const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
@@ -172,17 +181,19 @@ export const updateCore = async (options: {
               await Deno.mkdir(TargetDirectory, { recursive: true }).catch(
                 () => {
                   // Do nothing...
-                }
+                },
               );
 
               await Deno.copyFile(SourcePath, TargetPath);
             }
           }
+        }
+      }
 
       // Update Docs File
       await Deno.copyFile(
         join(TempPath, "README.md"),
-        join(Deno.cwd(), "new.README.md")
+        join(Deno.cwd(), "new.README.md"),
       );
 
       await mergeConfig(TempPath);
