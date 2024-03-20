@@ -1,16 +1,16 @@
 import {
-  Controller,
   BaseController,
-  Get,
-  Post,
-  Patch,
+  Controller,
   Delete,
-  Versioned,
-  Response,
-  type IRoute,
+  Get,
   type IRequestContext,
+  type IRoute,
+  Patch,
+  Post,
+  Response,
+  Versioned,
 } from "@Core/common/mod.ts";
-import { Status, type RouterContext } from "oak";
+import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { ObjectId } from "mongo";
 
@@ -39,14 +39,13 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: `${route.scope}.query` }
+          { name: `${route.scope}.query` },
         );
 
         /**
          * It is recommended to keep the following validators in place even if you don't want to validate any data.
          * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
+         */
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
@@ -56,11 +55,11 @@ export default class $_namePascalController extends BaseController {
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body({ type: "json" }).value,
-          { name: `${route.scope}.body` }
+          { name: `${route.scope}.body` },
         );
 
         return Response.statusCode(Status.Created).data(
-          await $_namePascalModel.create(Body)
+          await $_namePascalModel.create(Body),
         );
       },
     });
@@ -89,14 +88,13 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: `${route.scope}.query` }
+          { name: `${route.scope}.query` },
         );
 
         /**
          * It is recommended to keep the following validators in place even if you don't want to validate any data.
          * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
+         */
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
@@ -106,21 +104,15 @@ export default class $_namePascalController extends BaseController {
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body({ type: "json" }).value,
-          { name: `${route.scope}.body` }
+          { name: `${route.scope}.body` },
         );
 
-        const $_namePascalUpdated = await $_namePascalModel.updateAndFindOne(
+        const { modifications } = await $_namePascalModel.updateAndFindOne(
           Params.id,
-          Body
+          Body,
         );
 
-        if (!$_namePascalUpdated)
-          ctx.router.throw(
-            Status.NotFound,
-            "Updating failed! Target not found."
-          );
-
-        return Response.data($_namePascalUpdated);
+        return Response.data(modifications);
       },
     });
   }
@@ -134,27 +126,27 @@ export default class $_namePascalController extends BaseController {
       {
         search: e.optional(e.string()),
         range: e.optional(
-          e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true })
+          e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true }),
         ),
         offset: e.optional(e.number({ cast: true }).min(0)).default(0),
         limit: e.optional(e.number({ cast: true }).max(2000)).default(2000),
         sort: e
           .optional(
-            e.record(e.number({ cast: true }).min(-1).max(1), { cast: true })
+            e.record(e.number({ cast: true }).min(-1).max(1), { cast: true }),
           )
           .default({ _id: -1 }),
         project: e.optional(
-          e.record(e.number({ cast: true }).min(0).max(1), { cast: true })
+          e.record(e.number({ cast: true }).min(0).max(1), { cast: true }),
         ),
         includeTotalCount: e.optional(
           e
             .boolean({ cast: true })
             .describe(
-              "If `true` is passed, the system will return a total items count for pagination purpose."
-            )
+              "If `true` is passed, the system will return a total items count for pagination purpose.",
+            ),
         ),
       },
-      { allowUnexpectedProps: true }
+      { allowUnexpectedProps: true },
     );
 
     // Define Params Schema
@@ -171,14 +163,13 @@ export default class $_namePascalController extends BaseController {
         // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: `${route.scope}.query` }
+          { name: `${route.scope}.query` },
         );
 
         /**
          * It is recommended to keep the following validators in place even if you don't want to validate any data.
          * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
+         */
 
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
@@ -191,11 +182,11 @@ export default class $_namePascalController extends BaseController {
             ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
             ...(Query.range instanceof Array
               ? {
-                  createdAt: {
-                    $gt: new Date(Query.range[0]),
-                    $lt: new Date(Query.range[1]),
-                  },
-                }
+                createdAt: {
+                  $gt: new Date(Query.range[0]),
+                  $lt: new Date(Query.range[1]),
+                },
+              }
               : {}),
           })
           .skip(Query.offset)
@@ -206,8 +197,8 @@ export default class $_namePascalController extends BaseController {
 
         return Response.data({
           totalCount: Query.includeTotalCount
-            ? //? Make sure to pass any limiting conditions for count if needed.
-              await $_namePascalModel.count()
+            //? Make sure to pass any limiting conditions for count if needed.
+            ? await $_namePascalModel.count()
             : undefined,
           results: await $_namePascalListQuery,
         });
