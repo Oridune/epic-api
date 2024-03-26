@@ -18,7 +18,7 @@ export class Store {
   static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
   static denoKvConnectionString = Env.getSync(
     "DENO_KV_CONNECTION_STRING",
-    true
+    true,
   );
   static map = new Map<string, StoreItem>();
   static redis?: Redis;
@@ -29,14 +29,16 @@ export class Store {
   }
 
   private static deserialize(value: unknown) {
-    if (typeof value === "string" && value)
+    if (typeof value === "string" && value) {
       try {
         const RawValue = JSON.parse(value);
-        if (typeof RawValue === "object" && RawValue && "__value" in RawValue)
+        if (typeof RawValue === "object" && RawValue && "__value" in RawValue) {
           return RawValue.__value;
+        }
       } catch {
         // Do nothing...
       }
+    }
 
     return value;
   }
@@ -66,13 +68,13 @@ export class Store {
       case StoreType.REDIS:
         if (!Store.redis && Store.redisConnectionString) {
           const { hostname, port, pathname, username, password } = new URL(
-            Store.redisConnectionString.replace("redis://", "http://")
+            Store.redisConnectionString.replace("redis://", "http://"),
           );
 
           Store.redis = new Redis({
             lazyConnect: true,
             host: hostname,
-            port,
+            port: parseInt(port),
             db: parseInt(pathname.split("/").filter(Boolean)[0]),
             username,
             password,
@@ -83,8 +85,9 @@ export class Store {
         break;
 
       case StoreType.DENO_KV:
-        if (!(Store.denoKv instanceof Deno.Kv))
+        if (!(Store.denoKv instanceof Deno.Kv)) {
           Store.denoKv = await Deno.openKv(Store.denoKvConnectionString);
+        }
         break;
 
       default:
@@ -125,7 +128,7 @@ export class Store {
   static async set(
     key: string,
     value: unknown,
-    options?: { expiresInMs?: number }
+    options?: { expiresInMs?: number },
   ) {
     switch (Store.type) {
       case StoreType.REDIS:
@@ -153,10 +156,9 @@ export class Store {
           await Store.denoKv.set(["store", key], {
             value,
             timestamp: CurrentTime,
-            expiresOnMs:
-              typeof options?.expiresInMs === "number"
-                ? CurrentTime + options?.expiresInMs
-                : undefined,
+            expiresOnMs: typeof options?.expiresInMs === "number"
+              ? CurrentTime + options?.expiresInMs
+              : undefined,
           });
         }
         break;
@@ -167,10 +169,9 @@ export class Store {
           Store.map.set(key, {
             value,
             timestamp: CurrentTime,
-            expiresOnMs:
-              typeof options?.expiresInMs === "number"
-                ? CurrentTime + options?.expiresInMs
-                : undefined,
+            expiresOnMs: typeof options?.expiresInMs === "number"
+              ? CurrentTime + options?.expiresInMs
+              : undefined,
           });
         }
         break;
@@ -233,7 +234,7 @@ export class Store {
 
         await Store.redis.del(
           ...keys,
-          ...keys.map((key) => `${key}:timestamp`)
+          ...keys.map((key) => `${key}:timestamp`),
         );
         break;
 
@@ -300,7 +301,7 @@ export class Store {
    */
   static async incr(
     key: string,
-    options?: { incrBy?: number; expiresInMs?: number }
+    options?: { incrBy?: number; expiresInMs?: number },
   ) {
     switch (Store.type) {
       case StoreType.REDIS: {
@@ -346,8 +347,10 @@ export class Store {
 
     const Value = await callback();
 
-    if (![null, undefined].includes(Value as any))
+    // deno-lint-ignore no-explicit-any
+    if (![null, undefined].includes(Value as any)) {
       await this.set(key, Value, { expiresInMs });
+    }
 
     return Value;
   }
