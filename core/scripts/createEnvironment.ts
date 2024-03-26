@@ -108,4 +108,6 @@ if (import.meta.main) {
     variables: Variables,
     prompt: true,
   });
+
+  Deno.exit();
 }

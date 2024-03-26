@@ -2,8 +2,8 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
-import { Select, Confirm } from "cliffy:prompt";
-import { Loader, ISequenceDetail } from "@Core/common/loader.ts";
+import { Confirm, Select } from "cliffy:prompt";
+import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 
 import { updatePluginDeclarationFile } from "./addPlugin.ts";
 
@@ -12,7 +12,7 @@ export const removePluginFromImportMap = async (name: string) => {
 
   const ImportMap = (
     await import(`file:///${ImportMapPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
@@ -21,7 +21,7 @@ export const removePluginFromImportMap = async (name: string) => {
 
   await Deno.writeTextFile(
     ImportMapPath,
-    JSON.stringify(ImportMap, undefined, 2)
+    JSON.stringify(ImportMap, undefined, 2),
   );
 };
 
@@ -31,7 +31,7 @@ export const removePlugin = async (options: {
 }) => {
   try {
     const PluginsList = Array.from(
-      Loader.getSequence("plugins")?.includes() ?? []
+      Loader.getSequence("plugins")?.includes() ?? [],
     );
 
     const Options = await e
@@ -42,15 +42,15 @@ export const removePlugin = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? [
-                    await Select.prompt({
-                      message: "Choose the plugin to be deleted",
-                      options: PluginsList,
-                    }),
-                  ]
+                  await Select.prompt({
+                    message: "Choose the plugin to be deleted",
+                    options: PluginsList,
+                  }),
+                ]
                 : undefined
             ),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
@@ -60,18 +60,22 @@ export const removePlugin = async (options: {
       if (
         options.prompt &&
         !(await Confirm.prompt({
-          message: `Do you really want to delete the plugin(s) '${Options.name.join(
-            ", "
-          )}'?`,
+          message: `Do you really want to delete the plugin(s) '${
+            Options.name.join(
+              ", ",
+            )
+          }'?`,
         }))
-      )
+      ) {
         return PluginDetails;
+      }
 
       for (const PluginName of Options.name) {
         const PluginPath = join(Deno.cwd(), "plugins", PluginName);
 
-        const PluginDetail =
-          Loader.getSequence("plugins")?.getDetailed(PluginName);
+        const PluginDetail = Loader.getSequence("plugins")?.getDetailed(
+          PluginName,
+        );
 
         if (PluginDetail) {
           PluginDetails.push(PluginDetail);
@@ -107,4 +111,6 @@ if (import.meta.main) {
     name: name ?? n,
     prompt: true,
   });
+
+  Deno.exit();
 }

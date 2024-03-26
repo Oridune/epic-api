@@ -1,9 +1,9 @@
 import { parse } from "flags";
-import { join, basename } from "path";
+import { basename, join } from "path";
 import e from "validator";
 
 import { listValidTemplates, ModuleType } from "@Core/scripts/createModule.ts";
-import { Select, Confirm } from "cliffy:prompt";
+import { Confirm, Select } from "cliffy:prompt";
 import { Loader } from "@Core/common/loader.ts";
 
 export const deleteTemplate = async (options: {
@@ -20,22 +20,22 @@ export const deleteTemplate = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Select.prompt({
-                    message: "What is the template type?",
-                    options: Object.values(ModuleType),
-                  })) as ModuleType)
+                  message: "What is the template type?",
+                  options: Object.values(ModuleType),
+                })) as ModuleType)
                 : undefined
             ),
           name: e.optional(e.string()).default(async (ctx) =>
             ctx.parent!.input.prompt
               ? await Select.prompt({
-                  message: "Choose the template to be deleted",
-                  options: listValidTemplates(
-                    Array.from(
-                      Loader.getSequence("templates")?.includes() ?? []
-                    ),
-                    ctx.parent!.output.type
+                message: "Choose the template to be deleted",
+                options: listValidTemplates(
+                  Array.from(
+                    Loader.getSequence("templates")?.includes() ?? [],
                   ),
-                })
+                  ctx.parent!.output.type,
+                ),
+              })
               : undefined
           ),
           templatePath: e
@@ -44,11 +44,11 @@ export const deleteTemplate = async (options: {
               join(
                 Deno.cwd(),
                 "templates",
-                `${ctx.parent!.output.type}.${ctx.parent!.output.name}`
+                `${ctx.parent!.output.type}.${ctx.parent!.output.name}`,
               )
             ),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
@@ -58,10 +58,12 @@ export const deleteTemplate = async (options: {
       if (
         options.prompt &&
         !(await Confirm.prompt({
-          message: `Do you really want to delete the template '${TemplateName}'?`,
+          message:
+            `Do you really want to delete the template '${TemplateName}'?`,
         }))
-      )
+      ) {
         return;
+      }
 
       await Deno.remove(Options.templatePath);
       await Loader.getSequence("templates")?.set((_) => {
@@ -87,4 +89,6 @@ if (import.meta.main) {
     name: name ?? n,
     prompt: true,
   });
+
+  Deno.exit();
 }

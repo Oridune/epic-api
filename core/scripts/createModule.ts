@@ -3,14 +3,14 @@ import { join } from "path";
 import { exists } from "fs";
 import e from "validator";
 
-import { Input, Select, Confirm } from "cliffy:prompt";
+import { Confirm, Input, Select } from "cliffy:prompt";
 import { plural, singular } from "pluralize";
 import {
-  pascalCase,
   camelCase,
-  snakeCase,
   paramCase,
+  pascalCase,
   pathCase,
+  snakeCase,
 } from "stringcase/mod.ts";
 import { Loader } from "@Core/common/loader.ts";
 
@@ -37,7 +37,7 @@ export const createModule = async (options: {
 }) => {
   try {
     const Templates = Array.from(
-      Loader.getSequence("templates")?.includes() ?? []
+      Loader.getSequence("templates")?.includes() ?? [],
     );
     const Options = await e
       .object(
@@ -47,9 +47,9 @@ export const createModule = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Select.prompt({
-                    message: "What is the module type?",
-                    options: Object.values(ModuleType),
-                  })) as ModuleType)
+                  message: "What is the module type?",
+                  options: Object.values(ModuleType),
+                })) as ModuleType)
                 : undefined
             ),
           name: e
@@ -57,27 +57,27 @@ export const createModule = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Input.prompt({
-                    message: "What is the name of module?",
-                    validate: (value) =>
-                      /^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/.test(value),
-                  })) as string)
+                  message: "What is the name of module?",
+                  validate: (value) =>
+                    /^[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*$/.test(value),
+                })) as string)
                 : undefined
             ),
           template: e
             .optional(
               e.in((ctx) =>
                 listValidTemplates(Templates, ctx.parent!.output.type)
-              )
+              ),
             )
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? await Select.prompt({
-                    message: "Choose a template",
-                    options: listValidTemplates(
-                      Templates,
-                      ctx.parent!.output.type
-                    ),
-                  })
+                  message: "Choose a template",
+                  options: listValidTemplates(
+                    Templates,
+                    ctx.parent!.output.type,
+                  ),
+                })
                 : undefined
             ),
           moduleDirName: e
@@ -107,11 +107,11 @@ export const createModule = async (options: {
               join(
                 Deno.cwd(),
                 "templates",
-                `${ctx.parent!.output.type}.${ctx.parent!.output.template}`
+                `${ctx.parent!.output.type}.${ctx.parent!.output.template}`,
               )
             ),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
@@ -120,10 +120,12 @@ export const createModule = async (options: {
         options.prompt &&
         (await exists(Options.modulePath)) &&
         !(await Confirm.prompt({
-          message: `Are you sure you want to re-create the module '${Options.name}'?`,
+          message:
+            `Are you sure you want to re-create the module '${Options.name}'?`,
         }))
-      )
+      ) {
         return;
+      }
 
       const Content = (await Deno.readTextFile(Options.templatePath))
         .replaceAll("$_namePascal", pascalCase(Options.name))
@@ -135,17 +137,19 @@ export const createModule = async (options: {
         .replaceAll("$_nameSingular", singular(Options.name))
         .replaceAll("$_name", Options.name);
 
-      if (!(await exists(Options.moduleDir)))
+      if (!(await exists(Options.moduleDir))) {
         await Deno.mkdir(Options.moduleDir, { recursive: true });
+      }
 
       await Deno.writeTextFile(Options.modulePath, Content);
       await Loader.getSequence(plural(Options.type))?.set((_) =>
         _.add(Options.module)
       );
-    } else
+    } else {
       throw new Error(
-        `We couldn't create that module! The type or name is missing.`
+        `We couldn't create that module! The type or name is missing.`,
       );
+    }
 
     console.info("Module has been created successfully!");
   } catch (error) {
@@ -166,4 +170,6 @@ if (import.meta.main) {
     template,
     prompt: true,
   });
+
+  Deno.exit();
 }

@@ -117,7 +117,7 @@ export const syncPostman = async (options: {
 
     const Config = (
       await import(`file:///${join(Deno.cwd(), "deno.json")}`, {
-        assert: { type: "json" },
+        with: { type: "json" },
       })
     ).default;
 
@@ -301,24 +301,11 @@ export const syncPostman = async (options: {
 
       const PushRequests = (
         requestGroups: NestedRequests,
-      ): IPostmanCollection[] => {
-        const Requests = [];
-        for (const [Key, Item] of Object.entries(requestGroups)) {
-          if (Item instanceof Array) {
-            Requests.push({
-              name: Key,
-              item: Item,
-            });
-          } else {
-            Requests.push({
-              name: Key,
-              item: PushRequests(Item),
-            });
-          }
-        }
-
-        return Requests;
-      };
+      ): IPostmanCollection[] =>
+        Object.entries(requestGroups).map(([Key, Item]) => ({
+          name: Key,
+          item: Item instanceof Array ? Item : PushRequests(Item),
+        }));
 
       PostmanCollectionObject.item = PushRequests(RequestGroups);
     });
@@ -368,4 +355,6 @@ if (import.meta.main) {
     description: description ?? d,
     version: version ?? v,
   });
+
+  Deno.exit();
 }

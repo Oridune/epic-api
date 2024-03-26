@@ -1,5 +1,5 @@
 import { parse } from "flags";
-import { join, isAbsolute } from "path";
+import { isAbsolute, join } from "path";
 import { exists } from "fs";
 import e from "validator";
 
@@ -20,7 +20,7 @@ export const resolvePluginName = (name: string) =>
     .join("\\");
 
 export const addPluginToImportMap = async (
-  name: string
+  name: string,
 ): Promise<{
   imports: Record<string, string>;
   scopes: Record<string, Record<string, string>>;
@@ -30,13 +30,13 @@ export const addPluginToImportMap = async (
     Deno.cwd(),
     "plugins",
     name,
-    "import_map.json"
+    "import_map.json",
   );
   const RelativePluginPath = `./plugins/${name}/`;
 
   const ImportMap = (
     await import(`file:///${ImportMapPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
@@ -52,16 +52,18 @@ export const addPluginToImportMap = async (
 
   const PluginImportMap = (
     await import(`file:///${PluginImportMapPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
   const ImportKeys = Object.keys(ImportMap.imports ?? {});
   const PluginImportKeys = Object.keys(PluginImportMap.imports ?? {});
 
-  for (const Key of PluginImportKeys.filter(
-    (key) => !ImportKeys.includes(key) || /@(-?\w+\/?)+/.test(key)
-  ))
+  for (
+    const Key of PluginImportKeys.filter(
+      (key) => !ImportKeys.includes(key) || /@(-?\w+\/?)+/.test(key),
+    )
+  ) {
     if (!/^@((Plugin|Core)\/.*|Database)$/.test(Key)) {
       const TempPath = PluginImportMap.imports?.[Key];
 
@@ -79,18 +81,22 @@ export const addPluginToImportMap = async (
       const IsAbsolute = !IsUrl && isAbsolute(TempPath);
       const IsRelative = !IsUrl && !IsAbsolute;
 
-      if (IsRelative)
-        ResolvedPath = `./${join(`./plugins/${name}/`, TempPath).replace(
-          /\\/g,
-          "/"
-        )}`;
+      if (IsRelative) {
+        ResolvedPath = `./${
+          join(`./plugins/${name}/`, TempPath).replace(
+            /\\/g,
+            "/",
+          )
+        }`;
+      }
 
       ImportMap.scopes[RelativePluginPath][Key] = ResolvedPath;
     }
+  }
 
   await Deno.writeTextFile(
     ImportMapPath,
-    JSON.stringify(ImportMap, undefined, 2)
+    JSON.stringify(ImportMap, undefined, 2),
   );
 
   return ImportMap;
@@ -106,8 +112,10 @@ export const updatePluginDeclarationFile = async () => {
   for (const PluginName of PluginsName) {
     const RelativePluginDeclarationPath = `./plugins/${PluginName}/index.d.ts`;
 
-    if (await exists(RelativePluginDeclarationPath))
-      DeclarationFileContent += `\n/// <reference types="${RelativePluginDeclarationPath}" />`;
+    if (await exists(RelativePluginDeclarationPath)) {
+      DeclarationFileContent +=
+        `\n/// <reference types="${RelativePluginDeclarationPath}" />`;
+    }
   }
 
   await Deno.writeTextFile(DeclarationFilePath, DeclarationFileContent);
@@ -132,14 +140,14 @@ export const addPlugin = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? [
-                    await Input.prompt({
-                      message: "Name of the Plugin",
-                    }),
-                  ]
+                  await Input.prompt({
+                    message: "Name of the Plugin",
+                  }),
+                ]
                 : undefined
             ),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
@@ -152,25 +160,27 @@ export const addPlugin = async (options: {
         let ResolvePluginName = PluginName;
         let Process:
           | Deno.Process<{
-              cmd: string[];
-              cwd: string;
-            }>
+            cmd: string[];
+            cwd: string;
+          }>
           | undefined;
 
         const GitRepoUrl = new URL(ResolvePluginName, "https://github.com");
 
         // Resolve plugin name according to Git scheme.
-        if (Options.source === PluginSource.GIT)
+        if (Options.source === PluginSource.GIT) {
           ResolvePluginName = resolvePluginName(GitRepoUrl.pathname);
+        }
 
         // Check if plugin already exists.
-        if (Loader.getSequence("plugins")?.includes().has(ResolvePluginName))
+        if (Loader.getSequence("plugins")?.includes().has(ResolvePluginName)) {
           throw new Error(
-            `The plugin '${ResolvePluginName}' already exists on this project!`
+            `The plugin '${ResolvePluginName}' already exists on this project!`,
           );
+        }
 
         // Clone Repository from Git.
-        if (Options.source === PluginSource.GIT)
+        if (Options.source === PluginSource.GIT) {
           // deno-lint-ignore no-deprecated-deno-api
           Process = Deno.run({
             cmd: [
@@ -183,6 +193,7 @@ export const addPlugin = async (options: {
             ],
             cwd: PluginsDir,
           });
+        }
 
         if (Process) {
           const Status = await Process.status();
@@ -196,24 +207,27 @@ export const addPlugin = async (options: {
             await addPluginToImportMap(ResolvePluginName);
             await updatePluginDeclarationFile();
 
-            for (const EntryName of [
-              ".git",
-              ".vscode",
-              "core",
-              "docs",
-              "env",
-              "terraform",
-              "database.ts",
-              "serve.ts",
-            ])
+            for (
+              const EntryName of [
+                ".git",
+                ".vscode",
+                "core",
+                "docs",
+                "env",
+                "terraform",
+                "database.ts",
+                "serve.ts",
+              ]
+            ) {
               try {
                 await Deno.remove(
                   join(PluginsDir, ResolvePluginName, EntryName),
-                  { recursive: true }
+                  { recursive: true },
                 );
               } catch {
                 // Do nothing...
               }
+            }
 
             console.info("Plugin(s) added successfully!");
           } else throw new Error("We were unable to add plugin(s)!");
@@ -238,4 +252,6 @@ if (import.meta.main) {
     name: name ?? n,
     prompt: true,
   });
+
+  Deno.exit();
 }

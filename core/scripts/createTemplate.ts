@@ -1,16 +1,16 @@
 import { parse } from "flags";
-import { join, dirname, basename } from "path";
+import { basename, dirname, join } from "path";
 import { exists } from "fs";
 import e from "validator";
 
-import { Input, Select, Confirm } from "cliffy:prompt";
+import { Confirm, Input, Select } from "cliffy:prompt";
 import { plural, singular } from "pluralize";
 import {
-  pascalCase,
   camelCase,
-  snakeCase,
   paramCase,
+  pascalCase,
   pathCase,
+  snakeCase,
 } from "stringcase/mod.ts";
 import { Loader } from "@Core/common/loader.ts";
 import { ModuleType } from "@Core/scripts/createModule.ts";
@@ -30,22 +30,22 @@ export const createTemplate = async (options: {
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? ((await Select.prompt({
-                    message: "What is the template type?",
-                    options: Object.values(ModuleType),
-                  })) as ModuleType)
+                  message: "What is the template type?",
+                  options: Object.values(ModuleType),
+                })) as ModuleType)
                 : undefined
             ),
           name: e.optional(e.string()).default(async (ctx) =>
             ctx.parent!.input.prompt
               ? ((await Input.prompt({
-                  message:
-                    "What is the name of template? (Full file name. E.g: blank.ts)",
-                })) as string)
+                message:
+                  "What is the name of template? (Full file name. E.g: blank.ts)",
+              })) as string)
               : undefined
           ),
           content: e.optional(e.string()),
         },
-        { allowUnexpectedProps: true }
+        { allowUnexpectedProps: true },
       )
       .validate(options);
 
@@ -53,7 +53,7 @@ export const createTemplate = async (options: {
       const TemplatePath = join(
         Deno.cwd(),
         "templates",
-        `${Options.type}.${Options.name}`
+        `${Options.type}.${Options.name}`,
       );
       const TemplateDir = dirname(TemplatePath);
       const TemplateName = basename(TemplatePath);
@@ -62,10 +62,12 @@ export const createTemplate = async (options: {
         options.prompt &&
         (await exists(TemplatePath)) &&
         !(await Confirm.prompt({
-          message: `Are you sure you want to re-create the template '${TemplateName}'?`,
+          message:
+            `Are you sure you want to re-create the template '${TemplateName}'?`,
         }))
-      )
+      ) {
         return;
+      }
 
       const Content = (Options.content ?? "")
         .replaceAll("$_namePascal", pascalCase(Options.name))
@@ -77,8 +79,9 @@ export const createTemplate = async (options: {
         .replaceAll("$_nameSingular", singular(Options.name))
         .replaceAll("$_name", Options.name);
 
-      if (!(await exists(TemplateDir)))
+      if (!(await exists(TemplateDir))) {
         await Deno.mkdir(TemplateDir, { recursive: true });
+      }
 
       await Deno.writeTextFile(TemplatePath, Content);
       await Loader.getSequence("templates")?.set((_) => _.add(TemplateName));
@@ -102,4 +105,6 @@ if (import.meta.main) {
     content: content ?? c,
     prompt: true,
   });
+
+  Deno.exit();
 }

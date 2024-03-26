@@ -11,7 +11,7 @@ export const getDenoConfig = async () => {
 
   return (
     await import(`file:///${MainConfigPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 };
@@ -21,7 +21,7 @@ export const mergeConfig = async (dir: string) => {
 
   const TempConfig = (
     await import(`file:///${TempConfigPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
@@ -58,13 +58,13 @@ export const mergeImports = async (dir: string) => {
 
   const TempImports = (
     await import(`file:///${TempImportsPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
   const MainImports = (
     await import(`file:///${MainImportsPath}`, {
-      assert: { type: "json" },
+      with: { type: "json" },
     })
   ).default;
 
@@ -222,4 +222,6 @@ if (import.meta.main) {
     template: template ?? t,
     prompt: true,
   });
+
+  Deno.exit();
 }
