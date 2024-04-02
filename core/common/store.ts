@@ -340,8 +340,14 @@ export class Store {
    * @param expiresInMs
    * @returns
    */
-  static async cache<T>(key: string, callback: () => T, expiresInMs?: number) {
-    const Cached = await this.get<T>(key);
+  static async cache<T>(
+    key: string | string[],
+    callback: () => T,
+    expiresInMs?: number,
+  ) {
+    const Key = key instanceof Array ? key.join(":") : key;
+
+    const Cached = await this.get<T>(Key);
 
     if (Cached !== null) return Cached;
 
@@ -349,7 +355,7 @@ export class Store {
 
     // deno-lint-ignore no-explicit-any
     if (![null, undefined].includes(Value as any)) {
-      await this.set(key, Value, { expiresInMs });
+      await this.set(Key, Value, { expiresInMs });
     }
 
     return Value;
