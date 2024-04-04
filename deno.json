@@ -14,7 +14,7 @@
     "start": "ENV_TYPE=production deno run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi ./serve.ts",
     "dev": "ENV_TYPE=development denon run --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi ./serve.ts",
     "test": "ENV_TYPE=test deno test --allow-read --allow-write --allow-env --allow-net --allow-sys --allow-run --allow-ffi tests/*.test.ts",
-    "init": "rm -rf .git && git init && deno task create:env -t development,test,production && deno task cache",
+    "init": "rm -rf .git && git init && npx -y husky && deno task create:env -t development,test,production && deno task cache",
     "cache": "deno cache ./serve.ts",
     "create:env": "deno run -A ./core/scripts/createEnvironment.ts",
     "update:core": "deno run -A ./core/scripts/updateCore.ts",
