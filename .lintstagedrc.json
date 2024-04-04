@@ -1,0 +1,7 @@
+{
+  "*.ts": [
+    "deno fmt",
+    "deno lint",
+    "git add"
+  ]
+}
