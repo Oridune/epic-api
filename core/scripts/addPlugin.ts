@@ -218,6 +218,7 @@ export const addPlugin = async (options: {
                 "terraform",
                 "database.ts",
                 "serve.ts",
+                ".lintstagedrc.json",
               ]
             ) {
               try {
