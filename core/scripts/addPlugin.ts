@@ -211,6 +211,7 @@ export const addPlugin = async (options: {
               const EntryName of [
                 ".git",
                 ".vscode",
+                ".husky",
                 "core",
                 "docs",
                 "env",
