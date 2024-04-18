@@ -14,10 +14,10 @@ import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { ObjectId } from "mongo";
 
-import { $_namePascalModel } from "@Models/$_name.ts";
+import { <%- utils.pascalCase(utils.singular(name)) %>Model } from "@Models/<%- utils.singular(name) %>.ts";
 
-@Controller("/$_namePath/", { name: "$_nameCamel" })
-export default class $_namePascalController extends BaseController {
+@Controller("/<%- utils.pathCase(name) %>/", { name: "<%- utils.camelCase(name) %>" })
+export default class <%- utils.pascalCase(name) %>Controller extends BaseController {
   @Post("/")
   public create(route: IRoute) {
     // Define Query Schema
@@ -59,7 +59,7 @@ export default class $_namePascalController extends BaseController {
         );
 
         return Response.statusCode(Status.Created).data(
-          await $_namePascalModel.create(Body),
+          await <%- utils.pascalCase(utils.singular(name)) %>Model.create(Body),
         );
       },
     });
@@ -107,7 +107,7 @@ export default class $_namePascalController extends BaseController {
           { name: `${route.scope}.body` },
         );
 
-        const { modifications } = await $_namePascalModel.updateAndFindOne(
+        const { modifications } = await <%- utils.pascalCase(utils.singular(name)) %>Model.updateOneOrFail(
           Params.id,
           Body,
         );
@@ -176,7 +176,7 @@ export default class $_namePascalController extends BaseController {
           name: `${route.scope}.params`,
         });
 
-        const $_namePascalListQuery = $_namePascalModel
+        const <%- utils.pascalCase(name) %>ListQuery = <%- utils.pascalCase(utils.singular(name)) %>Model
           .search(Query.search)
           .filter({
             ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
@@ -193,14 +193,14 @@ export default class $_namePascalController extends BaseController {
           .limit(Query.limit)
           .sort(Query.sort);
 
-        if (Query.project) $_namePascalListQuery.project(Query.project);
+        if (Query.project) <%- utils.pascalCase(name) %>ListQuery.project(Query.project);
 
         return Response.data({
           totalCount: Query.includeTotalCount
             //? Make sure to pass any limiting conditions for count if needed.
-            ? await $_namePascalModel.count()
+            ? await <%- utils.pascalCase(utils.singular(name)) %>Model.count()
             : undefined,
-          results: await $_namePascalListQuery,
+          results: await <%- utils.pascalCase(name) %>ListQuery,
         });
       },
     });
@@ -223,7 +223,7 @@ export default class $_namePascalController extends BaseController {
           name: `${route.scope}.params`,
         });
 
-        await $_namePascalModel.deleteOne(Params.id);
+        await <%- utils.pascalCase(utils.singular(name)) %>Model.deleteOne(Params.id);
 
         return Response.true();
       },

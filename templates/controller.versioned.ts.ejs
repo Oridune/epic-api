@@ -3,6 +3,7 @@ import {
   BaseController,
   Get,
   Post,
+  Versioned,
   Response,
   type IRoute,
   type IRequestContext,
@@ -10,8 +11,8 @@ import {
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
-@Controller("/$_namePath/", { name: "$_nameCamel" })
-export default class $_namePascalController extends BaseController {
+@Controller("/<%- utils.pathCase(name) %>/", { name: "<%- utils.camelCase(name) %>" })
+export default class <%- utils.pascalCase(name) %>Controller extends BaseController {
   @Post("/")
   public create(route: IRoute) {
     // Define Query Schema
@@ -23,7 +24,7 @@ export default class $_namePascalController extends BaseController {
     // Define Body Schema
     const BodySchema = e.object({});
 
-    return {
+    return new Versioned().add("1.0.0", {
       postman: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
@@ -57,7 +58,7 @@ export default class $_namePascalController extends BaseController {
 
         return Response.statusCode(Status.Created);
       },
-    };
+    });
   }
 
   @Get("/")
@@ -68,7 +69,7 @@ export default class $_namePascalController extends BaseController {
     // Define Params Schema
     const ParamsSchema = e.object({});
 
-    return {
+    return Versioned.add("1.0.0", {
       postman: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
@@ -95,6 +96,6 @@ export default class $_namePascalController extends BaseController {
 
         return Response.status(true);
       },
-    };
+    });
   }
 }

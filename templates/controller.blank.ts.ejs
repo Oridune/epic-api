@@ -1,15 +1,15 @@
 import {
-  Controller,
   BaseController,
+  Controller,
   Get,
-  Response,
-  type IRoute,
   type IRequestContext,
+  type IRoute,
+  Response,
 } from "@Core/common/mod.ts";
 import { type RouterContext } from "oak";
 
-@Controller("/$_namePath/", { name: "$_nameCamel" })
-export default class $_namePascalController extends BaseController {
+@Controller("/<%- utils.pathCase(name) %>/", { name: "<%- utils.camelCase(name) %>" })
+export default class <%- utils.pascalCase(name) %>Controller extends BaseController {
   @Get("/")
   public list(_: IRoute) {
     // This is a factory method that returns a request handler.

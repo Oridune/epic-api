@@ -1,0 +1,28 @@
+import e, { inferInput, inferOutput } from "validator";
+import { InputDocument, Mongo, ObjectId, OutputDocument } from "mongo";
+
+export const <%- utils.pascalCase(name) %>Schema = () =>
+  e.object({
+    _id: e.optional(e.instanceOf(ObjectId, { instantiate: true })),
+    createdAt: e.optional(e.date()).default(() => new Date()),
+    updatedAt: e.optional(e.date()).default(() => new Date()),
+  });
+
+export type T<%- utils.pascalCase(name) %>Input = InputDocument<
+  inferInput<typeof <%- utils.pascalCase(name) %>Schema>
+>;
+export type T<%- utils.pascalCase(name) %>Output = OutputDocument<
+  inferOutput<typeof <%- utils.pascalCase(name) %>Schema>
+>;
+
+export const <%- utils.pascalCase(name) %>Model = Mongo.model(
+  "<%- utils.pascalCase(name) %>",
+  <%- utils.pascalCase(name) %>Schema,
+);
+
+<%- utils.pascalCase(name) %>Model.pre("update", (details) => {
+  details.updates.$set = {
+    ...details.updates.$set,
+    updatedAt: new Date(),
+  };
+});
