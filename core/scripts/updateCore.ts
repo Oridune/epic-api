@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { dirname, join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
-import { existsSync, expandGlob } from "fs";
+import { existsSync, expandGlob } from "dfs";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";

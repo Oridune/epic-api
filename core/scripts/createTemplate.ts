@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { basename, dirname, join } from "path";
-import { existsSync } from "fs";
+import { existsSync } from "dfs";
 import e from "validator";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
