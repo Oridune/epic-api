@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { isAbsolute, join } from "path";
-import { exists } from "fs";
+import { existsSync } from "fs";
 import e from "validator";
 
 import { Input } from "cliffy:prompt";
@@ -112,7 +112,7 @@ export const updatePluginDeclarationFile = async () => {
   for (const PluginName of PluginsName) {
     const RelativePluginDeclarationPath = `./plugins/${PluginName}/index.d.ts`;
 
-    if (await exists(RelativePluginDeclarationPath)) {
+    if (existsSync(RelativePluginDeclarationPath)) {
       DeclarationFileContent +=
         `\n/// <reference types="${RelativePluginDeclarationPath}" />`;
     }

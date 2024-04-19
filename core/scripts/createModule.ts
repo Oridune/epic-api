@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { join } from "path";
-import { exists } from "fs";
+import { existsSync } from "fs";
 import e from "validator";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
@@ -120,7 +120,7 @@ export const createModule = async (options: {
     if (Options.type && Options.name) {
       if (
         options.prompt &&
-        (await exists(Options.modulePath)) &&
+        existsSync(Options.modulePath) &&
         !(await Confirm.prompt({
           message:
             `Are you sure you want to re-create the module '${Options.name}'?`,
@@ -142,9 +142,9 @@ export const createModule = async (options: {
           .replaceAll("$_nameSingular", singular(Options.name))
           .replaceAll("$_name", Options.name);
 
-      if (!(await exists(Options.moduleDir))) {
-        await Deno.mkdir(Options.moduleDir, { recursive: true });
-      }
+      await Deno.mkdir(Options.moduleDir, { recursive: true }).catch(() => {
+        // Do nothing...
+      });
 
       await Deno.writeTextFile(Options.modulePath, Content);
       await Loader.getSequence(plural(Options.type))?.set((_) =>

@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { dirname, join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
-import { exists, expandGlob } from "fs";
+import { existsSync, expandGlob } from "fs";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
@@ -102,9 +102,9 @@ export const updateCore = async (options: {
     const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
     const TempPath = join(Deno.cwd(), "_temp");
 
-    if (await exists(TempPath)) {
-      await Deno.remove(TempPath, { recursive: true });
-    }
+    await Deno.remove(TempPath, { recursive: true }).catch(() => {
+      // Do nothing...
+    });
 
     // deno-lint-ignore no-deprecated-deno-api
     const Process = Deno.run({
@@ -142,7 +142,7 @@ export const updateCore = async (options: {
             const TargetPath = Entry.path.replace(TempPath, Deno.cwd());
             const TargetDirectory = dirname(TargetPath);
 
-            if (await exists(TargetPath)) continue;
+            if (existsSync(TargetPath)) continue;
 
             await Deno.mkdir(TargetDirectory, { recursive: true }).catch(() => {
               // Do nothing...

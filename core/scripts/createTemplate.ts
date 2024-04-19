@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { basename, dirname, join } from "path";
-import { exists } from "fs";
+import { existsSync } from "fs";
 import e from "validator";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
@@ -60,7 +60,7 @@ export const createTemplate = async (options: {
 
       if (
         options.prompt &&
-        (await exists(TemplatePath)) &&
+        existsSync(TemplatePath) &&
         !(await Confirm.prompt({
           message:
             `Are you sure you want to re-create the template '${TemplateName}'?`,
@@ -79,9 +79,9 @@ export const createTemplate = async (options: {
         .replaceAll("$_nameSingular", singular(Options.name))
         .replaceAll("$_name", Options.name);
 
-      if (!(await exists(TemplateDir))) {
-        await Deno.mkdir(TemplateDir, { recursive: true });
-      }
+      await Deno.mkdir(TemplateDir, { recursive: true }).catch(() => {
+        // Do nothing...
+      });
 
       await Deno.writeTextFile(TemplatePath, Content);
       await Loader.getSequence("templates")?.set((_) => _.add(TemplateName));

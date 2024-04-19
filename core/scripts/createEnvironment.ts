@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { join } from "path";
-import { exists } from "fs";
+import { existsSync } from "fs";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
@@ -32,11 +32,11 @@ export const createEnvironment = async (options: {
     const EnvironmentDir = join(Deno.cwd(), "./env/");
     const GlobalEnvironmentFilePath = join(EnvironmentDir, ".env");
 
-    if (!(await exists(EnvironmentDir))) {
-      await Deno.mkdir(EnvironmentDir, { recursive: true });
-    }
+    await Deno.mkdir(EnvironmentDir, { recursive: true }).catch(() => {
+      // Do nothing...
+    });
 
-    if (!(await exists(GlobalEnvironmentFilePath))) {
+    if (!existsSync(GlobalEnvironmentFilePath)) {
       await Deno.writeTextFile(
         GlobalEnvironmentFilePath,
         "# Put your global environment variables here.",
@@ -54,7 +54,7 @@ export const createEnvironment = async (options: {
 
       if (
         options.prompt &&
-        (await exists(EnvironmentFilePath)) &&
+        existsSync(EnvironmentFilePath) &&
         !(await Confirm.prompt({
           message:
             `Are you sure you want to re-create the environment file '${EnvironmentFileName}'?`,
