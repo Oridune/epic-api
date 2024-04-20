@@ -141,7 +141,10 @@ export class StoreBase extends StoreLike {
    */
   static async cache<T>(
     key: string | string[],
-    callback: () => T | { result: T; expiresInMs: number },
+    callback: () =>
+      | T
+      | { _result: T; expiresInMs: number }
+      | Promise<T | { _result: T; expiresInMs: number }>,
     expiresInMs?: number,
   ) {
     const Key = key instanceof Array ? key.join(":") : key;
@@ -171,6 +174,6 @@ export class StoreBase extends StoreLike {
       await this.set(Key, Value, { expiresInMs: ExpiresInMs });
     }
 
-    return Value;
+    return Value as T;
   }
 }
