@@ -36,7 +36,7 @@ Deno.test({
         }),
         metrics: e.record(e.any()),
       },
-      { cast: true }
+      { cast: true },
     );
 
     await t.step("GET / Should return 404 not found", async () => {
@@ -60,7 +60,12 @@ Deno.test({
       expect(Response.headers.get("Content-Type")).toMatch(/json/);
       expect(Response.status).toBe(200);
 
-      await ResponseSchema.validate(JSON.parse(await Response.text()));
+      await ResponseSchema.validate(JSON.parse(await Response.text())).catch(
+        (error) => {
+          console.error(error);
+          throw error;
+        },
+      );
     });
 
     await t.step(
@@ -81,7 +86,7 @@ Deno.test({
           console.error(error);
           throw error;
         });
-      }
+      },
     );
 
     await t.step(
@@ -96,9 +101,9 @@ Deno.test({
         expect(Response.headers.get("Content-Type")).toMatch(/json/);
         expect(Response.status).toBe(200);
         expect(await Response.text()).toMatch(
-          /Latest test was successful from API version 1.0.5!/
+          /Latest test was successful from API version 1.0.5!/,
         );
-      }
+      },
     );
 
     await t.step(
@@ -111,7 +116,7 @@ Deno.test({
         });
 
         expect(Response.status).toBe(404);
-      }
+      },
     );
 
     await t.step(
@@ -122,7 +127,7 @@ Deno.test({
         await Promise.all(
           new Array(RequestLimit)
             .fill(null)
-            .map(() => fetch(new URL("/", APIHost)))
+            .map(() => fetch(new URL("/", APIHost))),
         );
 
         const Response = await fetch(new URL("/api/", APIHost));
@@ -130,11 +135,11 @@ Deno.test({
         expect(Response.headers.get("Content-Type")).toMatch(/json/);
         expect(Response.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
         expect(Response.headers.get("X-Rate-Limit-Limit")).toMatch(
-          RequestLimit.toString()
+          RequestLimit.toString(),
         );
         expect(Response.headers.get("X-Rate-Limit-Remaining")).toMatch("0");
         expect(Response.status).toBe(429);
-      }
+      },
     );
 
     await end();
