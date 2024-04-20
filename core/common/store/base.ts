@@ -143,8 +143,8 @@ export class StoreBase extends StoreLike {
     key: string | string[],
     callback: () =>
       | T
-      | { _result: T; expiresInMs: number }
-      | Promise<T | { _result: T; expiresInMs: number }>,
+      | { result: T; expiresInMs: number }
+      | Promise<T | { result: T; expiresInMs: number }>,
     expiresInMs?: number,
   ) {
     const Key = key instanceof Array ? key.join(":") : key;
@@ -161,11 +161,11 @@ export class StoreBase extends StoreLike {
     if (
       typeof RawValue === "object" &&
       RawValue &&
-      "_result" in RawValue &&
+      "result" in RawValue &&
       "expiresInMs" in RawValue &&
       Object.keys(RawValue).length === 2
     ) {
-      Value = RawValue._result;
+      Value = RawValue.result;
       ExpiresInMs = RawValue.expiresInMs;
     }
 
