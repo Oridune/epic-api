@@ -35,4 +35,29 @@ export class Store extends getStore(CurrentStoreType) {
   static switch(type: StoreType) {
     return getStore(type);
   }
+
+  static async session<T>(
+    type: StoreType,
+    callback: (store: typeof StoreBase) => T,
+  ): Promise<T> {
+    const store = this.switch(type);
+
+    let error: unknown;
+
+    await store.connect();
+
+    const results = callback(store);
+
+    if (results instanceof Promise) {
+      await results.catch((e) => {
+        error = e;
+      });
+    }
+
+    await store.disconnect();
+
+    if (error !== undefined) throw error;
+
+    return results;
+  }
 }

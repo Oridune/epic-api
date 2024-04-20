@@ -52,7 +52,7 @@ export class DenoKvStore extends StoreBase {
   }
 
   static async get<T extends unknown>(key: string): Promise<T | null> {
-    return (await this._get(key))?.__value as T;
+    return (await this._get(key))?.__value as T ?? null;
   }
 
   static async del(...keys: string[]) {
