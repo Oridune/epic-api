@@ -2,18 +2,18 @@
 import { StoreBase, StoreItem } from "./base.ts";
 
 export class MapStore extends StoreBase {
-  static map = new Map<string, StoreItem>();
+  static map?: Map<string, StoreItem>;
 
   static isConnected() {
-    return false;
+    return this.map instanceof Map;
   }
 
   static async connect() {
-    // Do nothing...
+    this.map = new Map<string, StoreItem>();
   }
 
   static async disconnect() {
-    // Do nothing...
+    delete this.map;
   }
 
   static async set(
@@ -23,6 +23,8 @@ export class MapStore extends StoreBase {
       expiresInMs?: number;
     },
   ) {
+    if (!this.map) throw new Error(`Map not initialized!`);
+
     const CurrentTime = Date.now();
 
     this.map.set(
@@ -36,6 +38,8 @@ export class MapStore extends StoreBase {
   }
 
   private static _get(key: string): StoreItem | null {
+    if (!this.map) throw new Error(`Map not initialized!`);
+
     const Value = this.map.get(key) ?? null;
 
     if (
@@ -54,15 +58,19 @@ export class MapStore extends StoreBase {
   }
 
   static async del(...keys: string[]) {
-    keys.forEach((key) => this.map.delete(key));
+    if (!this.map) throw new Error(`Map not initialized!`);
+
+    keys.forEach((key) => this.map!.delete(key));
   }
 
   static async has(key: string) {
+    if (!this.map) throw new Error(`Map not initialized!`);
+
     return this.map.has(key);
   }
 
   static async timestamp(key: string) {
-    return this.map.get(key)?.timestamp ?? null;
+    return this._get(key)?.timestamp ?? null;
   }
 
   static async incr(
