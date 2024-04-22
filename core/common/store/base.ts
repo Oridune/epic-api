@@ -136,7 +136,7 @@ export class StoreBase extends StoreLike {
    * A utility method to cache any computed results and make the process faster.
    * @param key
    * @param callback
-   * @param expiresInMs
+   * @param options Expiry in ms or an options object
    * @returns
    */
   static async cache<T>(
@@ -145,18 +145,25 @@ export class StoreBase extends StoreLike {
       | T
       | { result: T; expiresInMs: number }
       | Promise<T | { result: T; expiresInMs: number }>,
-    expiresInMs?: number,
+    options?: number | {
+      store?: typeof StoreLike;
+      expiresInMs?: number;
+    },
   ) {
     const Key = key instanceof Array ? key.join(":") : key;
+    const Options = typeof options === "number"
+      ? { expiresInMs: options }
+      : options;
+    const Store = Options?.store ?? this;
 
-    const Cached = await this.get<T>(Key);
+    const Cached = await Store.get<T>(Key);
 
     if (Cached !== null) return Cached;
 
     const RawValue = await callback();
 
     let Value: unknown = RawValue;
-    let ExpiresInMs = expiresInMs;
+    let ExpiresInMs = Options?.expiresInMs;
 
     if (
       typeof RawValue === "object" &&
@@ -171,7 +178,7 @@ export class StoreBase extends StoreLike {
 
     // deno-lint-ignore no-explicit-any
     if (![null, undefined].includes(Value as any)) {
-      await this.set(Key, Value, { expiresInMs: ExpiresInMs });
+      await Store.set(Key, Value, { expiresInMs: ExpiresInMs });
     }
 
     return Value as T;

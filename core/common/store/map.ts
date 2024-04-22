@@ -4,18 +4,18 @@ import { StoreBase, StoreItem } from "./base.ts";
 export const StoreMap = new Map<string, StoreItem>();
 
 export class MapStore extends StoreBase {
-  static map?: Map<string, StoreItem>;
+  static map = StoreMap;
 
   static isConnected() {
     return this.map instanceof Map;
   }
 
   static async connect() {
-    this.map = StoreMap;
+    // Do nothing...
   }
 
   static async disconnect() {
-    delete this.map;
+    // Do nothing...
   }
 
   static async set(
@@ -25,8 +25,6 @@ export class MapStore extends StoreBase {
       expiresInMs?: number;
     },
   ) {
-    if (!this.map) throw new Error(`Map not initialized!`);
-
     const CurrentTime = Date.now();
 
     this.map.set(
@@ -40,8 +38,6 @@ export class MapStore extends StoreBase {
   }
 
   private static _get(key: string): StoreItem | null {
-    if (!this.map) throw new Error(`Map not initialized!`);
-
     const Value = this.map.get(key) ?? null;
 
     if (
@@ -60,14 +56,10 @@ export class MapStore extends StoreBase {
   }
 
   static async del(...keys: string[]) {
-    if (!this.map) throw new Error(`Map not initialized!`);
-
     keys.forEach((key) => this.map!.delete(key));
   }
 
   static async has(key: string) {
-    if (!this.map) throw new Error(`Map not initialized!`);
-
     return this.map.has(key);
   }
 
