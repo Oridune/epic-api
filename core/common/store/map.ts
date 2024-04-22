@@ -1,6 +1,8 @@
 // deno-lint-ignore-file require-await
 import { StoreBase, StoreItem } from "./base.ts";
 
+export const StoreMap = new Map<string, StoreItem>();
+
 export class MapStore extends StoreBase {
   static map?: Map<string, StoreItem>;
 
@@ -9,7 +11,7 @@ export class MapStore extends StoreBase {
   }
 
   static async connect() {
-    this.map = new Map<string, StoreItem>();
+    this.map = StoreMap;
   }
 
   static async disconnect() {
