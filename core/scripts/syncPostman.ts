@@ -193,8 +193,10 @@ export const syncPostman = async (options: {
             .replace(/\\/g, "/")
             .replace("?", "");
 
+          const Shape = RequestHandler.postman ?? RequestHandler.shape;
+
           const QueryParams = Object.entries<string>(
-            RequestHandler.postman?.query?.data ?? {},
+            Shape?.query?.data ?? {},
           );
 
           NormalizeRequest(
@@ -221,31 +223,31 @@ export const syncPostman = async (options: {
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.query?.schema?.requiredProperties
+                      Shape?.query?.schema?.requiredProperties
                           ?.includes(
                             key,
                           )
                         ? undefined
                         : "(Optional)",
-                      RequestHandler.postman?.query?.schema?.properties?.[key]
+                      Shape?.query?.schema?.properties?.[key]
                         .description,
                     ]
                       .filter(Boolean)
                       .join(" "),
                   })),
                   variable: Object.entries<string>(
-                    RequestHandler.postman?.params?.data ?? {},
+                    Shape?.params?.data ?? {},
                   ).map(([key, value]) => ({
                     key,
                     value,
                     description: [
-                      RequestHandler.postman?.params?.schema?.requiredProperties
+                      Shape?.params?.schema?.requiredProperties
                           ?.includes(
                             key,
                           )
                         ? undefined
                         : "(Optional)",
-                      RequestHandler.postman?.params?.schema?.properties?.[key]
+                      Shape?.params?.schema?.properties?.[key]
                         .description,
                     ]
                       .filter(Boolean)
@@ -255,29 +257,29 @@ export const syncPostman = async (options: {
                 method: Route.options.method
                   .toUpperCase() as PostmanRequestMethods,
                 header: Object.entries<string>(
-                  RequestHandler.postman?.headers?.data ?? {},
+                  Shape?.headers?.data ?? {},
                 ).map(([key, value]) => ({
                   key,
                   value,
                   type: "text",
                   description: [
-                    RequestHandler.postman?.headers?.schema?.requiredProperties
+                    Shape?.headers?.schema?.requiredProperties
                         ?.includes(
                           key,
                         )
                       ? undefined
                       : "(Optional)",
-                    RequestHandler.postman?.headers?.schema?.properties?.[key]
+                    Shape?.headers?.schema?.properties?.[key]
                       .description,
                   ]
                     .filter(Boolean)
                     .join(" "),
                 })),
-                body: RequestHandler.postman?.body?.data
+                body: Shape?.body?.data
                   ? {
                     mode: "raw",
                     raw: JSON.stringify(
-                      RequestHandler.postman.body.data,
+                      Shape.body.data,
                       undefined,
                       2,
                     ),

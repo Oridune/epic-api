@@ -9,6 +9,14 @@ declare module "@Core/common/controller/base.ts" {
   }
 
   interface IRequestHandlerObjectExtendor {
+    shape?: {
+      headers?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
+      query?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
+      params?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
+      body?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
+      return?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
+    };
+
     postman?: {
       headers?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
       query?: { data: Record<string, any>; schema?: IValidatorJSONSchema };

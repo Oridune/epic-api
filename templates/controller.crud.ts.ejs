@@ -30,7 +30,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const BodySchema = e.object({});
 
     return new Versioned().add("1.0.0", {
-      postman: {
+      shape: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
@@ -79,7 +79,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const BodySchema = e.object({});
 
     return new Versioned().add("1.0.0", {
-      postman: {
+      shape: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
@@ -155,7 +155,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     });
 
     return Versioned.add("1.0.0", {
-      postman: {
+      shape: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
       },
@@ -214,7 +214,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     });
 
     return Versioned.add("1.0.0", {
-      postman: {
+      shape: {
         params: ParamsSchema.toSample(),
       },
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {

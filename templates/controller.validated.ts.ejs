@@ -24,7 +24,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const BodySchema = e.object({});
 
     return {
-      postman: {
+      shape: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
@@ -69,7 +69,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const ParamsSchema = e.object({});
 
     return {
-      postman: {
+      shape: {
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
       },
