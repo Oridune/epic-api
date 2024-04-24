@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-unused-vars require-await
 import { Env } from "@Core/common/env.ts";
+import DenoConfig from "../../../deno.json" with { type: "json" };
 
 export interface StoreItem {
   __value: unknown;
@@ -131,7 +132,7 @@ export class StoreBase extends StoreLike {
 
   protected static resolveKey(key: string | string[]) {
     const KeyParts = key instanceof Array ? key : [key];
-    return [Env.getType(), "store", ...KeyParts].join(":");
+    return [DenoConfig.id, Env.getType(), "store", ...KeyParts].join(":");
   }
 
   /**
