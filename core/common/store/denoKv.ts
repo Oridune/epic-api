@@ -26,7 +26,7 @@ export class DenoKvStore extends StoreBase {
   static async set(
     key: string,
     value: unknown,
-    options: {
+    options?: {
       expiresInMs?: number;
     },
   ) {
@@ -39,7 +39,7 @@ export class DenoKvStore extends StoreBase {
       {
         __value: value,
         timestamp: CurrentTime,
-        expiresInMs: options.expiresInMs,
+        expiresInMs: options?.expiresInMs,
       } satisfies StoreItem,
       { expireIn: options?.expiresInMs },
     );
@@ -73,7 +73,7 @@ export class DenoKvStore extends StoreBase {
 
   static async incr(
     key: string,
-    options: {
+    options?: {
       incrBy?: number;
       expiresInMs?: number;
     },
@@ -81,7 +81,7 @@ export class DenoKvStore extends StoreBase {
     const RawValue = await this._get(key);
 
     const Count = ((RawValue?.__value as number) ?? 0) +
-      (options.incrBy ?? 1);
+      (options?.incrBy ?? 1);
 
     await this.set(key, Count, options);
 
