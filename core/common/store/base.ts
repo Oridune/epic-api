@@ -1,4 +1,6 @@
 // deno-lint-ignore-file no-unused-vars require-await
+import { Env } from "@Core/common/env.ts";
+
 export interface StoreItem {
   __value: unknown;
   timestamp: number;
@@ -129,7 +131,7 @@ export class StoreBase extends StoreLike {
 
   protected static resolveKey(key: string | string[]) {
     const KeyParts = key instanceof Array ? key : [key];
-    return ["store", ...KeyParts].join(":");
+    return [Env.getType(), "store", ...KeyParts].join(":");
   }
 
   /**
