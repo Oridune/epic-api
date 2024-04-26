@@ -92,10 +92,15 @@ export class RedisStore extends StoreBase {
   ) {
     if (!this.redis) throw new Error(`No redis connection!`);
 
+    const Key = this.resolveKey(key);
     const Count = await this.redis.incrby(
-      this.resolveKey(key),
+      Key,
       options?.incrBy ?? 1,
     );
+
+    if (typeof options?.expiresInMs === "number") {
+      await this.redis.expire(Key, options.expiresInMs / 1000);
+    }
 
     return Count;
   }
