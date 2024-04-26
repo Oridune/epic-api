@@ -3,6 +3,7 @@ import {
   Env,
   EnvType,
   Events,
+  fetch as customFetch,
   Loader,
   RawResponse,
   Response,
@@ -300,6 +301,11 @@ export const createAppServer = async () => {
 
   return {
     app: App,
+    fetch: (
+      ...params: Parameters<typeof customFetch> extends [infer _, ...infer R]
+        ? R
+        : never
+    ) => customFetch(App, params[0], params[1]),
     start: StartServer,
     end: EndServer,
     restart: RestartServer,

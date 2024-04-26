@@ -1,7 +1,3 @@
 {
-  "*.ts": [
-    "deno fmt",
-    "deno lint",
-    "deno check"
-  ]
+  "*.ts": ["deno fmt", "deno lint", "deno check", "deno task test"]
 }

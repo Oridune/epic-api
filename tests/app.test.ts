@@ -9,7 +9,7 @@ Deno.test({
   async fn(t) {
     await Loader.load({ excludeTypes: ["templates"] });
 
-    const { start, end, restart } = await createAppServer();
+    const { fetch, start, end, restart } = await createAppServer();
 
     // Database Cleanup
     Database.connection.post("connect", () => Database.connection.drop());
@@ -42,30 +42,31 @@ Deno.test({
     await t.step("GET / Should return 404 not found", async () => {
       const Response = await fetch(new URL("/", APIHost));
 
-      expect(Response.headers.get("X-Request-ID")).toMatch(/.*/);
-      expect(Response.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("X-Rate-Limit-Limit")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("X-Rate-Limit-Remaining")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("Content-Type")).toMatch(/json/);
-      expect(Response.status).toBe(404);
+      expect(Response?.headers.get("X-Request-ID")).toMatch(/.*/);
+      expect(Response?.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("X-Rate-Limit-Limit")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("X-Rate-Limit-Remaining")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+      expect(Response?.status).toBe(404);
     });
 
     await t.step("GET /api/ Should return 200 ok", async () => {
       const Response = await fetch(new URL("/api/", APIHost));
 
-      expect(Response.headers.get("X-Request-ID")).toMatch(/.*/);
-      expect(Response.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("X-Rate-Limit-Limit")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("X-Rate-Limit-Remaining")).toMatch(/[0-9]+/);
-      expect(Response.headers.get("Content-Type")).toMatch(/json/);
-      expect(Response.status).toBe(200);
+      expect(Response?.headers.get("X-Request-ID")).toMatch(/.*/);
+      expect(Response?.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("X-Rate-Limit-Limit")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("X-Rate-Limit-Remaining")).toMatch(/[0-9]+/);
+      expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+      expect(Response?.status).toBe(200);
 
-      await ResponseSchema.validate(JSON.parse(await Response.text())).catch(
-        (error) => {
-          console.error(error);
-          throw error;
-        },
-      );
+      await ResponseSchema.validate(JSON.parse(await Response?.text() ?? ""))
+        .catch(
+          (error) => {
+            console.error(error);
+            throw error;
+          },
+        );
     });
 
     await t.step(
@@ -77,10 +78,10 @@ Deno.test({
           },
         });
 
-        expect(Response.headers.get("Content-Type")).toMatch(/json/);
-        expect(Response.status).toBe(200);
+        expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+        expect(Response?.status).toBe(200);
 
-        const Body = await Response.text();
+        const Body = await Response?.text();
 
         await ResponseSchema.validate(Body).catch((error) => {
           console.error(error);
@@ -98,9 +99,9 @@ Deno.test({
           },
         });
 
-        expect(Response.headers.get("Content-Type")).toMatch(/json/);
-        expect(Response.status).toBe(200);
-        expect(await Response.text()).toMatch(
+        expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+        expect(Response?.status).toBe(200);
+        expect(await Response?.text()).toMatch(
           /Latest test was successful from API version 1.0.5!/,
         );
       },
@@ -115,7 +116,7 @@ Deno.test({
           },
         });
 
-        expect(Response.status).toBe(404);
+        expect(Response?.status).toBe(404);
       },
     );
 
@@ -132,13 +133,13 @@ Deno.test({
 
         const Response = await fetch(new URL("/api/", APIHost));
 
-        expect(Response.headers.get("Content-Type")).toMatch(/json/);
-        expect(Response.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
-        expect(Response.headers.get("X-Rate-Limit-Limit")).toMatch(
+        expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+        expect(Response?.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
+        expect(Response?.headers.get("X-Rate-Limit-Limit")).toMatch(
           RequestLimit.toString(),
         );
-        expect(Response.headers.get("X-Rate-Limit-Remaining")).toMatch("0");
-        expect(Response.status).toBe(429);
+        expect(Response?.headers.get("X-Rate-Limit-Remaining")).toMatch("0");
+        expect(Response?.status).toBe(429);
       },
     );
 
