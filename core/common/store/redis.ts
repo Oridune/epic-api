@@ -90,12 +90,12 @@ export class RedisStore extends StoreBase {
       expiresInMs?: number;
     },
   ) {
-    const RawValue = await this._get(key);
+    if (!this.redis) throw new Error(`No redis connection!`);
 
-    const Count = ((RawValue?.__value as number) ?? 0) +
-      (options?.incrBy ?? 1);
-
-    await this.set(key, Count, options);
+    const Count = await this.redis.incrby(
+      this.resolveKey(key),
+      options?.incrBy ?? 1,
+    );
 
     return Count;
   }

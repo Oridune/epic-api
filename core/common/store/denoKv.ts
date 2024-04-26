@@ -32,13 +32,11 @@ export class DenoKvStore extends StoreBase {
   ) {
     if (!this.denoKv) throw new Error(`Deno Kv is not connected!`);
 
-    const CurrentTime = Date.now();
-
     await this.denoKv.set(
       [this.resolveKey(key)],
       {
         __value: value,
-        timestamp: CurrentTime,
+        timestamp: Date.now(),
         expiresInMs: options?.expiresInMs,
       } satisfies StoreItem,
       { expireIn: options?.expiresInMs },
@@ -78,12 +76,24 @@ export class DenoKvStore extends StoreBase {
       expiresInMs?: number;
     },
   ) {
-    const RawValue = await this._get(key);
+    if (!this.denoKv) throw new Error(`Deno Kv is not connected!`);
 
-    const Count = ((RawValue?.__value as number) ?? 0) +
+    const Value = await this.denoKv.get<StoreItem>([this.resolveKey(key)]);
+
+    const Count = ((Value.value?.__value as number) ?? 0) +
       (options?.incrBy ?? 1);
 
-    await this.set(key, Count, options);
+    const NewValue = {
+      __value: Count,
+      timestamp: Value.value?.timestamp ?? Date.now(),
+      expiresInMs: Value.value?.expiresInMs ?? options?.expiresInMs,
+    } satisfies StoreItem;
+
+    await this.denoKv.atomic().check(Value).set(
+      [this.resolveKey(key)],
+      NewValue,
+      { expireIn: NewValue.expiresInMs },
+    ).commit();
 
     return Count;
   }

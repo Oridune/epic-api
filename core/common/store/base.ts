@@ -4,7 +4,7 @@ import DenoConfig from "../../../deno.json" with { type: "json" };
 
 export interface StoreItem {
   __value: unknown;
-  timestamp: number;
+  timestamp?: number;
   expiresInMs?: number;
 }
 
@@ -127,7 +127,7 @@ export class StoreBase extends StoreLike {
       }
     }
 
-    return { __value: value, timestamp: Date.now() };
+    return { __value: value };
   }
 
   protected static resolveKey(key: string | string[]) {

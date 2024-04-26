@@ -42,7 +42,7 @@ export class MapStore extends StoreBase {
 
     if (
       typeof Value?.expiresInMs === "number" &&
-      Date.now() >= (Value.timestamp + Value.expiresInMs)
+      Date.now() >= ((Value.timestamp ?? 0) + Value.expiresInMs)
     ) {
       this.map.delete(key);
       return null;
