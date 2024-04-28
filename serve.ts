@@ -2,7 +2,7 @@ import { Loader } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 
 if (import.meta.main) {
-  await Loader.load({ excludeTypes: ["templates"] });
+  await Loader.load({ excludeTypes: ["templates", "models"] });
 
   const { start, end } = await createAppServer();
 

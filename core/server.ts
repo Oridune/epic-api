@@ -24,26 +24,23 @@ import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
 import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
 
-export const prepareAppServer = async () => {
-  const App = new AppServer();
-  const Router = new AppRouter();
-
-  App.use(responseTime());
+export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
+  app.use(responseTime());
 
   if (!Env.is(EnvType.PRODUCTION)) {
-    App.use(Logger.logger);
+    app.use(Logger.logger);
   }
 
-  App.use(errorHandler());
-  App.use(gzip());
-  App.use(CORS());
-  App.use(
+  app.use(errorHandler());
+  app.use(gzip());
+  app.use(CORS());
+  app.use(
     rateLimiter({
       limit: await Env.get("RATE_LIMITER_LIMIT", true),
       windowMs: await Env.get("RATE_LIMITER_WINDOW_MS", true),
     }),
   );
-  App.use(requestId());
+  app.use(requestId());
 
   const UITableData: Array<{
     Type: string;
@@ -62,7 +59,7 @@ export const prepareAppServer = async () => {
       Root: Root.replace(Deno.cwd(), "").replace(/\\/g, "/"),
     });
 
-    App.use(serveStatic(details.name, Root));
+    app.use(serveStatic(details.name, Root));
   };
 
   for (const [, SubLoader] of Loader.getLoaders() ?? []) {
@@ -88,14 +85,14 @@ export const prepareAppServer = async () => {
         []
     ) {
       if (typeof Middleware.object.default === "function") {
-        App.use(await Middleware.object.default());
+        app.use(await Middleware.object.default());
       }
     }
   }
 
   for (const [, Middleware] of Loader.getModules("middlewares") ?? []) {
     if (typeof Middleware.object.default === "function") {
-      App.use(await Middleware.object.default());
+      app.use(await Middleware.object.default());
     }
   }
 
@@ -145,7 +142,7 @@ export const prepareAppServer = async () => {
           : Route.options.middlewares ?? []),
       ];
 
-      Router[Route.options.method as "get"](
+      router[Route.options.method as "get"](
         Route.endpoint,
         async (ctx, next) => {
           ctx.state.requestId = ctx.state["X-Request-ID"];
@@ -214,39 +211,66 @@ export const prepareAppServer = async () => {
     if (RoutesTableData.length) console.table(RoutesTableData);
   });
 
-  App.use(Router.routes());
-  App.use(Router.allowedMethods());
-  App.use((ctx) => ctx.throw(Status.NotFound));
-
-  return App;
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+  app.use((ctx) => ctx.throw(Status.NotFound));
 };
 
-export const startBackgroundJobs = async (app: AppServer) => {
-  const Jobs: Array<(app: AppServer) => Promise<() => Promise<void>>> = [];
+type TBackgroundJob = (app: AppServer) => Promise<() => Promise<void>>;
+
+export const loadBackgroundJobs = () => {
+  const PreJobs: Array<TBackgroundJob> = [];
+  const PostJobs: Array<TBackgroundJob> = [];
 
   for (const [, SubLoader] of Loader.getLoaders() ?? []) {
     for (const [, Job] of SubLoader.tree.get("jobs")?.modules ?? []) {
       if (typeof Job.object.default === "function") {
-        Jobs.push(Job.object.default);
+        PreJobs.push(Job.object.default);
+      } else if (typeof Job.object.default === "object") {
+        if (typeof Job.object.default.pre === "function") {
+          PreJobs.push(Job.object.default.pre);
+        }
+
+        if (typeof Job.object.default.post === "function") {
+          PostJobs.push(Job.object.default.post);
+        }
       }
     }
   }
 
   for (const [, Job] of Loader.getModules("jobs") ?? []) {
-    if (typeof Job.object.default === "function") Jobs.push(Job.object.default);
+    if (typeof Job.object.default === "function") {
+      PreJobs.push(Job.object.default);
+    } else if (typeof Job.object.default === "object") {
+      if (typeof Job.object.default.pre === "function") {
+        PreJobs.push(Job.object.default.pre);
+      }
+
+      if (typeof Job.object.default.post === "function") {
+        PostJobs.push(Job.object.default.post);
+      }
+    }
   }
 
-  return (await Promise.all(Jobs.map((_) => _(app)))).filter(
-    (_) => typeof _ === "function",
-  );
+  return {
+    execPreJobs: async (app: AppServer) =>
+      (await Promise.all(PreJobs.map((_) => _(app)))).filter(
+        (_) => typeof _ === "function",
+      ),
+    execPostJobs: async (app: AppServer) =>
+      (await Promise.all(PostJobs.map((_) => _(app)))).filter(
+        (_) => typeof _ === "function",
+      ),
+  };
 };
 
-export const createAppServer = async () => {
-  const App = await prepareAppServer();
-
-  const Context = { jobCleanups: [] as Array<() => any> };
-
-  let AbortControllerObject: AbortController | undefined;
+export const createAppServer = () => {
+  const Context = {
+    app: undefined as AppServer | undefined,
+    router: undefined as AppRouter | undefined,
+    jobCleanups: [] as Array<() => any>,
+    abortController: undefined as AbortController | undefined,
+  };
 
   const StartServer = () =>
     new Promise<ApplicationListenEvent>((resolve) => {
@@ -254,31 +278,39 @@ export const createAppServer = async () => {
         await Store.connect();
         await Database.connect();
 
-        Context.jobCleanups = await startBackgroundJobs(App);
+        const { execPreJobs, execPostJobs } = loadBackgroundJobs();
 
-        AbortControllerObject = new AbortController();
+        Context.app = new AppServer();
+        Context.router = new AppRouter();
+        Context.abortController = new AbortController();
 
-        App.listen({
-          port: parseInt(Env.getSync("PORT", true) || "8080"),
-          signal: AbortControllerObject.signal,
-        });
+        Context.jobCleanups.push(...(await execPreJobs(Context.app)));
+
+        await prepareAppServer(Context.app, Context.router);
+
+        Context.jobCleanups.push(...(await execPostJobs(Context.app)));
 
         const listenHandler = (e: ApplicationListenEvent) => {
           console.info(
             `${Env.getType().toUpperCase()} Server is listening on Port: ${e.port}`,
           );
 
-          App.removeEventListener("listen", listenHandler as any);
+          Context.app!.removeEventListener("listen", listenHandler as any);
 
           resolve(e);
         };
 
-        App.addEventListener("listen", listenHandler);
+        Context.app.addEventListener("listen", listenHandler);
+
+        Context.app.listen({
+          port: parseInt(Env.getSync("PORT", true) || "8080"),
+          signal: Context.abortController.signal,
+        });
       })();
     });
 
   const EndServer = async () => {
-    AbortControllerObject?.abort();
+    Context.abortController!.abort();
 
     try {
       await Promise.all(Context.jobCleanups.map((_) => _()));
@@ -300,12 +332,15 @@ export const createAppServer = async () => {
   };
 
   return {
-    app: App,
+    getApp: () => Context.app,
     fetch: (
       ...params: Parameters<typeof customFetch> extends [infer _, ...infer R]
         ? R
         : never
-    ) => customFetch(App, params[0], params[1]),
+    ) => {
+      if (!Context.app) throw new Error(`App server not started yet!`);
+      return customFetch(Context.app, params[0], params[1]);
+    },
     start: StartServer,
     end: EndServer,
     restart: RestartServer,
