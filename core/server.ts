@@ -235,8 +235,10 @@ export const loadBackgroundJobs = async () => {
       const Module = await Job.import();
 
       if (typeof Module.default === "function") {
-        PreJobs.push(Module.default);
-      } else if (typeof Module.default === "object") {
+        PostJobs.push(Module.default);
+      }
+
+      if (typeof Module.default === "object") {
         if (typeof Module.default.pre === "function") {
           PreJobs.push(Module.default.pre);
         }
@@ -252,8 +254,10 @@ export const loadBackgroundJobs = async () => {
     const Module = await Job.import();
 
     if (typeof Module.default === "function") {
-      PreJobs.push(Module.default);
-    } else if (typeof Module.default === "object") {
+      PostJobs.push(Module.default);
+    }
+
+    if (typeof Module.default === "object") {
       if (typeof Module.default.pre === "function") {
         PreJobs.push(Module.default.pre);
       }
