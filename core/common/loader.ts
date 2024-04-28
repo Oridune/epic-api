@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { join, dirname } from "path";
+import { dirname, join } from "path";
 
 export type TSequenceProps = Record<string, Record<string, string>>;
 
@@ -29,7 +29,7 @@ export class Sequence {
 
   protected pickObjectProperties<T extends object>(obj: T, props: Set<string>) {
     return Object.fromEntries(
-      Object.entries(obj).filter(([key]) => props.has(key))
+      Object.entries(obj).filter(([key]) => props.has(key)),
     );
   }
 
@@ -42,13 +42,13 @@ export class Sequence {
         ? data
         : data.sequence instanceof Array
         ? data.sequence.filter((_) => typeof _ === "string")
-        : []
+        : [],
     );
 
     this.Excludes = new Set(
       !(data instanceof Array) && data.excludes instanceof Array
         ? data.excludes.filter((_) => typeof _ === "string")
-        : []
+        : [],
     );
 
     this.SequenceProps =
@@ -80,8 +80,9 @@ export class Sequence {
   public list() {
     const List: string[] = [];
 
-    for (const Item of this.Includes)
+    for (const Item of this.Includes) {
       if (!this.Excludes.has(Item)) List.push(Item);
+    }
 
     return List;
   }
@@ -119,14 +120,13 @@ export class Sequence {
   public async set(
     sequence:
       | Set<string>
-      | ((sequence: Set<string>) => Set<string> | Promise<Set<string>>)
+      | ((sequence: Set<string>) => Set<string> | Promise<Set<string>>),
   ) {
-    this.Includes =
-      typeof sequence === "function"
-        ? await sequence(this.Includes)
-        : sequence instanceof Set
-        ? sequence
-        : this.Includes;
+    this.Includes = typeof sequence === "function"
+      ? await sequence(this.Includes)
+      : sequence instanceof Set
+      ? sequence
+      : this.Includes;
 
     await this.persist();
   }
@@ -143,14 +143,13 @@ export class Sequence {
   public async exclude(
     excludes:
       | Set<string>
-      | ((excludes: Set<string>) => Set<string> | Promise<Set<string>>)
+      | ((excludes: Set<string>) => Set<string> | Promise<Set<string>>),
   ) {
-    this.Excludes =
-      typeof excludes === "function"
-        ? await excludes(this.Excludes)
-        : excludes instanceof Set
-        ? excludes
-        : this.Excludes;
+    this.Excludes = typeof excludes === "function"
+      ? await excludes(this.Excludes)
+      : excludes instanceof Set
+      ? excludes
+      : this.Excludes;
 
     await this.persist();
   }
@@ -171,9 +170,10 @@ export class Sequence {
    */
   public async toggle(...items: string[]) {
     (items instanceof Array ? items : []).forEach((item) => {
-      if (this.Includes.has(item))
+      if (this.Includes.has(item)) {
         if (this.Excludes.has(item)) this.Excludes.delete(item);
         else this.Excludes.add(item);
+      }
     });
 
     await this.persist();
@@ -194,7 +194,7 @@ export class Sequence {
       excludes: Array.from(this.Excludes),
       sequenceProps: this.pickObjectProperties(
         this.SequenceProps,
-        this.Includes
+        this.Includes,
       ),
     };
   }
@@ -208,7 +208,7 @@ export type TModuleTree = Map<
       string,
       {
         name: string;
-        object: any;
+        import: () => Promise<any>;
       }
     >;
     loaders: Map<
@@ -262,7 +262,7 @@ export class Loader {
           (!(options?.includeTypes instanceof Array) ||
             options.includeTypes.includes(_)) &&
           (!(options?.excludeTypes instanceof Array) ||
-            !options.excludeTypes.includes(_))
+            !options.excludeTypes.includes(_)),
       ).map(async (type) => {
         try {
           const SequenceDataPath = join(CWD, type, Loader.SequenceFileName);
@@ -273,25 +273,24 @@ export class Loader {
           const SequenceObject = new Sequence(
             type,
             SequenceDataPath,
-            SequenceData.default
+            SequenceData.default,
           );
 
           const Modules: Map<any, any> = new Map();
 
-          if (!options?.sequenceOnly && Loader.Modules.includes(type))
-            await Promise.all(
-              SequenceObject.list().map(async (name) => {
-                const ModulePath = join(dirname(SequenceDataPath), name);
-                Modules.set(name, {
-                  name,
-                  object: await Loader.readLocalModule(ModulePath),
-                });
-              })
-            );
+          if (!options?.sequenceOnly && Loader.Modules.includes(type)) {
+            SequenceObject.list().map((name) => {
+              const ModulePath = join(dirname(SequenceDataPath), name);
+              Modules.set(name, {
+                name,
+                import: () => Loader.readLocalModule(ModulePath),
+              });
+            });
+          }
 
           const Loaders: Map<any, any> = new Map();
 
-          if (!options?.sequenceOnly && Loader.Loaders.includes(type))
+          if (!options?.sequenceOnly && Loader.Loaders.includes(type)) {
             await Promise.all(
               SequenceObject.list().map(async (name) => {
                 const PluginPath = join(dirname(SequenceDataPath), name);
@@ -302,8 +301,9 @@ export class Loader {
                     cwd: PluginPath,
                   }),
                 });
-              })
+              }),
             );
+          }
 
           Tree.set(type, {
             sequence: SequenceObject,
@@ -313,7 +313,7 @@ export class Loader {
         } catch (error) {
           console.error(error);
         }
-      })
+      }),
     );
 
     return Tree;
@@ -327,7 +327,7 @@ export class Loader {
    */
   static isValidType(
     target: string,
-    category?: "module" | "loader" | "sequence"
+    category?: "module" | "loader" | "sequence",
   ) {
     const Err = new Error(`Invalid loader type '${target}'!`);
     switch (category) {

@@ -1,30 +1,41 @@
 // deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import {
-  Loader,
-  Controller,
   BaseController,
+  Controller,
+  Env,
   Get,
-  Versioned,
+  Loader,
   Response,
   Store,
-  Env,
+  Versioned,
 } from "@Core/common/mod.ts";
 import { Database } from "@Database";
 
 @Controller("/api/", {
   name: "api",
-  childs: () => {
+  childs: async () => {
     const Controllers: Array<typeof BaseController> = [];
 
-    for (const [, SubLoader] of Loader.getLoaders() ?? [])
-      for (const [, Controller] of SubLoader.tree.get("controllers")?.modules ??
-        [])
-        if (typeof Controller.object.default === "function")
-          Controllers.push(Controller.object.default);
+    for (const [, SubLoader] of Loader.getLoaders() ?? []) {
+      for (
+        const [, Controller] of SubLoader.tree.get("controllers")?.modules ??
+          []
+      ) {
+        const Module = await Controller.import();
 
-    for (const [, Controller] of Loader.getModules("controllers") ?? [])
-      if (typeof Controller.object.default === "function")
-        Controllers.push(Controller.object.default);
+        if (typeof Module.default === "function") {
+          Controllers.push(Module.default);
+        }
+      }
+    }
+
+    for (const [, Controller] of Loader.getModules("controllers") ?? []) {
+      const Module = await Controller.import();
+
+      if (typeof Module.default === "function") {
+        Controllers.push(Module.default);
+      }
+    }
 
     return Controllers;
   },
@@ -55,14 +66,14 @@ export class APIController extends BaseController {
       .add(["0.0.1", "1.0.0"], {
         handler: ({ version }: { version: string }) => {
           return Response.message(
-            `Your test was successful from API version ${version}!`
+            `Your test was successful from API version ${version}!`,
           );
         },
       })
       .add(["1.0.2", "1.0.5"], {
         handler: ({ version }: { version: string }) => {
           return Response.message(
-            `Latest test was successful from API version ${version}!`
+            `Latest test was successful from API version ${version}!`,
           );
         },
       });

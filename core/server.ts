@@ -84,15 +84,19 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
       const [, Middleware] of SubLoader.tree.get("middlewares")?.modules ??
         []
     ) {
-      if (typeof Middleware.object.default === "function") {
-        app.use(await Middleware.object.default());
+      const Module = await Middleware.import();
+
+      if (typeof Module.default === "function") {
+        app.use(await Module.default());
       }
     }
   }
 
   for (const [, Middleware] of Loader.getModules("middlewares") ?? []) {
-    if (typeof Middleware.object.default === "function") {
-      app.use(await Middleware.object.default());
+    const Module = await Middleware.import();
+
+    if (typeof Module.default === "function") {
+      app.use(await Module.default());
     }
   }
 
@@ -104,15 +108,19 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
     for (const [, SubLoader] of Loader.getLoaders() ?? []) {
       for (const [, Hook] of SubLoader.tree.get("hooks")?.modules ?? []) {
-        if (typeof Hook.object.default === "object") {
-          Hooks.push(Hook.object.default);
+        const Module = await Hook.import();
+
+        if (typeof Module.default === "object") {
+          Hooks.push(Module.default);
         }
       }
     }
 
     for (const [, Hook] of Loader.getModules("hooks") ?? []) {
-      if (typeof Hook.object.default === "object") {
-        Hooks.push(Hook.object.default);
+      const Module = await Hook.import();
+
+      if (typeof Module.default === "object") {
+        Hooks.push(Module.default);
       }
     }
 
@@ -218,36 +226,40 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
 type TBackgroundJob = (app: AppServer) => Promise<() => Promise<void>>;
 
-export const loadBackgroundJobs = () => {
+export const loadBackgroundJobs = async () => {
   const PreJobs: Array<TBackgroundJob> = [];
   const PostJobs: Array<TBackgroundJob> = [];
 
   for (const [, SubLoader] of Loader.getLoaders() ?? []) {
     for (const [, Job] of SubLoader.tree.get("jobs")?.modules ?? []) {
-      if (typeof Job.object.default === "function") {
-        PreJobs.push(Job.object.default);
-      } else if (typeof Job.object.default === "object") {
-        if (typeof Job.object.default.pre === "function") {
-          PreJobs.push(Job.object.default.pre);
+      const Module = await Job.import();
+
+      if (typeof Module.default === "function") {
+        PreJobs.push(Module.default);
+      } else if (typeof Module.default === "object") {
+        if (typeof Module.default.pre === "function") {
+          PreJobs.push(Module.default.pre);
         }
 
-        if (typeof Job.object.default.post === "function") {
-          PostJobs.push(Job.object.default.post);
+        if (typeof Module.default.post === "function") {
+          PostJobs.push(Module.default.post);
         }
       }
     }
   }
 
   for (const [, Job] of Loader.getModules("jobs") ?? []) {
-    if (typeof Job.object.default === "function") {
-      PreJobs.push(Job.object.default);
-    } else if (typeof Job.object.default === "object") {
-      if (typeof Job.object.default.pre === "function") {
-        PreJobs.push(Job.object.default.pre);
+    const Module = await Job.import();
+
+    if (typeof Module.default === "function") {
+      PreJobs.push(Module.default);
+    } else if (typeof Module.default === "object") {
+      if (typeof Module.default.pre === "function") {
+        PreJobs.push(Module.default.pre);
       }
 
-      if (typeof Job.object.default.post === "function") {
-        PostJobs.push(Job.object.default.post);
+      if (typeof Module.default.post === "function") {
+        PostJobs.push(Module.default.post);
       }
     }
   }
@@ -278,7 +290,7 @@ export const createAppServer = () => {
         await Store.connect();
         await Database.connect();
 
-        const { execPreJobs, execPostJobs } = loadBackgroundJobs();
+        const { execPreJobs, execPostJobs } = await loadBackgroundJobs();
 
         Context.app = new AppServer();
         Context.router = new AppRouter();
