@@ -162,6 +162,7 @@ export const updateCore = async (options: {
           "core/**/*",
           "docs/**/*",
           "templates/**/*",
+          "tests/**/*",
           "serve.ts",
         ].map((pattern) =>
           expandGlob(pattern, {
