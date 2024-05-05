@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any no-unused-vars
 import "ts-reset";
 import { Context } from "oak/context.ts";
-import "@Core/common/controller/base.ts";
+import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
 declare module "oak/context.ts" {
