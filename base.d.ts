@@ -1,11 +1,13 @@
 // deno-lint-ignore-file no-explicit-any no-unused-vars
 import "ts-reset";
+import i18next from "i18next";
 import { Context } from "oak/context.ts";
 import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
 declare module "oak/context.ts" {
   export interface Context {
+    i18next: typeof i18next;
     t(key: string | string[], ...opts: any[]): any;
   }
 }
