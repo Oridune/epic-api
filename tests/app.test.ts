@@ -1,3 +1,5 @@
+import "../index.d.ts";
+
 import { EnvType, Loader, StoreType } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 import { expect } from "expect";
@@ -7,9 +9,9 @@ import e from "validator";
 Deno.test({
   name: "Basic Flow Test",
   async fn(t) {
-    await Loader.load({ excludeTypes: ["templates"] });
+    await Loader.load({ excludeTypes: ["templates", "models"] });
 
-    const { fetch, start, end, restart } = await createAppServer();
+    const { fetch, start, end, restart } = createAppServer();
 
     // Database Cleanup
     Database.connection.post("connect", () => Database.connection.drop());
@@ -68,6 +70,29 @@ Deno.test({
           },
         );
     });
+
+    await t.step(
+      "GET /api/ Should return 200 ok with translation",
+      async () => {
+        const Response = await fetch(new URL("/api/", APIHost), {
+          headers: new Headers({ "Accept-Language": "ar" }),
+        });
+
+        expect(Response?.status).toBe(200);
+
+        const Data = await ResponseSchema.validate(
+          (await Response?.json()) ?? {},
+        )
+          .catch(
+            (error) => {
+              console.error(error);
+              throw error;
+            },
+          );
+
+        expect(Data.messages[0].message).not.toMatch(/^Hurry/);
+      },
+    );
 
     await t.step(
       "GET /api/ Should return 200 ok for x-App-version latest",

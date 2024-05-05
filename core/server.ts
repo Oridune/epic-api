@@ -6,6 +6,7 @@ import {
   fetch as customFetch,
   Loader,
   RawResponse,
+  respondWith,
   Response,
   Server,
   Store,
@@ -18,8 +19,10 @@ import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
+
 import { responseTime } from "@Core/middlewares/responseTime.ts";
-import { errorHandler, respondWith } from "@Core/middlewares/errorHandler.ts";
+import { useTranslator } from "@Core/middlewares/useTranslator.ts";
+import { errorHandler } from "@Core/middlewares/errorHandler.ts";
 import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
 import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
@@ -27,10 +30,9 @@ import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
 export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
   app.use(responseTime());
 
-  if (!Env.is(EnvType.PRODUCTION)) {
-    app.use(Logger.logger);
-  }
+  if (!Env.is(EnvType.PRODUCTION)) app.use(Logger.logger);
 
+  app.use(await useTranslator());
   app.use(errorHandler());
   app.use(gzip());
   app.use(CORS());
@@ -319,7 +321,7 @@ export const createAppServer = () => {
         Context.app.addEventListener("listen", listenHandler);
 
         Context.app.listen({
-          port: parseInt(Env.getSync("PORT", true) || "8080"),
+          port: parseInt(Env.getSync("PORT", true) || "3742"),
           signal: Context.abortController.signal,
         });
       })();

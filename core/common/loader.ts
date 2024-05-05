@@ -102,12 +102,19 @@ export class Sequence {
    * Lists all sequence items in detail
    * @returns
    */
-  public listDetailed() {
+  public listDetailed(options?: { enabled?: boolean }) {
     const DetailsMap = new Map<string, ISequenceDetail>();
 
     for (const Name of this.Includes) {
       const Detail = this.getDetailed(Name);
-      if (Detail) DetailsMap.set(Name, Detail);
+
+      if (
+        Detail &&
+        (typeof options?.enabled !== "boolean" ||
+          Detail.enabled === options.enabled)
+      ) {
+        DetailsMap.set(Name, Detail);
+      }
     }
 
     return DetailsMap;
@@ -241,14 +248,14 @@ export class Loader {
     "templates",
   ];
   protected static Loaders = ["plugins"];
-  protected static Sequence = ["public"];
+  protected static Statics = ["public", "locales"];
 
   protected static readLocalModule(path: string, options?: any) {
     return import(`file://${path}`, options);
   }
 
   protected static getAllTypes() {
-    return [...Loader.Modules, ...Loader.Loaders, ...Loader.Sequence];
+    return [...Loader.Modules, ...Loader.Loaders, ...Loader.Statics];
   }
 
   protected static async buildTree(options?: TLoadOptions) {
@@ -327,7 +334,7 @@ export class Loader {
    */
   static isValidType(
     target: string,
-    category?: "module" | "loader" | "sequence",
+    category?: "module" | "loader" | "static",
   ) {
     const Err = new Error(`Invalid loader type '${target}'!`);
     switch (category) {
@@ -337,8 +344,8 @@ export class Loader {
       case "loader":
         if (!Loader.Loaders.includes(target)) throw Err;
         break;
-      case "sequence":
-        if (!Loader.Sequence.includes(target)) throw Err;
+      case "static":
+        if (!Loader.Statics.includes(target)) throw Err;
         break;
 
       default:

@@ -449,10 +449,22 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * Converts the current response object to a normalized body.
    * @returns
    */
-  public getBody(): ResponseBody<D, M> {
+  public getBody(
+    options?: {
+      translator?: (target: string) => string;
+    },
+  ): ResponseBody<D, M> {
+    const Messages = typeof options?.translator === "function"
+      ? this.Messages?.map((_) => {
+        _.message = options.translator!(_.message);
+
+        return _;
+      })
+      : this.Messages;
+
     return {
       status: this.Status,
-      messages: this.Messages,
+      messages: Messages,
       data: this.Data,
       metadata: this.Metadata,
       errorStack: this.ErrorStack,
