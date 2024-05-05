@@ -15,6 +15,7 @@ export const useTranslator = async () => {
       ctx.request.headers.get("accept-language") ?? undefined,
     );
 
+    // Pass the translator to the request context
     ctx.t = translator(Languages[0]?.code);
 
     await next();

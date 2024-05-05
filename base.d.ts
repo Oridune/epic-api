@@ -1,6 +1,6 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any no-unused-vars
 import "ts-reset";
-import "oak/context.ts";
+import { Context } from "oak/context.ts";
 import "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
