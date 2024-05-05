@@ -7,7 +7,7 @@ import { IValidatorJSONSchema } from "validator";
 
 declare module "oak/context.ts" {
   export interface Context {
-    i18next: typeof i18next;
+    i18n: typeof i18next;
     t(key: string | string[], ...opts: any[]): any;
   }
 }
