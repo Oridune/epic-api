@@ -1,4 +1,5 @@
 {
   "sequence": ["ar.json"],
-  "excludes": []
+  "excludes": [],
+  "sequenceProps": {}
 }

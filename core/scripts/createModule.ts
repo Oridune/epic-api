@@ -21,6 +21,7 @@ export enum ModuleType {
   JOB = "job",
   MIDDLEWARE = "middleware",
   HOOK = "hook",
+  LOCALE = "locale",
 }
 
 export const listValidTemplates = (templates: string[], type: string) =>
