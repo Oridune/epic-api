@@ -1,3 +1,3 @@
-/// <reference path="./base.d.ts" />
+import "./base.d.ts";
 
 // Add your type overrides here...
