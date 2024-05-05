@@ -164,6 +164,7 @@ export const updateCore = async (options: {
           "templates/**/*",
           "tests/**/*",
           "serve.ts",
+          "base.d.ts",
         ].map((pattern) =>
           expandGlob(pattern, {
             root: TempPath,
