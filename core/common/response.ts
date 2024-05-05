@@ -122,7 +122,7 @@ export class RawResponse {
    * Get the Body
    * @returns
    */
-  public getBody() {
+  public getBody(_options?: any) {
     return this.Body;
   }
 }
