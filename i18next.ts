@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Env, EnvType, Loader } from "@Core/common/mod.ts";
 import i18next from "i18next";
 
@@ -44,12 +45,28 @@ await i18next
 
 export class I18next {
   static core = i18next;
+  static translators: Record<
+    string,
+    ReturnType<typeof I18next.translator>
+  > = {};
 
   static availableLanguages = new Set([
     DefaultLanguage,
     ...Object.keys(Resources),
   ]);
 
-  static translator = (lng?: string | null) =>
-    i18next.getFixedT(lng ?? DefaultLanguage);
+  static translator = (
+    lng = DefaultLanguage,
+  ): ReturnType<
+    typeof i18next.getFixedT
+  > => (I18next.translators[lng] ??= i18next.getFixedT(lng));
+
+  static tvar = (...args: Parameters<ReturnType<typeof I18next.translator>>) =>
+    Array.from(I18next.availableLanguages).reduce<Record<string, any>>(
+      (trns, lng) => {
+        trns[lng] = I18next.translator(lng)(...args);
+        return trns;
+      },
+      {},
+    );
 }
