@@ -113,7 +113,8 @@ export const updatePluginDeclarationFile = async () => {
     const RelativePluginDeclarationPath = `./plugins/${PluginName}/index.d.ts`;
 
     if (existsSync(RelativePluginDeclarationPath)) {
-      DeclarationFileContent += `\nimport "${RelativePluginDeclarationPath}"`;
+      DeclarationFileContent +=
+        `\n/// <reference types="${RelativePluginDeclarationPath}" />`;
     }
   }
 
