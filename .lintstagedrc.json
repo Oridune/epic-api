@@ -2,6 +2,6 @@
   "!((public|plugins)/**/*)*.ts": [
     "deno fmt",
     "deno lint",
-    "deno check base.d.ts"
+    "deno check index.d.ts"
   ]
 }

@@ -16,11 +16,13 @@ export const useTranslator = async () => {
     );
     const Language = Languages[0]?.code;
 
-    // Pass the translator to the request context
+    // Pass the translator instance to the request context
     ctx.i18n = I18next;
 
+    // Pass the translator to the request context
     ctx.t = I18next.translator(Language);
 
+    // Pass the translator to the request context
     ctx.tvar = I18next.tvar;
 
     await next();
