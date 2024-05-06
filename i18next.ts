@@ -25,9 +25,14 @@ const Resources = await [...Locales, ...PluginLocales].reduce(
       with: { type: "json" },
     })).default;
 
-    if (Locales[Key]) {
-      Locales[Key] = Object.assign(Locales[Key], Translation);
-    } else Locales[Key] = Translation;
+    if (typeof Translation?.translation === "object") {
+      if (typeof Locales[Key] === "object") {
+        Locales[Key].translation = Object.assign(
+          Locales[Key].translation,
+          Translation.translation,
+        );
+      } else Locales[Key] = Translation;
+    }
 
     return Locales;
   },
