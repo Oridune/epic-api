@@ -23,7 +23,7 @@ export const createEnvironment = async (options: {
           content: e
             .optional(e.string())
             .default(() => Deno.readTextFile(join(Deno.cwd(), ".sample.env"))),
-          variables: e.record(e.or([e.string(), e.number()])),
+          variables: e.record(e.or([e.number(), e.string()])),
         },
         { allowUnexpectedProps: true },
       )
