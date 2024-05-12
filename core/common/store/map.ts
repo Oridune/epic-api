@@ -4,6 +4,8 @@ import { StoreBase, StoreItem } from "./base.ts";
 export const StoreMap = new Map<string, StoreItem>();
 
 export class MapStore extends StoreBase {
+  static _freeBytes?: number;
+
   static map = StoreMap;
 
   static isConnected() {
@@ -35,15 +37,14 @@ export class MapStore extends StoreBase {
         expiresInMs: options?.expiresInMs,
       } satisfies StoreItem,
     );
+
+    if (this.isCleanupRequired()) this.cleanup();
   }
 
   private static _get(key: string): StoreItem | null {
     const Value = this.map.get(key) ?? null;
 
-    if (
-      typeof Value?.expiresInMs === "number" &&
-      Date.now() >= ((Value.timestamp ?? 0) + Value.expiresInMs)
-    ) {
+    if (this.isExpired(Value)) {
       this.map.delete(key);
       return null;
     }
@@ -83,4 +84,52 @@ export class MapStore extends StoreBase {
 
     return Count;
   }
+
+  static throttle<T extends (...args: unknown[]) => unknown>(
+    callback: T,
+    ttlMs: number,
+  ): T {
+    let InitialExec = false;
+    let ExecutionTime: number;
+    let Value: unknown;
+
+    return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+      const CurrentTime = Date.now();
+
+      if (!InitialExec || (CurrentTime - ExecutionTime) >= ttlMs) {
+        InitialExec = true;
+        ExecutionTime = CurrentTime;
+
+        Value = callback.bind(this)(...args);
+      }
+
+      return Value;
+    } as T;
+  }
+
+  static usedMemoryPercentage = this.throttle(() => {
+    const FreeBytes = Deno.systemMemoryInfo().free;
+    const UsedBytes = Deno.memoryUsage().heapUsed;
+
+    this._freeBytes ??= FreeBytes;
+
+    const Percentage = (UsedBytes / this._freeBytes) * 100;
+
+    return Percentage;
+  }, 3000);
+
+  static isCleanupRequired = () => this.usedMemoryPercentage() >= 30;
+
+  static isExpired = (value?: StoreItem | null, timestamp = Date.now()) => {
+    return typeof value?.expiresInMs === "number" &&
+      timestamp >= ((value.timestamp ?? 0) + value.expiresInMs);
+  };
+
+  static cleanup = this.throttle(() => {
+    const Timestamp = Date.now();
+
+    for (const [Key, Value] of this.map) {
+      if (this.isExpired(Value, Timestamp)) this.del(Key);
+    }
+  }, 6000);
 }
