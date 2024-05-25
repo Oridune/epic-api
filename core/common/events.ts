@@ -1,4 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
+import { Context } from "oak";
+import { RawResponse, Response } from "./response.ts";
 
 export enum EventChannel {
   REQUEST = "request",
@@ -11,7 +13,7 @@ export interface IListener {
 
 export type TEventCallback<T> = (
   this: IListener,
-  event: CustomEvent<T>
+  event: CustomEvent<T>,
 ) => void;
 
 /**
@@ -38,7 +40,7 @@ export class Events {
     return dispatchEvent(
       new CustomEvent(Events.createEventId(EventChannel.REQUEST, event), {
         detail,
-      })
+      }),
     );
   }
 
@@ -52,8 +54,8 @@ export class Events {
     return dispatchEvent(
       new CustomEvent(
         Events.createEventId(EventChannel.CUSTOM, event),
-        eventInitDict
-      )
+        eventInitDict,
+      ),
     );
   }
 
@@ -65,11 +67,20 @@ export class Events {
    * @param options
    * @returns
    */
+  static listen(
+    channel: EventChannel.CUSTOM,
+    event: "response",
+    callback: TEventCallback<{
+      ctx: Context;
+      res: Response | RawResponse;
+    }>,
+    options?: boolean | AddEventListenerOptions,
+  ): IListener;
   static listen<T>(
     channel: EventChannel,
     event: string | string[],
     callback: TEventCallback<T>,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ) {
     const Listener: IListener = {
       remove: (opts) => Events.remove(channel, event, callback, opts),
@@ -79,7 +90,7 @@ export class Events {
       addEventListener(
         Events.createEventId(channel, ev),
         callback.bind(Listener) as () => void,
-        options
+        options,
       )
     );
 
@@ -97,13 +108,13 @@ export class Events {
     channel: EventChannel,
     event: string | string[],
     callback: TEventCallback<T>,
-    options?: boolean | EventListenerOptions
+    options?: boolean | EventListenerOptions,
   ) {
     (event instanceof Array ? event : [event]).map((ev) =>
       removeEventListener(
         Events.createEventId(channel, ev),
         callback as () => void,
-        options
+        options,
       )
     );
   }

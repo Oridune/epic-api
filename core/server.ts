@@ -4,8 +4,8 @@ import {
   EnvType,
   Events,
   fetch as customFetch,
+  IRequestContext,
   Loader,
-  RawResponse,
   respondWith,
   Response,
   Server,
@@ -13,7 +13,12 @@ import {
 } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { Database } from "@Database";
-import { Application as AppServer, Router as AppRouter, Status } from "oak";
+import {
+  Application as AppServer,
+  Router as AppRouter,
+  RouterContext,
+  Status,
+} from "oak";
 import { join } from "path";
 import { ApplicationListenEvent } from "oak/application.ts";
 import Logger from "oak:logger";
@@ -164,11 +169,12 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
         async (ctx) => {
           const TargetVersion = ctx.request.headers.get("x-app-version") ??
             "latest";
-          const RequestContext = {
+
+          const RequestContext: IRequestContext<RouterContext<string>> = {
             requestedVersion: TargetVersion,
             version: TargetVersion,
             id: ctx.state.requestId,
-            router: ctx,
+            router: ctx as any,
             options: Route.options,
           };
 
@@ -207,12 +213,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             res: ReturnedResponse,
           });
 
-          if (
-            ReturnedResponse instanceof RawResponse ||
-            ReturnedResponse instanceof Response
-          ) {
-            respondWith(ctx, ReturnedResponse);
-          }
+          if (ReturnedResponse) respondWith(ctx, ReturnedResponse);
         },
       );
     }

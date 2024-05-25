@@ -1,24 +1,28 @@
-// deno-lint-ignore-file no-explicit-any
-import { Context } from "oak/context.ts";
+import { Context } from "oak";
 import { RawResponse, Response } from "./response.ts";
-import { Env } from "@Core/common/env.ts";
+import { Env } from "./env.ts";
+import { Events } from "./events.ts";
 
 export const respondWith = (
-  ctx: Context<Record<string, any>, Record<string, any>>,
-  response: Response | RawResponse,
+  ctx: Context,
+  res: Response | RawResponse,
 ) => {
-  if (response instanceof Response) {
-    response.metrics({ respondInMs: Date.now() - ctx.state._requestStartedAt });
+  if (res instanceof Response) {
+    res.metrics({
+      respondInMs: Date.now() - ctx.state._requestStartedAt,
+    });
   }
 
   // Append headers
-  response.getHeaders().forEach((v, k) => ctx.response.headers.append(k, v));
+  res.getHeaders().forEach((v, k) => ctx.response.headers.append(k, v));
 
   // Set status code & body
-  ctx.response.status = response.getStatusCode();
-  ctx.response.body = response.getBody(
+  ctx.response.status = res.getStatusCode();
+  ctx.response.body = res.getBody(
     ["1", undefined].includes(Env.getSync("TRANSLATE_RESPONSE_MESSAGES", true))
       ? { translator: ctx.t }
       : undefined,
   );
+
+  Events.dispatch("response", { detail: { ctx, res } });
 };
