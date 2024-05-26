@@ -3,7 +3,7 @@ import { RawResponse, Response } from "./response.ts";
 import { Env } from "./env.ts";
 import { Events } from "./events.ts";
 
-export const respondWith = (
+export const respondWith = async (
   ctx: Context,
   res: Response | RawResponse,
 ) => {
@@ -23,6 +23,8 @@ export const respondWith = (
       ? { translator: ctx.t }
       : undefined,
   );
+
+  ctx.state._body = await ctx.request.body().value;
 
   Events.dispatch("response", { detail: { ctx, res } });
 };

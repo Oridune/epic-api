@@ -214,7 +214,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             res: ReturnedResponse,
           });
 
-          if (ReturnedResponse) respondWith(ctx, ReturnedResponse);
+          if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
         },
       );
     }

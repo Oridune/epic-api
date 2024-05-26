@@ -18,7 +18,7 @@ async (
     await next();
   } catch (error) {
     if (error instanceof Response || error instanceof RawResponse) {
-      respondWith(ctx, error);
+      await respondWith(ctx, error);
     } else {
       const StatusCode = isHttpError(error)
         ? error.status
@@ -43,7 +43,7 @@ async (
           /^x-.*/i.test(key) && ResponseObject.header(key, value),
       );
 
-      respondWith(ctx, ResponseObject);
+      await respondWith(ctx, ResponseObject);
     }
 
     if (!Env.is(EnvType.PRODUCTION)) {
