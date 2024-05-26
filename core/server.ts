@@ -161,6 +161,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
         Route.endpoint,
         async (ctx, next) => {
           ctx.state.requestId = ctx.state["X-Request-ID"];
+          ctx.state.requestScope = Route.scope;
           ctx.state.requestName = Route.options.name;
 
           await next();
