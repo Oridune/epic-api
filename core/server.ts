@@ -353,7 +353,7 @@ export const createAppServer = () => {
 
   return {
     getApp: () => Context.app,
-    fetch: prepareFetch(Context.app!),
+    fetch: prepareFetch(Context as any),
     start: StartServer,
     end: EndServer,
     restart: RestartServer,

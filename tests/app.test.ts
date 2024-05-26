@@ -9,7 +9,7 @@ import e from "validator";
 Deno.test({
   name: "Basic Flow Test",
   async fn(t) {
-    await Loader.load({ excludeTypes: ["templates", "models"] });
+    await Loader.load({ excludeTypes: ["templates"] });
 
     const { fetch, start, end, restart } = createAppServer();
 
