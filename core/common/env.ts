@@ -10,12 +10,11 @@ export enum EnvType {
 export class Env {
   static configuration?: Record<string, string>;
   static onGetFailed?: (
-    key: string
+    key: string,
   ) => Promise<string | null | undefined> | string | null | undefined;
 
   /**
    * Get the type of current environment (development, production, test etc.)
-   *
    */
   static getType() {
     const Target = Deno.env.get("ENV_TYPE") as EnvType | undefined;
@@ -78,15 +77,26 @@ export class Env {
     let Data: string | null | undefined = Env.getAll()[key];
 
     if (typeof Data !== "string") {
-      if (typeof Env.onGetFailed === "function")
+      if (typeof Env.onGetFailed === "function") {
         Data = await Env.onGetFailed(key);
+      }
 
-      if (typeof Data !== "string")
+      if (typeof Data !== "string") {
         if (silent) return;
         else throw new Error(`Missing environment variable '${key}'!`);
+      }
     }
 
     return Data;
+  }
+
+  /**
+   * Asynchronously get a specific environment variable and cast to boolean
+   * @param key Key of the variable
+   * @returns
+   */
+  static async enabled(key: string): Promise<boolean> {
+    return ["true", "1"].includes(await this.get(key, true) as string);
   }
 
   /**
@@ -110,10 +120,15 @@ export class Env {
   static getSync(key: string, silent?: true) {
     const Value: string | null | undefined = Env.getAll()[key];
 
-    if (typeof Value !== "string")
+    if (typeof Value !== "string") {
       if (silent) return;
       else throw new Error(`Missing environment variable '${key}'!`);
+    }
 
     return Value;
+  }
+
+  static enabledSync(key: string): boolean {
+    return ["true", "1"].includes(this.getSync(key, true) as string);
   }
 }
