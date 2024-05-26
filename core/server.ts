@@ -3,9 +3,9 @@ import {
   Env,
   EnvType,
   Events,
-  fetch as customFetch,
   IRequestContext,
   Loader,
+  prepareFetch,
   respondWith,
   Response,
   Server,
@@ -352,14 +352,7 @@ export const createAppServer = () => {
 
   return {
     getApp: () => Context.app,
-    fetch: (
-      ...params: Parameters<typeof customFetch> extends [infer _, ...infer R]
-        ? R
-        : never
-    ) => {
-      if (!Context.app) throw new Error(`App server not started yet!`);
-      return customFetch(Context.app, params[0], params[1]);
-    },
+    fetch: prepareFetch(Context.app!),
     start: StartServer,
     end: EndServer,
     restart: RestartServer,

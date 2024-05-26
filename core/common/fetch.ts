@@ -18,3 +18,13 @@ export const fetch = (
     ),
   );
 };
+
+export const prepareFetch = (app: Application) =>
+(
+  ...params: Parameters<typeof fetch> extends [infer _, ...infer R] ? R
+    : never
+) => {
+  if (!app) throw new Error(`App server not started yet!`);
+
+  return fetch(app, params[0], params[1]);
+};
