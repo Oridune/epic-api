@@ -176,18 +176,22 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
           name: `${route.scope}.params`,
         });
 
+        const <%- utils.pascalCase(name) %>BaseFilters = {
+          ...(Query.range instanceof Array
+            ? {
+              createdAt: {
+                $gt: new Date(Query.range[0]),
+                $lt: new Date(Query.range[1]),
+              },
+            }
+            : {}),
+        };
+
         const <%- utils.pascalCase(name) %>ListQuery = <%- utils.pascalCase(utils.singular(name)) %>Model
           .search(Query.search)
           .filter({
             ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
-            ...(Query.range instanceof Array
-              ? {
-                createdAt: {
-                  $gt: new Date(Query.range[0]),
-                  $lt: new Date(Query.range[1]),
-                },
-              }
-              : {}),
+            ...<%- utils.pascalCase(name) %>BaseFilters
           })
           .skip(Query.offset)
           .limit(Query.limit)
@@ -198,7 +202,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         return Response.data({
           totalCount: Query.includeTotalCount
             //? Make sure to pass any limiting conditions for count if needed.
-            ? await <%- utils.pascalCase(utils.singular(name)) %>Model.count()
+            ? await <%- utils.pascalCase(utils.singular(name)) %>Model.count(<%- utils.pascalCase(name) %>BaseFilters)
             : undefined,
           results: await <%- utils.pascalCase(name) %>ListQuery,
         });
@@ -223,7 +227,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
           name: `${route.scope}.params`,
         });
 
-        await <%- utils.pascalCase(utils.singular(name)) %>Model.deleteOne(Params.id);
+        await <%- utils.pascalCase(utils.singular(name)) %>Model.deleteOneOrFail(Params.id);
 
         return Response.true();
       },
