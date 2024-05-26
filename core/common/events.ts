@@ -81,6 +81,12 @@ export class Events {
     event: string | string[],
     callback: TEventCallback<T>,
     options?: boolean | AddEventListenerOptions,
+  ): IListener;
+  static listen<T>(
+    channel: EventChannel,
+    event: string | string[],
+    callback: TEventCallback<T>,
+    options?: boolean | AddEventListenerOptions,
   ) {
     const Listener: IListener = {
       remove: (opts) => Events.remove(channel, event, callback, opts),

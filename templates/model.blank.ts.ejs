@@ -16,7 +16,7 @@ export type T<%- utils.pascalCase(name) %>Output = OutputDocument<
 >;
 
 export const <%- utils.pascalCase(name) %>Model = Mongo.model(
-  "<%- utils.pascalCase(name) %>",
+  "<%- utils.camelCase(name) %>",
   <%- utils.pascalCase(name) %>Schema,
 );
 
