@@ -8,7 +8,7 @@ async (
 ) => {
   const ID = crypto.randomUUID();
 
-  ctx.state.requestId = ID;
+  ctx.state._requestId = ID;
 
   await next().catch((error) => {
     Object.assign(error, { "X-Request-ID": ID });

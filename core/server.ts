@@ -160,8 +160,8 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
       router[Route.options.method as "get"](
         Route.endpoint,
         async (ctx, next) => {
-          ctx.state.requestScope = Route.scope;
-          ctx.state.requestName = Route.options.name;
+          ctx.state._requestScope = Route.scope;
+          ctx.state._requestName = Route.options.name;
 
           await next();
         },
@@ -173,7 +173,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
           const RequestContext: IRequestContext<RouterContext<string>> = {
             requestedVersion: TargetVersion,
             version: TargetVersion,
-            id: ctx.state.requestId,
+            id: ctx.state._requestId,
             router: ctx as any,
             options: Route.options,
           };
