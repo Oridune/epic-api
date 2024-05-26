@@ -160,7 +160,6 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
       router[Route.options.method as "get"](
         Route.endpoint,
         async (ctx, next) => {
-          ctx.state.requestId = ctx.state["X-Request-ID"];
           ctx.state.requestScope = Route.scope;
           ctx.state.requestName = Route.options.name;
 

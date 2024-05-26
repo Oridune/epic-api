@@ -7,12 +7,13 @@ async (
   next: () => Promise<unknown>,
 ) => {
   const ID = crypto.randomUUID();
-  ctx.state["X-Request-ID"] = ID;
+
+  ctx.state.requestId = ID;
+
   await next().catch((error) => {
-    Object.assign(error, {
-      "X-Request-ID": ID,
-    });
+    Object.assign(error, { "X-Request-ID": ID });
     throw error;
   });
+
   ctx.response.headers.set("X-Request-ID", ID);
 };
