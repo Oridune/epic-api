@@ -24,7 +24,11 @@ export const respondWith = async (
       : undefined,
   );
 
-  ctx.state._body = await ctx.request.body().value;
+  try {
+    ctx.state._body = await ctx.request.body().value;
+  } catch {
+    // Do nothing...
+  }
 
   Events.dispatch("response", { detail: { ctx, res } });
 };
