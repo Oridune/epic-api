@@ -51,5 +51,5 @@ If you want to collaborate on this project than fork this project on your github
 account and use the .sample.env file to setup the environment variables.
 
 **See the
-[branching strategy guide](https://dev.to/amit_k_812b560fb293c72152/branching-strategy-guide-24d6?ref=dailydev)
+[branching strategy guide](https://dev.to/ak_23/branching-strategy-guide-24d6)
 for the best collaboration practices when working with github repositories.**
