@@ -1,13 +1,17 @@
 import { parse } from "flags";
+import { join } from "path";
 import e from "validator";
 
 import { Confirm, Select } from "cliffy:prompt";
-import { addPlugin, PluginSource } from "@Core/scripts/addPlugin.ts";
-import { removePlugin } from "@Core/scripts/removePlugin.ts";
-import { Loader } from "@Core/common/loader.ts";
+import {
+  addPluginToImportMap,
+  PluginSource,
+  resolvePluginName,
+  updatePluginDeclarationFile,
+} from "./addPlugin.ts";
+import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 
 export const updatePlugin = async (options: {
-  source?: PluginSource;
   name: string | string[];
   prompt?: boolean;
 }) => {
@@ -19,9 +23,6 @@ export const updatePlugin = async (options: {
     const Options = await e
       .object(
         {
-          source: e
-            .optional(e.enum(Object.values(PluginSource)))
-            .default(PluginSource.GIT),
           name: e
             .optional(e.array(e.in(PluginsList), { cast: true, splitter: "," }))
             .default(async (ctx) =>
@@ -39,6 +40,8 @@ export const updatePlugin = async (options: {
       )
       .validate(options);
 
+    const PluginDetails: ISequenceDetail[] = [];
+
     if (Options.name) {
       if (
         options.prompt &&
@@ -49,23 +52,60 @@ export const updatePlugin = async (options: {
             )
           }'?`,
         }))
-      ) {
-        return;
+      ) return;
+
+      const PluginsDir = join(Deno.cwd(), "plugins");
+
+      for (const PluginId of Options.name) {
+        const [PluginName] = PluginId.split(":");
+
+        const ResolvedPluginName = resolvePluginName(PluginName);
+
+        const PluginPath = join(PluginsDir, ResolvedPluginName);
+
+        const PluginDetail = Loader.getSequence("plugins")?.getDetailed(
+          ResolvedPluginName,
+        );
+
+        if (PluginDetail) {
+          PluginDetails.push(PluginDetail);
+
+          const [command, commandOptions] =
+            PluginDetail.props.source === PluginSource.GIT
+              ? [
+                "git",
+                {
+                  // Pull repository changes from Git.
+                  args: [
+                    "pull",
+                    "origin",
+                    PluginDetail.props.branch,
+                  ].filter(Boolean),
+                  cwd: PluginPath,
+                },
+              ]
+              : ["unknown", {}];
+
+          const Command = new Deno.Command(command, commandOptions);
+
+          const Process = Command.spawn();
+
+          const Status = await Process.status;
+
+          if (!Status.success) {
+            throw new Error("We were unable to update plugin(s)!");
+          }
+        }
+
+        await addPluginToImportMap(ResolvedPluginName);
       }
 
-      const PluginDetails = await removePlugin({ name: Options.name });
-
-      for (const PluginDetail of PluginDetails) {
-        await addPlugin({
-          source: PluginDetail.props.source as PluginSource,
-          name: `${PluginDetail.name}${
-            PluginDetail.props.branch ? `:${PluginDetail.props.branch}` : ""
-          }`,
-        });
-      }
-    } else throw new Error(`The plugin name(s) is missing.`);
+      await updatePluginDeclarationFile();
+    }
 
     console.info("Plugin(s) updated successfully!");
+
+    return PluginDetails;
   } catch (error) {
     console.error(error, error.issues);
     throw error;
@@ -73,12 +113,11 @@ export const updatePlugin = async (options: {
 };
 
 if (import.meta.main) {
-  const { source, s, name, n } = parse(Deno.args);
+  const { name, n } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
 
   await updatePlugin({
-    source: source ?? s,
     name: name ?? n,
     prompt: true,
   });

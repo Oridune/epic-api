@@ -2,6 +2,7 @@ import { parse } from "flags";
 import { dirname, join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
 import { existsSync, expandGlob } from "dfs";
+import { printStream } from "./lib/utility.ts";
 import e from "validator";
 
 import { Confirm } from "cliffy:prompt";
@@ -16,7 +17,7 @@ export const getDenoConfig = async () => {
   ).default;
 };
 
-export const mergeConfig = async (dir: string) => {
+export const mergeDenoConfig = async (dir: string) => {
   const TempConfigPath = join(dir, "deno.json");
 
   const TempConfig = (
@@ -99,30 +100,44 @@ export const updateCore = async (options: {
       return;
     }
 
-    const GitRepoUrl = new URL("Oridune/epic-api", "https://github.com");
-    const TempPath = join(Deno.cwd(), "_temp");
+    const RepositoryPath = "Oridune/epic-api";
+    const GitRepoUrl = new URL(RepositoryPath, "https://github.com");
+    const TempPath = join(Deno.cwd(), "_temp", RepositoryPath);
 
-    await Deno.remove(TempPath, { recursive: true }).catch(() => {
-      // Do nothing...
+    const Command = new Deno.Command("git", {
+      args: existsSync(TempPath)
+        ? [
+          "pull",
+          "origin",
+          Options.template,
+          "--progress",
+        ]
+        : [
+          "clone",
+          "--single-branch",
+          "--branch",
+          Options.template,
+          GitRepoUrl.toString(),
+          TempPath,
+          "--progress",
+        ],
+      stdout: "piped",
+      stderr: "piped",
     });
 
-    // deno-lint-ignore no-deprecated-deno-api
-    const Process = Deno.run({
-      cmd: [
-        "git",
-        "clone",
-        "--single-branch",
-        "--branch",
-        Options.template,
-        GitRepoUrl.toString(),
-        TempPath,
+    const Process = Command.spawn();
+
+    const [Out] = await Promise.all(
+      [
+        printStream(Process.stdout),
+        printStream(Process.stderr),
       ],
-    });
+    );
 
-    const Status = await Process.status();
+    const Status = await Process.status;
 
-    if (Status.success) {
-      Process.close();
+    updateCore: if (Status.success) {
+      if (Out.find((_) => _.includes("Already up to date"))) break updateCore;
 
       // Set of files that should not be updated because the are created just now...
       const CreatedFiles = new Set<string>();
@@ -198,19 +213,11 @@ export const updateCore = async (options: {
         join(Deno.cwd(), "new.README.md"),
       );
 
-      await mergeConfig(TempPath);
+      await mergeDenoConfig(TempPath);
       await mergeImports(TempPath);
+    } else throw new Error("We were unable to update the core!");
 
-      // Sleep for 1s
-      await new Promise((_) => setTimeout(_, 3000));
-
-      await Deno.remove(TempPath, { recursive: true });
-
-      console.info("Core has been updated successfully!");
-    } else {
-      Process.close();
-      throw new Error("We were unable to update the core!");
-    }
+    console.info("Core has been updated successfully!");
   } catch (error) {
     console.error(error, error.issues);
     throw error;

@@ -5,7 +5,7 @@ import e from "validator";
 import { Confirm, Select } from "cliffy:prompt";
 import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 
-import { updatePluginDeclarationFile } from "./addPlugin.ts";
+import { resolvePluginName, updatePluginDeclarationFile } from "./addPlugin.ts";
 
 export const removePluginFromImportMap = async (name: string) => {
   const ImportMapPath = join(Deno.cwd(), "import_map.json");
@@ -66,32 +66,37 @@ export const removePlugin = async (options: {
             )
           }'?`,
         }))
-      ) {
-        return PluginDetails;
-      }
+      ) return PluginDetails;
 
-      for (const PluginName of Options.name) {
-        const PluginPath = join(Deno.cwd(), "plugins", PluginName);
+      const PluginsDir = join(Deno.cwd(), "plugins");
+
+      for (const PluginId of Options.name) {
+        const [PluginName] = PluginId.split(":");
+
+        const ResolvedPluginName = resolvePluginName(PluginName);
+
+        const PluginPath = join(PluginsDir, ResolvedPluginName);
 
         const PluginDetail = Loader.getSequence("plugins")?.getDetailed(
-          PluginName,
+          ResolvedPluginName,
         );
 
         if (PluginDetail) {
           PluginDetails.push(PluginDetail);
 
           await Loader.getSequence("plugins")?.set((_) => {
-            _.delete(PluginName);
+            _.delete(ResolvedPluginName);
             return _;
           });
         }
 
-        await removePluginFromImportMap(PluginName);
-        await updatePluginDeclarationFile();
+        await removePluginFromImportMap(ResolvedPluginName);
 
         await Deno.remove(PluginPath, { recursive: true });
       }
-    } else throw new Error(`The plugin name(s) is missing.`);
+
+      await updatePluginDeclarationFile();
+    }
 
     console.info("Plugin(s) removed successfully!");
 

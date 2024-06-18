@@ -126,6 +126,7 @@ export const updatePluginDeclarationFile = async () => {
 export const addPlugin = async (options: {
   source?: PluginSource;
   name: string | string[];
+  branch?: string;
   prompt?: boolean;
 }) => {
   try {
@@ -146,6 +147,10 @@ export const addPlugin = async (options: {
                 ]
                 : undefined
             ),
+          branch: e.optional(e.string()).default(
+            options.branch ?? "main",
+          ),
+          ignoreIfExists: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
       )
@@ -157,86 +162,79 @@ export const addPlugin = async (options: {
       for (const PluginId of Options.name) {
         const [PluginName, Branch] = PluginId.split(":");
 
-        let ResolvePluginName = PluginName;
-        let Process:
-          | Deno.Process<{
-            cmd: string[];
-            cwd: string;
-          }>
-          | undefined;
+        const ResolvedPluginName = resolvePluginName(PluginName);
+        const ResolvedBranch = Branch ?? Options.branch;
 
-        const GitRepoUrl = new URL(ResolvePluginName, "https://github.com");
-
-        // Resolve plugin name according to Git scheme.
-        if (Options.source === PluginSource.GIT) {
-          ResolvePluginName = resolvePluginName(GitRepoUrl.pathname);
-        }
+        const GitRepoUrl = new URL(ResolvedPluginName, "https://github.com");
 
         // Check if plugin already exists.
-        if (Loader.getSequence("plugins")?.includes().has(ResolvePluginName)) {
+        if (Loader.getSequence("plugins")?.includes().has(ResolvedPluginName)) {
+          if (Options.ignoreIfExists) continue;
+
           throw new Error(
-            `The plugin '${ResolvePluginName}' already exists on this project!`,
+            `The plugin '${ResolvedPluginName}' already exists on this project!`,
           );
         }
 
-        // Clone Repository from Git.
-        if (Options.source === PluginSource.GIT) {
-          // deno-lint-ignore no-deprecated-deno-api
-          Process = Deno.run({
-            cmd: [
-              "git",
-              "clone",
-              "--single-branch",
-              ...(Branch ? ["--branch", Branch] : []),
-              GitRepoUrl.toString(),
-              ResolvePluginName,
-            ],
-            cwd: PluginsDir,
+        const [command, commandOptions] = Options.source === PluginSource.GIT
+          ? [
+            "git",
+            {
+              // Clone repository from Git.
+              args: [
+                "clone",
+                "--single-branch",
+                "--branch",
+                ResolvedBranch,
+                GitRepoUrl.toString(),
+                ResolvedPluginName,
+              ],
+              cwd: PluginsDir,
+            },
+          ]
+          : ["unknown", {}];
+
+        const Command = new Deno.Command(command, commandOptions);
+
+        const Process = Command.spawn();
+
+        const Status = await Process.status;
+
+        if (Status.success) {
+          await Loader.getSequence("plugins")?.add(ResolvedPluginName, {
+            source: Options.source,
+            branch: ResolvedBranch,
           });
-        }
 
-        if (Process) {
-          const Status = await Process.status();
+          await addPluginToImportMap(ResolvedPluginName);
 
-          if (Status.success) {
-            await Loader.getSequence("plugins")?.add(ResolvePluginName, {
-              source: Options.source,
-              branch: Branch,
+          // Delete any useless files and folders
+          for (
+            const EntryName of [
+              ".vscode",
+              ".husky",
+              "core",
+              "docs",
+              "env",
+              "terraform",
+              "database.ts",
+              "serve.ts",
+              ".lintstagedrc.json",
+            ]
+          ) {
+            await Deno.remove(
+              join(PluginsDir, ResolvedPluginName, EntryName),
+              { recursive: true },
+            ).catch(() => {
+              // Do nothing...
             });
+          }
 
-            await addPluginToImportMap(ResolvePluginName);
-            await updatePluginDeclarationFile();
-
-            for (
-              const EntryName of [
-                ".git",
-                ".vscode",
-                ".husky",
-                "core",
-                "docs",
-                "env",
-                "terraform",
-                "database.ts",
-                "serve.ts",
-                ".lintstagedrc.json",
-              ]
-            ) {
-              try {
-                await Deno.remove(
-                  join(PluginsDir, ResolvePluginName, EntryName),
-                  { recursive: true },
-                );
-              } catch {
-                // Do nothing...
-              }
-            }
-
-            console.info("Plugin(s) added successfully!");
-          } else throw new Error("We were unable to add plugin(s)!");
-
-          Process.close();
-        } else throw new Error(`Oops! Something went wrong!`);
+          console.info("Plugin(s) added successfully!");
+        } else throw new Error("We were unable to add plugin(s)!");
       }
+
+      await updatePluginDeclarationFile();
     }
   } catch (error) {
     console.error(error, error.issues);
