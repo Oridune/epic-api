@@ -103,36 +103,29 @@ export const updateCore = async (options: {
     const RepositoryPath = "Oridune/epic-api";
     const GitRepoUrl = new URL(RepositoryPath, "https://github.com");
     const TempPath = join(Deno.cwd(), "_temp", RepositoryPath);
+    const Pull = existsSync(TempPath);
 
     const Command = new Deno.Command("git", {
-      args: existsSync(TempPath)
-        ? [
-          "pull",
-          "origin",
-          Options.template,
-          "--progress",
-        ]
-        : [
-          "clone",
-          "--single-branch",
-          "--branch",
-          Options.template,
-          GitRepoUrl.toString(),
-          TempPath,
-          "--progress",
-        ],
+      args: Pull ? ["pull", "origin", Options.template, "--progress"] : [
+        "clone",
+        "--single-branch",
+        "--branch",
+        Options.template,
+        GitRepoUrl.toString(),
+        TempPath,
+        "--progress",
+      ],
       stdout: "piped",
       stderr: "piped",
+      cwd: Pull ? TempPath : undefined,
     });
 
     const Process = Command.spawn();
 
-    const [Out] = await Promise.all(
-      [
-        printStream(Process.stdout),
-        printStream(Process.stderr),
-      ],
-    );
+    const [Out] = await Promise.all([
+      printStream(Process.stdout),
+      printStream(Process.stderr),
+    ]);
 
     const Status = await Process.status;
 
