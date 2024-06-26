@@ -10,6 +10,7 @@ import {
   updatePluginDeclarationFile,
 } from "./addPlugin.ts";
 import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
+import { run } from "./lib/run.ts";
 
 export const updatePlugin = async (options: {
   name: string | string[];
@@ -52,7 +53,9 @@ export const updatePlugin = async (options: {
             )
           }'?`,
         }))
-      ) return;
+      ) {
+        return;
+      }
 
       const PluginsDir = join(Deno.cwd(), "plugins");
 
@@ -76,23 +79,17 @@ export const updatePlugin = async (options: {
                 "git",
                 {
                   // Pull repository changes from Git.
-                  args: [
-                    "pull",
-                    "origin",
-                    PluginDetail.props.branch,
-                  ].filter(Boolean),
+                  args: ["pull", "origin", PluginDetail.props.branch].filter(
+                    Boolean,
+                  ),
                   cwd: PluginPath,
                 },
               ]
               : ["unknown", {}];
 
-          const Command = new Deno.Command(command, commandOptions);
+          const UpdatePlugin = await run(command, commandOptions);
 
-          const Process = Command.spawn();
-
-          const Status = await Process.status;
-
-          if (!Status.success) {
+          if (!UpdatePlugin.success) {
             throw new Error("We were unable to update plugin(s)!");
           }
         }

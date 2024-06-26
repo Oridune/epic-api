@@ -5,7 +5,12 @@ import e from "validator";
 import { Confirm, Select } from "cliffy:prompt";
 import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 
-import { resolvePluginName, updatePluginDeclarationFile } from "./addPlugin.ts";
+import { run } from "./lib/run.ts";
+import {
+  PluginSource,
+  resolvePluginName,
+  updatePluginDeclarationFile,
+} from "./addPlugin.ts";
 
 export const removePluginFromImportMap = async (name: string) => {
   const ImportMapPath = join(Deno.cwd(), "import_map.json");
@@ -66,16 +71,14 @@ export const removePlugin = async (options: {
             )
           }'?`,
         }))
-      ) return PluginDetails;
-
-      const PluginsDir = join(Deno.cwd(), "plugins");
+      ) {
+        return PluginDetails;
+      }
 
       for (const PluginId of Options.name) {
         const [PluginName] = PluginId.split(":");
 
         const ResolvedPluginName = resolvePluginName(PluginName);
-
-        const PluginPath = join(PluginsDir, ResolvedPluginName);
 
         const PluginDetail = Loader.getSequence("plugins")?.getDetailed(
           ResolvedPluginName,
@@ -84,6 +87,43 @@ export const removePlugin = async (options: {
         if (PluginDetail) {
           PluginDetails.push(PluginDetail);
 
+          const PathToPlugin = join("plugins", ResolvedPluginName);
+
+          const [deinitCommand, deinitCommandOptions] =
+            PluginDetail.props.source === PluginSource.GIT
+              ? [
+                "git",
+                {
+                  args: ["submodule", "deinit", "-f", PathToPlugin],
+                },
+              ]
+              : ["unknown", {}];
+
+          const Deinit = await run(deinitCommand, deinitCommandOptions);
+
+          if (!Deinit.success) {
+            throw new Error("We were unable to remove plugin(s)!");
+          }
+
+          const [unIndexCommand, unIndexCommandOptions] =
+            PluginDetail.props.source === PluginSource.GIT
+              ? [
+                "git",
+                {
+                  args: ["rm", "-f", PathToPlugin],
+                },
+              ]
+              : ["unknown", {}];
+
+          const UnIndexCommand = await run(
+            unIndexCommand,
+            unIndexCommandOptions,
+          );
+
+          if (!UnIndexCommand.success) {
+            throw new Error("We were unable to remove plugin(s)!");
+          }
+
           await Loader.getSequence("plugins")?.set((_) => {
             _.delete(ResolvedPluginName);
             return _;
@@ -91,8 +131,6 @@ export const removePlugin = async (options: {
         }
 
         await removePluginFromImportMap(ResolvedPluginName);
-
-        await Deno.remove(PluginPath, { recursive: true });
       }
 
       await updatePluginDeclarationFile();

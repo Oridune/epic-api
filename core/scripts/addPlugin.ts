@@ -5,6 +5,7 @@ import e from "validator";
 
 import { Input } from "cliffy:prompt";
 import { Loader } from "@Core/common/loader.ts";
+import { run } from "./lib/run.ts";
 
 export enum PluginSource {
   GIT = "git",
@@ -147,9 +148,7 @@ export const addPlugin = async (options: {
                 ]
                 : undefined
             ),
-          branch: e.optional(e.string()).default(
-            options.branch ?? "main",
-          ),
+          branch: e.optional(e.string()).default(options.branch ?? "main"),
           ignoreIfExists: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
@@ -180,27 +179,23 @@ export const addPlugin = async (options: {
           ? [
             "git",
             {
-              // Clone repository from Git.
+              // Add submodule repository from Git.
               args: [
-                "clone",
-                "--single-branch",
-                "--branch",
+                "submodule",
+                "add",
+                "-b",
                 ResolvedBranch,
+                "-f",
                 GitRepoUrl.toString(),
-                ResolvedPluginName,
+                join("plugins", ResolvedPluginName),
               ],
-              cwd: PluginsDir,
             },
           ]
           : ["unknown", {}];
 
-        const Command = new Deno.Command(command, commandOptions);
+        const AddPlugin = await run(command, commandOptions);
 
-        const Process = Command.spawn();
-
-        const Status = await Process.status;
-
-        if (Status.success) {
+        if (AddPlugin.success) {
           await Loader.getSequence("plugins")?.add(ResolvedPluginName, {
             source: Options.source,
             branch: ResolvedBranch,
@@ -222,10 +217,9 @@ export const addPlugin = async (options: {
               ".lintstagedrc.json",
             ]
           ) {
-            await Deno.remove(
-              join(PluginsDir, ResolvedPluginName, EntryName),
-              { recursive: true },
-            ).catch(() => {
+            await Deno.remove(join(PluginsDir, ResolvedPluginName, EntryName), {
+              recursive: true,
+            }).catch(() => {
               // Do nothing...
             });
           }
