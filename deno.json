@@ -1,5 +1,5 @@
 {
-  "template": "master",
+  "template": "default-v1",
   "id": "epic-api",
   "title": "Epic API",
   "description": "A powerful API built with the Epic API Framework.",
