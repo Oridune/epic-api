@@ -156,8 +156,6 @@ export const addPlugin = async (options: {
       .validate(options);
 
     if (Options.name) {
-      const PluginsDir = join(Deno.cwd(), "plugins");
-
       for (const PluginId of Options.name) {
         const [PluginName, Branch] = PluginId.split(":");
 
@@ -202,27 +200,6 @@ export const addPlugin = async (options: {
           });
 
           await addPluginToImportMap(ResolvedPluginName);
-
-          // Delete any useless files and folders
-          for (
-            const EntryName of [
-              ".vscode",
-              ".husky",
-              "core",
-              "docs",
-              "env",
-              "terraform",
-              "database.ts",
-              "serve.ts",
-              ".lintstagedrc.json",
-            ]
-          ) {
-            await Deno.remove(join(PluginsDir, ResolvedPluginName, EntryName), {
-              recursive: true,
-            }).catch(() => {
-              // Do nothing...
-            });
-          }
 
           console.info("Plugin(s) added successfully!");
         } else throw new Error("We were unable to add plugin(s)!");
