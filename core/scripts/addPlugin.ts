@@ -1,6 +1,6 @@
 import { parse } from "flags";
-import { isAbsolute, join } from "path";
-import { existsSync } from "dfs";
+import { dirname, isAbsolute, join } from "path";
+import { existsSync, expandGlob } from "dfs";
 import e from "validator";
 
 import { Input } from "cliffy:prompt";
@@ -124,6 +124,68 @@ export const updatePluginDeclarationFile = async () => {
   return DeclarationFileContent;
 };
 
+export const setupPlugin = async (opts: {
+  source: PluginSource;
+  branch: string;
+  name: string;
+  sourcePath: string;
+  targetPath: string;
+}) => {
+  // Create Files
+  for (
+    const Glob of ["**/**/*"].map((pattern) =>
+      expandGlob(pattern, {
+        root: opts.sourcePath,
+        globstar: true,
+      })
+    )
+  ) {
+    for await (const Entry of Glob) {
+      if (
+        !Entry.isDirectory && [
+          /^(\\|\/)?(\.git)(\\|\/)?/,
+          /^(\\|\/)?(\.vscode)(\\|\/)?/,
+          /^(\\|\/)?(\.husky)(\\|\/)?/,
+          /^(\\|\/)?(core)(\\|\/)?/,
+          /^(\\|\/)?(docs)(\\|\/)?/,
+          /^(\\|\/)?(env)(\\|\/)?/,
+          /^(\\|\/)?(terraform)(\\|\/)?/,
+          /^(\\|\/)?(database.ts)/,
+          /^(\\|\/)?(serve.ts)/,
+          /^(\\|\/)?(\.lintstagedrc.json)/,
+        ].reduce(
+          (allow, expect) =>
+            allow && !expect.test(Entry.path.replace(opts.sourcePath, "")),
+          true,
+        )
+      ) {
+        const SourcePath = Entry.path;
+        const TargetPath = SourcePath.replace(
+          opts.sourcePath,
+          opts.targetPath,
+        );
+
+        const TargetDirectory = dirname(TargetPath);
+
+        await Deno.mkdir(TargetDirectory, { recursive: true }).catch(
+          () => {
+            // Do nothing...
+          },
+        );
+
+        await Deno.copyFile(SourcePath, TargetPath);
+      }
+    }
+  }
+
+  await Loader.getSequence("plugins")?.add(opts.name, {
+    source: opts.source,
+    branch: opts.branch,
+  });
+
+  await addPluginToImportMap(opts.name);
+};
+
 export const addPlugin = async (options: {
   source?: PluginSource;
   name: string | string[];
@@ -156,13 +218,13 @@ export const addPlugin = async (options: {
       .validate(options);
 
     if (Options.name) {
+      const PluginsDir = join(Deno.cwd(), "plugins");
+
       for (const PluginId of Options.name) {
         const [PluginName, Branch] = PluginId.split(":");
 
         const ResolvedPluginName = resolvePluginName(PluginName);
         const ResolvedBranch = Branch ?? Options.branch;
-
-        const GitRepoUrl = new URL(ResolvedPluginName, "https://github.com");
 
         // Check if plugin already exists.
         if (Loader.getSequence("plugins")?.includes().has(ResolvedPluginName)) {
@@ -173,36 +235,43 @@ export const addPlugin = async (options: {
           );
         }
 
-        const [command, commandOptions] = Options.source === PluginSource.GIT
-          ? [
-            "git",
-            {
-              // Add submodule repository from Git.
-              args: [
-                "submodule",
-                "add",
-                "-b",
-                ResolvedBranch,
-                "-f",
-                GitRepoUrl.toString(),
-                join("plugins", ResolvedPluginName),
-              ],
-            },
-          ]
-          : ["unknown", {}];
+        const GitRepoUrl = new URL(ResolvedPluginName, "https://github.com");
+        const TempPath = join(Deno.cwd(), "_temp", ResolvedPluginName);
 
-        const AddPlugin = await run(command, commandOptions);
-
-        if (AddPlugin.success) {
-          await Loader.getSequence("plugins")?.add(ResolvedPluginName, {
+        const clonePlugin = () =>
+          setupPlugin({
             source: Options.source,
             branch: ResolvedBranch,
+            name: ResolvedPluginName,
+            sourcePath: TempPath,
+            targetPath: join(PluginsDir, ResolvedPluginName),
           });
 
-          await addPluginToImportMap(ResolvedPluginName);
+        if (!existsSync(join(TempPath, "deno.json"))) {
+          const [command, commandOptions] = Options.source === PluginSource.GIT
+            ? [
+              "git",
+              {
+                // Clone repository from Git.
+                args: [
+                  "clone",
+                  "--single-branch",
+                  "--branch",
+                  ResolvedBranch,
+                  GitRepoUrl.toString(),
+                  TempPath,
+                ],
+              },
+            ]
+            : ["unknown", {}];
 
-          console.info("Plugin(s) added successfully!");
-        } else throw new Error("We were unable to add plugin(s)!");
+          const AddPlugin = await run(command, commandOptions);
+
+          if (AddPlugin.success) await clonePlugin();
+          else throw new Error("We were unable to add plugin(s)!");
+        } else await clonePlugin();
+
+        console.info("Plugin(s) added successfully!");
       }
 
       await updatePluginDeclarationFile();

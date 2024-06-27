@@ -7,10 +7,11 @@ import {
   addPluginToImportMap,
   PluginSource,
   resolvePluginName,
+  setupPlugin,
   updatePluginDeclarationFile,
 } from "./addPlugin.ts";
 import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
-import { run } from "./lib/run.ts";
+import { printStream } from "./lib/utility.ts";
 
 export const updatePlugin = async (options: {
   name: string | string[];
@@ -73,28 +74,56 @@ export const updatePlugin = async (options: {
         if (PluginDetail) {
           PluginDetails.push(PluginDetail);
 
+          const TempPath = join(Deno.cwd(), "_temp", ResolvedPluginName);
+
           const [command, commandOptions] =
             PluginDetail.props.source === PluginSource.GIT
               ? [
                 "git",
                 {
                   // Pull repository changes from Git.
-                  args: ["pull", "origin", PluginDetail.props.branch].filter(
+                  args: [
+                    "pull",
+                    "origin",
+                    PluginDetail.props.branch,
+                    "--progress",
+                  ].filter(
                     Boolean,
                   ),
-                  cwd: PluginPath,
+                  cwd: TempPath,
+                  stdout: "piped" as const,
+                  stderr: "piped" as const,
                 },
               ]
               : ["unknown", {}];
 
-          const UpdatePlugin = await run(command, commandOptions);
+          const Command = new Deno.Command(command, commandOptions);
 
-          if (!UpdatePlugin.success) {
-            throw new Error("We were unable to update plugin(s)!");
-          }
+          const Process = Command.spawn();
+
+          const [Out] = await Promise.all([
+            printStream(Process.stdout),
+            printStream(Process.stderr),
+          ]);
+
+          const UpdatePlugin = await Process.status;
+
+          updatePlugin: if (UpdatePlugin.success) {
+            if (Out.find((_) => _.includes("Already up to date"))) {
+              break updatePlugin;
+            }
+
+            await setupPlugin({
+              source: PluginDetail.props.source as PluginSource,
+              branch: PluginDetail.props.branch,
+              name: ResolvedPluginName,
+              sourcePath: TempPath,
+              targetPath: PluginPath,
+            });
+
+            await addPluginToImportMap(ResolvedPluginName);
+          } else throw new Error("We were unable to update plugin(s)!");
         }
-
-        await addPluginToImportMap(ResolvedPluginName);
       }
 
       await updatePluginDeclarationFile();
