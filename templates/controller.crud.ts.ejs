@@ -10,6 +10,7 @@ import {
   Response,
   Versioned,
 } from "@Core/common/mod.ts";
+import { APIController } from "@Core/controller.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { ObjectId } from "mongo";
@@ -119,35 +120,8 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
   @Get("/:id?/")
   public get(route: IRoute) {
-    const CurrentTimestamp = Date.now();
-
     // Define Query Schema
-    const QuerySchema = e.object(
-      {
-        search: e.optional(e.string()),
-        range: e.optional(
-          e.tuple([e.date().end(CurrentTimestamp), e.date()], { cast: true }),
-        ),
-        offset: e.optional(e.number({ cast: true }).min(0)).default(0),
-        limit: e.optional(e.number({ cast: true }).max(2000)).default(2000),
-        sort: e
-          .optional(
-            e.record(e.number({ cast: true }).min(-1).max(1), { cast: true }),
-          )
-          .default({ _id: -1 }),
-        project: e.optional(
-          e.record(e.number({ cast: true }).min(0).max(1), { cast: true }),
-        ),
-        includeTotalCount: e.optional(
-          e
-            .boolean({ cast: true })
-            .describe(
-              "If `true` is passed, the system will return a total items count for pagination purpose.",
-            ),
-        ),
-      },
-      { allowUnexpectedProps: true },
-    );
+    const QuerySchema = APIController.queryValidator;
 
     // Define Params Schema
     const ParamsSchema = e.object({
@@ -177,6 +151,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         });
 
         const <%- utils.pascalCase(name) %>BaseFilters = {
+          ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
           ...(Query.range instanceof Array
             ? {
               createdAt: {
@@ -189,10 +164,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
         const <%- utils.pascalCase(name) %>ListQuery = <%- utils.pascalCase(utils.singular(name)) %>Model
           .search(Query.search)
-          .filter({
-            ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
-            ...<%- utils.pascalCase(name) %>BaseFilters
-          })
+          .filter(<%- utils.pascalCase(name) %>BaseFilters)
           .skip(Query.offset)
           .limit(Query.limit)
           .sort(Query.sort);
