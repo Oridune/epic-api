@@ -141,6 +141,7 @@ export const setupPlugin = async (opts: {
     )
   ) {
     for await (const Entry of Glob) {
+      // Do not copy any file or folder from this list
       if (
         !Entry.isDirectory && [
           /^(\\|\/)?(\.git)(\\|\/)?/,

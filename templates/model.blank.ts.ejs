@@ -1,12 +1,17 @@
 import e, { inferInput, inferOutput } from "validator";
 import { InputDocument, Mongo, ObjectId, OutputDocument } from "mongo";
 
-export const <%- utils.pascalCase(name) %>Schema = () =>
-  e.object({
-    _id: e.optional(e.instanceOf(ObjectId, { instantiate: true })),
-    createdAt: e.optional(e.date()).default(() => new Date()),
-    updatedAt: e.optional(e.date()).default(() => new Date()),
-  });
+export const Input<%- utils.pascalCase(name) %>Schema = e.object({
+  // Your user prompted properties go here...
+});
+
+export const <%- utils.pascalCase(name) %>Schema = e.object({
+  _id: e.optional(e.instanceOf(ObjectId, { instantiate: true })),
+  createdAt: e.optional(e.date()).default(() => new Date()),
+  updatedAt: e.optional(e.date()).default(() => new Date()),
+
+  // Write any private/system properties here...
+}).extends(Input<%- utils.pascalCase(name) %>Schema);
 
 export type T<%- utils.pascalCase(name) %>Input = InputDocument<
   inferInput<typeof <%- utils.pascalCase(name) %>Schema>
