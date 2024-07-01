@@ -132,9 +132,6 @@ export const updateCore = async (options: {
     updateCore: if (Status.success) {
       if (Out.find((_) => _.includes("Already up to date"))) break updateCore;
 
-      // Set of files that should not be updated because the are created just now...
-      const CreatedFiles = new Set<string>();
-
       // Create Files
       for (
         const Glob of ["**/**/*"].map((pattern) =>
@@ -145,6 +142,7 @@ export const updateCore = async (options: {
         )
       ) {
         for await (const Entry of Glob) {
+          // Do not include .git folder
           if (
             !Entry.isDirectory &&
             !/^(\\|\/)?(\.git)(\\|\/)?/.test(Entry.path.replace(TempPath, ""))
@@ -152,6 +150,7 @@ export const updateCore = async (options: {
             const SourcePath = Entry.path;
             const TargetPath = SourcePath.replace(TempPath, Deno.cwd());
 
+            // Do not replace any file that is not included in this list.
             if (
               existsSync(TargetPath) && [
                 /^(\\|\/)?(core)(\\|\/)?/,
@@ -175,8 +174,6 @@ export const updateCore = async (options: {
             });
 
             await Deno.copyFile(SourcePath, TargetPath);
-
-            CreatedFiles.add(TargetPath);
           }
         }
       }
