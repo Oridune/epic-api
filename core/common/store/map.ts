@@ -38,7 +38,8 @@ export class MapStore extends StoreBase {
       } satisfies StoreItem,
     );
 
-    if (this.isCleanupRequired()) this.cleanup();
+    // if (this.isCleanupRequired())
+    this.cleanup();
   }
 
   private static _get(key: string): StoreItem | null {
@@ -53,7 +54,7 @@ export class MapStore extends StoreBase {
   }
 
   static async get<T extends unknown>(key: string): Promise<T | null> {
-    return this._get(key)?.__value as T ?? null;
+    return (this._get(key)?.__value as T) ?? null;
   }
 
   static async del(...keys: string[]) {
@@ -77,8 +78,7 @@ export class MapStore extends StoreBase {
   ) {
     const RawValue = this._get(key);
 
-    const Count = ((RawValue?.__value as number) ?? 0) +
-      (options?.incrBy ?? 1);
+    const Count = ((RawValue?.__value as number) ?? 0) + (options?.incrBy ?? 1);
 
     this.set(key, Count, options);
 
@@ -96,7 +96,7 @@ export class MapStore extends StoreBase {
     return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
       const CurrentTime = Date.now();
 
-      if (!InitialExec || (CurrentTime - ExecutionTime) >= ttlMs) {
+      if (!InitialExec || CurrentTime - ExecutionTime >= ttlMs) {
         InitialExec = true;
         ExecutionTime = CurrentTime;
 
@@ -121,8 +121,10 @@ export class MapStore extends StoreBase {
   static isCleanupRequired = () => this.usedMemoryPercentage() >= 30;
 
   static isExpired = (value?: StoreItem | null, timestamp = Date.now()) => {
-    return typeof value?.expiresInMs === "number" &&
-      timestamp >= ((value.timestamp ?? 0) + value.expiresInMs);
+    return (
+      typeof value?.expiresInMs === "number" &&
+      timestamp >= (value.timestamp ?? 0) + value.expiresInMs
+    );
   };
 
   static cleanup = this.throttle(() => {
@@ -131,5 +133,5 @@ export class MapStore extends StoreBase {
     for (const [Key, Value] of this.map) {
       if (this.isExpired(Value, Timestamp)) this.del(Key);
     }
-  }, 6000);
+  }, 30000);
 }
