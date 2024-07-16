@@ -3,7 +3,10 @@ import {
   BaseController,
   Controller,
   Env,
+  EnvType,
   Get,
+  type IRequestContext,
+  type IRoute,
   Loader,
   Response,
   Store,
@@ -11,6 +14,9 @@ import {
 } from "@Core/common/mod.ts";
 import { Database } from "@Database";
 import e from "validator";
+import { type RouterContext } from "oak";
+import { generatePostmanCollection } from "@Core/scripts/syncPostman.ts";
+import { denoConfig } from "@Core/common/denoConfig.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -102,5 +108,39 @@ export class APIController extends BaseController {
           );
         },
       });
+  }
+
+  @Get("/postman/", {
+    disabled: Env.is(EnvType.PRODUCTION),
+  })
+  public postman(route: IRoute) {
+    // Define Query Schema
+    const QuerySchema = e.deepCast(
+      e.object({
+        name: e.optional(e.string()),
+        description: e.optional(e.string()),
+      }, { allowUnexpectedProps: true }),
+    );
+
+    return {
+      shape: {
+        query: QuerySchema.toSample(),
+      },
+      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
+        // Query Validation
+        const Query = await QuerySchema.validate(
+          Object.fromEntries(ctx.router.request.url.searchParams),
+          { name: `${route.scope}.query` },
+        );
+
+        const Collection = await generatePostmanCollection(ctx.routes, {
+          name: Query.name ?? denoConfig.title,
+          description: Query.description ?? denoConfig.description,
+          version: ctx.requestedVersion,
+        });
+
+        return Response.raw(Collection);
+      },
+    };
   }
 }

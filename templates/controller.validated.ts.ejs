@@ -63,7 +63,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
   @Get("/")
   public list(route: IRoute) {
     // Define Query Schema
-    const QuerySchema = e.object({}, { allowUnexpectedProps: true });
+    const QuerySchema = e.deepCast(e.object({}, { allowUnexpectedProps: true }));
 
     // Define Params Schema
     const ParamsSchema = e.object({});

@@ -147,7 +147,10 @@ export interface ResponseBody<D, M> {
   metrics?: ResponseMetrics;
 }
 
-export class Response<D = Record<string, any>, M = Record<string, any>> {
+export class Response<
+  Data = Record<string, any>,
+  Metadata = Record<string, any>,
+> {
   protected StatusCode = 200;
   protected Headers = new Headers({
     "Content-Type": "application/json",
@@ -155,8 +158,8 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
 
   protected Status = true;
   protected Messages?: ResponseMessage[];
-  protected Data?: D;
-  protected Metadata?: M;
+  protected Data?: Data;
+  protected Metadata?: Metadata;
   protected ErrorStack?: string;
   protected Metrics?: ResponseMetrics;
 
@@ -301,7 +304,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
     return new Response().errorStack(stack);
   }
 
-  constructor(data?: any, metadata?: M) {
+  constructor(data?: any, metadata?: Metadata) {
     if (data) this.data(data);
     if (metadata) this.metadata(metadata);
   }
@@ -387,7 +390,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @param metadata Optionally pass a metadata object.
    * @returns
    */
-  public data(data: D, metadata?: M) {
+  public data(data: Data, metadata?: Metadata) {
     if (typeof data === "object") this.Data = data;
     if (typeof metadata === "object") this.metadata(metadata);
     return this;
@@ -398,7 +401,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
    * @param metadata
    * @returns
    */
-  public metadata(metadata: M) {
+  public metadata(metadata: Metadata) {
     if (typeof metadata === "object") {
       this.Metadata = { ...this.Metadata, ...metadata };
     }
@@ -453,7 +456,7 @@ export class Response<D = Record<string, any>, M = Record<string, any>> {
     options?: {
       translator?: (target: string) => string;
     },
-  ): ResponseBody<D, M> {
+  ): ResponseBody<Data, Metadata> {
     const Messages = typeof options?.translator === "function"
       ? this.Messages?.map((_) => {
         _.message = options.translator!(_.message);

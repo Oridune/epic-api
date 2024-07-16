@@ -3,7 +3,7 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
-import { Loader, Server } from "@Core/common/mod.ts";
+import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 
 export type PostmanRequestMethods =
@@ -92,10 +92,196 @@ export interface PostmanCollectionInterface {
     _postman_id?: string;
     name: string;
     description?: string;
+    version: string;
     schema: string;
   };
   item: Array<IPostmanCollection>;
 }
+
+export const generatePostmanCollection = async (
+  routes: IRoute[],
+  data: {
+    name: string;
+    description: string;
+    version: string;
+  },
+) => {
+  // Create Empty Collection
+  const PostmanCollectionObject: PostmanCollectionInterface = {
+    info: {
+      name: data.name,
+      description: data.description,
+      version: data.version,
+      schema:
+        "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
+    item: [],
+  };
+
+  type NestedRequests = {
+    [Key: string]: IPostmanCollection[] | NestedRequests;
+  };
+
+  const RequestGroups: NestedRequests = {};
+
+  for (const Route of routes) {
+    const Groups = Route.group.split("/").filter(Boolean);
+
+    const normalizeRequest = (
+      groups: string[],
+      scope: string,
+      request: IPostmanCollection,
+      requestGroups: NestedRequests,
+    ) => {
+      if (!groups.length) {
+        requestGroups[scope] = [
+          ...((requestGroups[scope] as IPostmanCollection[]) ?? []),
+          request,
+        ];
+
+        return requestGroups;
+      }
+
+      const Group = groups.shift()!;
+
+      requestGroups[Group] = normalizeRequest(
+        groups,
+        scope,
+        request,
+        (requestGroups[Group] as NestedRequests) ?? {},
+      );
+
+      return requestGroups;
+    };
+
+    const { object: RequestHandler } =
+      (await Route.options.buildRequestHandler(Route, {
+        version: data.version,
+      })) ?? {};
+
+    if (typeof RequestHandler === "object") {
+      const Host = "{{host}}";
+      const Endpoint = join(Host, Route.endpoint)
+        .replace(/\\/g, "/")
+        .replace("?", "");
+
+      const Shape = RequestHandler.postman ?? RequestHandler.shape;
+
+      const QueryParams = Object.entries<string>(
+        Shape?.query?.data ?? {},
+      );
+
+      normalizeRequest(
+        Groups,
+        Route.scope,
+        {
+          name: Route.options.name,
+          request: {
+            url: {
+              raw: Endpoint +
+                (QueryParams.length
+                  ? `?${
+                    QueryParams.map(
+                      ([key, value]) => key + "=" + value,
+                    ).join("&")
+                  }`
+                  : ""),
+              host: [Host],
+              path: Route.endpoint
+                .split("/")
+                .filter(Boolean)
+                .map((path) => path.replace(/\?$/, "")),
+              query: QueryParams.map(([key, value]) => ({
+                key,
+                value,
+                description: [
+                  Shape?.query?.schema?.requiredProperties
+                      ?.includes(
+                        key,
+                      )
+                    ? undefined
+                    : "(Optional)",
+                  Shape?.query?.schema?.properties?.[key]
+                    .description,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              })),
+              variable: Object.entries<string>(
+                Shape?.params?.data ?? {},
+              ).map(([key, value]) => ({
+                key,
+                value,
+                description: [
+                  Shape?.params?.schema?.requiredProperties
+                      ?.includes(
+                        key,
+                      )
+                    ? undefined
+                    : "(Optional)",
+                  Shape?.params?.schema?.properties?.[key]
+                    .description,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              })),
+            },
+            method: Route.options.method
+              .toUpperCase() as PostmanRequestMethods,
+            header: Object.entries<string>(
+              Shape?.headers?.data ?? {},
+            ).map(([key, value]) => ({
+              key,
+              value,
+              type: "text",
+              description: [
+                Shape?.headers?.schema?.requiredProperties
+                    ?.includes(
+                      key,
+                    )
+                  ? undefined
+                  : "(Optional)",
+                Shape?.headers?.schema?.properties?.[key]
+                  .description,
+              ]
+                .filter(Boolean)
+                .join(" "),
+            })),
+            body: Shape?.body?.data
+              ? {
+                mode: "raw",
+                raw: JSON.stringify(
+                  Shape.body.data,
+                  undefined,
+                  2,
+                ),
+                options: {
+                  raw: {
+                    language: "json",
+                  },
+                },
+              }
+              : undefined,
+          },
+          response: [],
+        },
+        RequestGroups,
+      );
+    }
+  }
+
+  const pushRequests = (
+    requestGroups: NestedRequests,
+  ): IPostmanCollection[] =>
+    Object.entries(requestGroups).map(([Key, Item]) => ({
+      name: Key,
+      item: Item instanceof Array ? Item : pushRequests(Item),
+    }));
+
+  PostmanCollectionObject.item = pushRequests(RequestGroups);
+
+  return PostmanCollectionObject;
+};
 
 export const syncPostman = async (options: {
   key?: string;
@@ -115,29 +301,7 @@ export const syncPostman = async (options: {
       })
       .validate(options);
 
-    const Config = (
-      await import(`file:///${join(Deno.cwd(), "deno.json")}`, {
-        with: { type: "json" },
-      })
-    ).default;
-
-    // Create Empty Collection
-    const PostmanCollectionObject: PostmanCollectionInterface = {
-      info: {
-        name: Options.name ?? Config.title ?? Options.collectionId,
-        description: Options.description ?? Config.description,
-        schema:
-          "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      },
-      item: [],
-    };
-
-    await new Server(APIController).prepare(async (routes) => {
-      type NestedRequests = {
-        [Key: string]: IPostmanCollection[] | NestedRequests;
-      };
-
-      const RequestGroups: NestedRequests = {};
+    const Routes = await new Server(APIController).prepare((routes) => {
       const RoutesTableData: Array<{
         Type: string;
         Method: string;
@@ -145,171 +309,25 @@ export const syncPostman = async (options: {
         Endpoint: string;
       }> = [];
 
-      for (const Route of routes) {
+      routes.forEach((Route) =>
         RoutesTableData.push({
           Type: "Endpoint",
           Method: Route.options.method.toUpperCase(),
           Permission: `${Route.scope}.${Route.options.name}`,
           Endpoint: Route.endpoint,
-        });
-
-        const Groups = Route.group.split("/").filter(Boolean);
-
-        const NormalizeRequest = (
-          groups: string[],
-          scope: string,
-          request: IPostmanCollection,
-          requestGroups: NestedRequests,
-        ) => {
-          if (!groups.length) {
-            requestGroups[scope] = [
-              ...((requestGroups[scope] as IPostmanCollection[]) ?? []),
-              request,
-            ];
-
-            return requestGroups;
-          }
-
-          const Group = groups.shift()!;
-
-          requestGroups[Group] = NormalizeRequest(
-            groups,
-            scope,
-            request,
-            (requestGroups[Group] as NestedRequests) ?? {},
-          );
-
-          return requestGroups;
-        };
-
-        const { object: RequestHandler } =
-          (await Route.options.buildRequestHandler(Route, {
-            version: Options.version,
-          })) ?? {};
-
-        if (typeof RequestHandler === "object") {
-          const Host = "{{host}}";
-          const Endpoint = join(Host, Route.endpoint)
-            .replace(/\\/g, "/")
-            .replace("?", "");
-
-          const Shape = RequestHandler.postman ?? RequestHandler.shape;
-
-          const QueryParams = Object.entries<string>(
-            Shape?.query?.data ?? {},
-          );
-
-          NormalizeRequest(
-            Groups,
-            Route.scope,
-            {
-              name: Route.options.name,
-              request: {
-                url: {
-                  raw: Endpoint +
-                    (QueryParams.length
-                      ? `?${
-                        QueryParams.map(
-                          ([key, value]) => key + "=" + value,
-                        ).join("&")
-                      }`
-                      : ""),
-                  host: [Host],
-                  path: Route.endpoint
-                    .split("/")
-                    .filter(Boolean)
-                    .map((path) => path.replace(/\?$/, "")),
-                  query: QueryParams.map(([key, value]) => ({
-                    key,
-                    value,
-                    description: [
-                      Shape?.query?.schema?.requiredProperties
-                          ?.includes(
-                            key,
-                          )
-                        ? undefined
-                        : "(Optional)",
-                      Shape?.query?.schema?.properties?.[key]
-                        .description,
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                  })),
-                  variable: Object.entries<string>(
-                    Shape?.params?.data ?? {},
-                  ).map(([key, value]) => ({
-                    key,
-                    value,
-                    description: [
-                      Shape?.params?.schema?.requiredProperties
-                          ?.includes(
-                            key,
-                          )
-                        ? undefined
-                        : "(Optional)",
-                      Shape?.params?.schema?.properties?.[key]
-                        .description,
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                  })),
-                },
-                method: Route.options.method
-                  .toUpperCase() as PostmanRequestMethods,
-                header: Object.entries<string>(
-                  Shape?.headers?.data ?? {},
-                ).map(([key, value]) => ({
-                  key,
-                  value,
-                  type: "text",
-                  description: [
-                    Shape?.headers?.schema?.requiredProperties
-                        ?.includes(
-                          key,
-                        )
-                      ? undefined
-                      : "(Optional)",
-                    Shape?.headers?.schema?.properties?.[key]
-                      .description,
-                  ]
-                    .filter(Boolean)
-                    .join(" "),
-                })),
-                body: Shape?.body?.data
-                  ? {
-                    mode: "raw",
-                    raw: JSON.stringify(
-                      Shape.body.data,
-                      undefined,
-                      2,
-                    ),
-                    options: {
-                      raw: {
-                        language: "json",
-                      },
-                    },
-                  }
-                  : undefined,
-              },
-              response: [],
-            },
-            RequestGroups,
-          );
-        }
-      }
+        })
+      );
 
       // Log routes list
       if (RoutesTableData) console.table(RoutesTableData);
 
-      const PushRequests = (
-        requestGroups: NestedRequests,
-      ): IPostmanCollection[] =>
-        Object.entries(requestGroups).map(([Key, Item]) => ({
-          name: Key,
-          item: Item instanceof Array ? Item : PushRequests(Item),
-        }));
+      return routes;
+    });
 
-      PostmanCollectionObject.item = PushRequests(RequestGroups);
+    const PostmanCollectionObject = await generatePostmanCollection(Routes, {
+      name: Options.name ?? denoConfig.title ?? Options.collectionId,
+      description: Options.description ?? denoConfig.description,
+      version: Options.version,
     });
 
     await Deno.writeTextFile(

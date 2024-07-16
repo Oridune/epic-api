@@ -49,6 +49,7 @@ export interface IRequestContext<RouterContext = any> {
   version: string;
   id: string;
   router: RouterContext & IRouterContextExtendor;
+  routes: IRoute[];
   options: IRouteOptions;
 }
 
@@ -89,10 +90,12 @@ export type TBuildRequestHandler = (
     version?: string | null;
 
     /**
-     * Once a handler is compiled, the handler factory is cached into the memory to increase the performance. Passing fresh `true` will disable factory caching.
+     * Once a handler is compiled, the handler factory is cached into the memory to increase the performance.
+     *
+     * Passing fresh `true` will disable factory caching.
      */
     fresh?: boolean;
-  }
+  },
 ) =>
   | TBuildRequestHandlerResult
   | void

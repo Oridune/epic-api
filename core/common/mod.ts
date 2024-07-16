@@ -1,3 +1,4 @@
+export * from "./denoConfig.ts";
 export * from "./controller/decorator.ts";
 export * from "./controller/base.ts";
 export * from "./route/decorator.ts";

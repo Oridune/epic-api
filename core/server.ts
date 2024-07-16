@@ -175,6 +175,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             version: TargetVersion,
             id: ctx.state._requestId,
             router: ctx as any,
+            routes,
             options: Route.options,
           };
 
