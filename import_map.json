@@ -28,7 +28,9 @@
     "ts-reset": "npm:@total-typescript/ts-reset@^0.4.2",
     "redis": "npm:ioredis@^5.4.1",
     "i18next": "https://deno.land/x/i18next@v23.11.3/index.js",
-    "lngParser": "npm:accept-language-parser@^1.5.0"
+    "lngParser": "npm:accept-language-parser@^1.5.0",
+
+    "axios": "npm:axios@1.7.2"
   },
   "scopes": {}
 }

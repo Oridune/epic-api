@@ -139,7 +139,7 @@ export class APIController extends BaseController {
           version: ctx.requestedVersion,
         });
 
-        return Response.raw(Collection);
+        return Response.data(Collection);
       },
     };
   }

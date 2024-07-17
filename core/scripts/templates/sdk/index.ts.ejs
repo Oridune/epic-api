@@ -1,0 +1,103 @@
+/**
+ * Copyright © Oridune <%- new Date().getFullYear() %>
+ *
+ * This is a generated file. Do not edit the contents of this file!
+ */
+
+import axios, {
+    type AxiosInstance,
+    type AxiosRequestConfig,
+    type AxiosResponse,
+    type CreateAxiosDefaults,
+} from "axios";
+
+export type TSDKOptions = CreateAxiosDefaults;
+export type TRequestOptions = {
+    axiosConfig?: Omit<
+        AxiosRequestConfig<unknown>,
+        "method" | "url" | "data" | "params"
+    >;
+};
+
+export type TResponseShape<D> = {
+    status: boolean;
+    data: D;
+    messages?: Array<{message: string}>
+};
+
+<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
+export interface IController$<%- Scope %> {
+    <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
+
+    <% const QueryShape = await getTypeStr(Routes[0], "query"); %>
+    <% const ParamsShape = await getTypeStr(Routes[0], "params"); %>
+    <% const BodyShape = await getTypeStr(Routes[0], "body"); %>
+
+    <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { %>
+    <% if (Route.options.method.toLowerCase() === "get") { %>
+    <%- Route.options.name %>(): Promise<AxiosResponse<TResponseShape<{}>>>;
+    <% } %>
+    <%- Route.options.name %><
+        Method extends "<%- Route.options.method %>",
+        QueryShape extends <%- QueryShape.content %>,
+        ParamsShape extends <%- ParamsShape.content %>,
+        BodyShape extends <%- BodyShape.content %>,
+    >(data: {
+        method?: Method;
+        query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
+        params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
+        body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
+    } & TRequestOptions): Promise<AxiosResponse<TResponseShape<{}>, BodyShape>>;
+    <% } %>
+    <% } %>
+}
+<% } %>
+
+export class EpicSDK {
+    static options?: TSDKOptions;
+    static client?: AxiosInstance;
+
+    static init(options: TSDKOptions) {
+        this.options = options;
+
+        this.client = axios.create(options);
+    }
+
+    static isPermitted(scope: string, permission?: string) {}
+
+    static getAuthToken(): string | undefined {
+        return "";
+    }
+
+    <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
+    static <%- Scope %>: IController$<%- Scope %> = {
+        <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
+        async <%- Name %>(data?: any) {
+            EpicSDK.isPermitted("<%- Scope %>", "<%- Name %>");
+
+            const auth = EpicSDK.getAuthToken();
+
+            const res = await EpicSDK.client?.request({
+                method: data?.method ?? "get",
+                url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
+                params: data?.query,
+                data: data?.body,
+                ...data?.axiosConfig,
+                ...(auth
+                    ? {
+                        headers: {
+                            ...data?.axiosConfig?.headers,
+                            Authorization: `Bearer ${auth}`,
+                        },
+                    }
+                    : {}),
+            });
+
+            if (!res) throw new Error(`Client not initialized!`);
+
+            return res;
+        },
+        <% } %>
+    };
+    <% } %>
+}
