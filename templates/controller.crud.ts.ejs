@@ -10,9 +10,9 @@ import {
   Response,
   Versioned,
 } from "@Core/common/mod.ts";
-import { APIController } from "@Core/controller.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
+import { queryValidator } from "@Core/common/validators.ts";
 import { ObjectId } from "mongo";
 
 import { <%- utils.pascalCase(utils.singular(name)) %>Model } from "@Models/<%- utils.singular(name) %>.ts";
@@ -121,7 +121,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
   @Get("/:id?/")
   public get(route: IRoute) {
     // Define Query Schema
-    const QuerySchema = APIController.queryValidator;
+    const QuerySchema = queryValidator();
 
     // Define Params Schema
     const ParamsSchema = e.object({
