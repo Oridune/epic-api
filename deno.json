@@ -30,6 +30,7 @@
     "update:plugin": "deno run -A ./core/scripts/updatePlugin.ts",
     "remove:plugin": "deno run -A ./core/scripts/removePlugin.ts",
     "sync:postman": "deno run -A ./core/scripts/syncPostman.ts",
+    "generate:erd": "deno run -A ./core/scripts/generateERD.ts",
     "build:docker": "docker compose -f docker-compose.yml build"
   }
 }

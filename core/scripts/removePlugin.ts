@@ -2,8 +2,9 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
+import { ISequenceDetail, Loader, SupportedEnv } from "@Core/common/loader.ts";
+import { EnvType } from "@Core/common/env.ts";
 import { Confirm, Select } from "cliffy:prompt";
-import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 
 import { resolvePluginName, updatePluginDeclarationFile } from "./addPlugin.ts";
 
@@ -26,6 +27,7 @@ export const removePluginFromImportMap = async (name: string) => {
 };
 
 export const removePlugin = async (options: {
+  env?: SupportedEnv;
   name: string | string[];
   prompt?: boolean;
 }) => {
@@ -37,6 +39,9 @@ export const removePlugin = async (options: {
     const Options = await e
       .object(
         {
+          env: e.optional(e.in(Object.values(EnvType))).default(
+            "global" as const,
+          ),
           name: e
             .optional(e.array(e.in(PluginsList), { cast: true, splitter: "," }))
             .default(async (ctx) =>
@@ -87,7 +92,7 @@ export const removePlugin = async (options: {
           await Loader.getSequence("plugins")?.set((_) => {
             _.delete(ResolvedPluginName);
             return _;
-          });
+          }, { env: Options.env });
         }
 
         await removePluginFromImportMap(ResolvedPluginName);
@@ -108,12 +113,13 @@ export const removePlugin = async (options: {
 };
 
 if (import.meta.main) {
-  const { name, n } = parse(Deno.args);
+  const { name, n, env } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
 
   await removePlugin({
     name: name ?? n,
+    env,
     prompt: true,
   });
 

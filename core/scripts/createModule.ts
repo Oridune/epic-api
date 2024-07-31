@@ -12,7 +12,8 @@ import {
   pathCase,
   snakeCase,
 } from "stringcase/mod.ts";
-import { Loader } from "@Core/common/loader.ts";
+import { Loader, SupportedEnv } from "@Core/common/loader.ts";
+import { EnvType } from "@Core/common/env.ts";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
 
 export enum ModuleType {
@@ -30,6 +31,7 @@ export const listValidTemplates = (templates: string[], type: string) =>
     .map((name) => name.replace(new RegExp(`^${type}\\.`), ""));
 
 export const createModule = async (options: {
+  env?: SupportedEnv;
   type: ModuleType;
   name: string;
   parent?: string;
@@ -45,6 +47,9 @@ export const createModule = async (options: {
     const Options = await e
       .object(
         {
+          env: e.optional(e.in(Object.values(EnvType))).default(
+            "global" as const,
+          ),
           type: e
             .optional(e.enum(Object.values(ModuleType)))
             .default(async (ctx) =>
@@ -148,8 +153,9 @@ export const createModule = async (options: {
       });
 
       await Deno.writeTextFile(Options.modulePath, Content);
-      await Loader.getSequence(plural(Options.type))?.set((_) =>
-        _.add(Options.module)
+      await Loader.getSequence(plural(Options.type))?.set(
+        (_) => _.add(Options.module),
+        { env: Options.env },
       );
     } else {
       throw new Error(
@@ -165,7 +171,7 @@ export const createModule = async (options: {
 };
 
 if (import.meta.main) {
-  const { type, t, name, n, parent, p, template } = parse(Deno.args);
+  const { type, t, name, n, parent, p, template, env } = parse(Deno.args);
 
   await Loader.load({ excludeTypes: ["plugins"], sequenceOnly: true });
 
@@ -174,6 +180,7 @@ if (import.meta.main) {
     name: name ?? n,
     parent: parent ?? p,
     template,
+    env,
     prompt: true,
   });
 
