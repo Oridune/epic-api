@@ -77,6 +77,7 @@ export const mergeImports = async (dir: string) => {
 
 export const updateCore = async (options: {
   template?: string;
+  forceSync?: boolean;
   prompt?: boolean;
 }) => {
   try {
@@ -202,10 +203,11 @@ export const updateCore = async (options: {
 };
 
 if (import.meta.main) {
-  const { template, t } = parse(Deno.args);
+  const { template, t, forceSync } = parse(Deno.args);
 
   await updateCore({
     template: template ?? t,
+    forceSync,
     prompt: true,
   });
 
