@@ -103,7 +103,7 @@ export const updatePlugin = async (options: {
                     ]).filter(
                       Boolean,
                     ),
-                  cwd: TempPath,
+                  cwd: Pull ? TempPath : undefined,
                   stdout: "piped" as const,
                   stderr: "piped" as const,
                 },
