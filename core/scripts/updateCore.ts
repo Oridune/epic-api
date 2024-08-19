@@ -84,6 +84,7 @@ export const updateCore = async (options: {
     const Options = await e
       .object(
         {
+          forceSync: e.optional(e.boolean()).default(false),
           template: e
             .optional(e.string())
             .default(async () => (await getDenoConfig()).template ?? "master"),
@@ -91,6 +92,7 @@ export const updateCore = async (options: {
         { allowUnexpectedProps: true },
       )
       .validate(options);
+
     if (
       options.prompt &&
       !(await Confirm.prompt({
@@ -131,7 +133,10 @@ export const updateCore = async (options: {
     const Status = await Process.status;
 
     updateCore: if (Status.success) {
-      if (Out.find((_) => _.includes("Already up to date"))) break updateCore;
+      if (
+        !Options.forceSync &&
+        Out.find((_) => _.includes("Already up to date"))
+      ) break updateCore;
 
       // Create Files
       for (
