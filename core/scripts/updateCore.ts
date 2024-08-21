@@ -99,9 +99,7 @@ export const updateCore = async (options: {
         message:
           `Updating the core will overwrite any changes made to the core and template files! Are you sure you want to continue?`,
       }))
-    ) {
-      return;
-    }
+    ) return;
 
     const RepositoryPath = "Oridune/epic-api";
     const GitRepoUrl = new URL(RepositoryPath, "https://github.com");
