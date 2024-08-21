@@ -8,7 +8,7 @@ import { exec } from "./lib/run.ts";
 import { Confirm, Input, Select } from "cliffy:prompt";
 
 export enum DeployEnv {
-  STAGING = "staging",
+  DEVELOPMENT = "development",
   PRODUCTION = "production",
 }
 
@@ -83,7 +83,7 @@ export const deployDocker = async (options: {
                   message: "Select deployment environment",
                   options: Object.values(DeployEnv),
                 })) as DeployEnv)
-                : DeployEnv.STAGING
+                : DeployEnv.DEVELOPMENT
             ),
         },
         { allowUnexpectedProps: true },
@@ -229,6 +229,7 @@ export const deployDocker = async (options: {
       "Starting terraform deployment...",
       exec(
         `terraform apply -var="container_image=${ImageTag}" -auto-approve`,
+        { cwd: join(Deno.cwd(), "terraform", Options.environment) },
       ),
     );
 
