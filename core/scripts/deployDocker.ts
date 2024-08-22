@@ -3,7 +3,7 @@ import { join } from "path";
 import { existsSync } from "dfs";
 import { denoConfig } from "@Core/common/mod.ts";
 import e from "validator";
-import { exec } from "./lib/run.ts";
+import { exec, spawn } from "./lib/run.ts";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
 
@@ -196,22 +196,13 @@ export const deployDocker = async (options: {
     ].filter(Boolean).join("-");
 
     // Build docker image
-    await logExecOut(
-      "Building docker image...",
-      exec(`docker build -t ${DefaultImageTag} .`),
-    );
+    await spawn(`docker build -t ${DefaultImageTag} .`);
 
     // Tag default image
-    await logExecOut(
-      "Tagging docker image...",
-      exec(`docker tag ${DefaultImageTag} ${ImageTag}`),
-    );
+    await spawn(`docker tag ${DefaultImageTag} ${ImageTag}`);
 
     // Push docker image to docker hub
-    await logExecOut(
-      "Pushing docker image...",
-      exec(`docker push ${ImageTag}`),
-    );
+    await spawn(`docker push ${ImageTag}`);
 
     await saveDeploymentLogs(AllLogs);
 
@@ -225,12 +216,9 @@ export const deployDocker = async (options: {
     ) return;
 
     // Push docker image to docker hub
-    await logExecOut(
-      "Starting terraform deployment...",
-      exec(
-        `terraform apply -var="container_image=${ImageTag}" -auto-approve`,
-        { cwd: join(Deno.cwd(), "terraform", Options.environment) },
-      ),
+    await spawn(
+      `terraform apply -var="container_image=${ImageTag}" -auto-approve`,
+      { cwd: join(Deno.cwd(), "terraform", Options.environment) },
     );
 
     console.info("Your deployment was successful!");
