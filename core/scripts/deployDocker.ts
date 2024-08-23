@@ -71,6 +71,7 @@ export const deployDocker = async (options: {
   versionTag?: string;
   prompt?: boolean;
   noConfirm?: boolean;
+  deployDirty?: boolean;
 }) => {
   try {
     const InitialOptions = await e
@@ -170,14 +171,19 @@ export const deployDocker = async (options: {
       )
       .validate(options);
 
-    if (
-      options.prompt &&
-      !Options.noConfirm &&
-      !(await Confirm.prompt({
-        message:
-          `Make sure you have docker installed on this machine! Do you want to continue deployment?`,
-      }))
-    ) return;
+    if (options.prompt) {
+      const [stdout] = await spawn(`git status --porcelain`);
+
+      console.log(stdout);
+
+      if (
+        !Options.noConfirm &&
+        !(await Confirm.prompt({
+          message:
+            `Make sure you have docker installed on this machine! Do you want to continue deployment?`,
+        }))
+      ) return;
+    }
 
     const TargetLogs = AllLogs[InitialOptions.environment] ??= {};
     DockerOrg = TargetLogs.dockerOrganization ??= DockerOrg;
@@ -240,6 +246,7 @@ if (import.meta.main) {
     versionTag,
     t,
     y,
+    deployDirty,
   } = parse(
     Deno.args,
   );
@@ -257,6 +264,7 @@ if (import.meta.main) {
     versionTag: versionTag ?? t,
     prompt: true,
     noConfirm: y,
+    deployDirty,
   });
 
   Deno.exit();
