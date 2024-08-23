@@ -166,15 +166,22 @@ export const deployDocker = async (options: {
             : VersionSchema,
           versionTag: e.optional(e.string()),
           noConfirm: e.optional(e.boolean()),
+          deployDirty: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
       )
       .validate(options);
 
     if (options.prompt) {
-      const [stdout] = await spawn(`git status --porcelain`);
+      if (!Options.deployDirty) {
+        const [stdout] = await spawn(`git status --porcelain`);
 
-      console.log(stdout);
+        if (stdout.length) {
+          throw new Error(
+            `Git staged files detected! Please commit any changes before the deployment!`,
+          );
+        }
+      }
 
       if (
         !Options.noConfirm &&
