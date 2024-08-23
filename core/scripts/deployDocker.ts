@@ -71,6 +71,7 @@ export const deployDocker = async (options: {
   versionTag?: string;
   prompt?: boolean;
   noConfirm?: boolean;
+  skipBuild?: boolean;
   deployDirty?: boolean;
 }) => {
   try {
@@ -166,31 +167,12 @@ export const deployDocker = async (options: {
             : VersionSchema,
           versionTag: e.optional(e.string()),
           noConfirm: e.optional(e.boolean()),
+          skipBuild: e.optional(e.boolean()),
           deployDirty: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
       )
       .validate(options);
-
-    if (options.prompt) {
-      if (!Options.deployDirty) {
-        const [stdout] = await spawn(`git status --porcelain`);
-
-        if (stdout.length) {
-          throw new Error(
-            `Git staged files detected! Please commit any changes before the deployment!`,
-          );
-        }
-      }
-
-      if (
-        !Options.noConfirm &&
-        !(await Confirm.prompt({
-          message:
-            `Make sure you have docker installed on this machine! Do you want to continue deployment?`,
-        }))
-      ) return;
-    }
 
     const TargetLogs = AllLogs[InitialOptions.environment] ??= {};
     DockerOrg = TargetLogs.dockerOrganization ??= DockerOrg;
@@ -208,16 +190,38 @@ export const deployDocker = async (options: {
       Options.versionTag,
     ].filter(Boolean).join("-");
 
-    // Build docker image
-    await spawn(`docker build -t ${DefaultImageTag} .`);
+    if (!Options.skipBuild) {
+      if (options.prompt) {
+        if (!Options.deployDirty) {
+          const [stdout] = await spawn(`git status --porcelain`);
 
-    // Tag default image
-    await spawn(`docker tag ${DefaultImageTag} ${ImageTag}`);
+          if (stdout.length) {
+            throw new Error(
+              `Git staged files detected! Please commit any changes before the deployment!`,
+            );
+          }
+        }
 
-    // Push docker image to docker hub
-    await spawn(`docker push ${ImageTag}`);
+        if (
+          !Options.noConfirm &&
+          !(await Confirm.prompt({
+            message:
+              `Make sure you have docker installed on this machine! Do you want to continue deployment?`,
+          }))
+        ) return;
+      }
 
-    await saveDeploymentLogs(AllLogs);
+      // Build docker image
+      await spawn(`docker build -t ${DefaultImageTag} .`);
+
+      // Tag default image
+      await spawn(`docker tag ${DefaultImageTag} ${ImageTag}`);
+
+      // Push docker image to docker hub
+      await spawn(`docker push ${ImageTag}`);
+
+      await saveDeploymentLogs(AllLogs);
+    }
 
     if (
       options.prompt &&
@@ -230,7 +234,7 @@ export const deployDocker = async (options: {
 
     // Push docker image to docker hub
     await spawn(
-      `terraform apply -var="container_image=${ImageTag}" -auto-approve`,
+      `terraform apply -var container_image=${ImageTag} -auto-approve`,
       { cwd: join(Deno.cwd(), "terraform", Options.environment) },
     );
 
@@ -253,6 +257,7 @@ if (import.meta.main) {
     versionTag,
     t,
     y,
+    skipBuild,
     deployDirty,
   } = parse(
     Deno.args,
@@ -271,6 +276,7 @@ if (import.meta.main) {
     versionTag: versionTag ?? t,
     prompt: true,
     noConfirm: y,
+    skipBuild,
     deployDirty,
   });
 
