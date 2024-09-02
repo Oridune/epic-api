@@ -418,7 +418,7 @@ export class Loader {
         try {
           const SequenceDataPath = join(CWD, type, Loader.SequenceFileName);
           const SequenceData = await Loader.readLocalModule(SequenceDataPath, {
-            assert: { type: "json" },
+            with: { type: "json" },
           });
 
           const SequenceObject = new Sequence(
