@@ -212,13 +212,27 @@ export const deployDocker = async (options: {
       }
 
       // Build docker image
-      await spawn(`docker build -t ${DefaultImageTag} .`);
+      const [_, dockerBuildErr] = await spawn(
+        `docker build -t ${DefaultImageTag} .`,
+      );
+
+      if (/^ERROR/.test(dockerBuildErr[0] ?? "")) {
+        throw new Error(`Docker build has been failed!`);
+      }
 
       // Tag default image
-      await spawn(`docker tag ${DefaultImageTag} ${ImageTag}`);
+      await spawn(
+        `docker tag ${DefaultImageTag} ${ImageTag}`,
+      );
 
       // Push docker image to docker hub
-      await spawn(`docker push ${ImageTag}`);
+      const [dockerPushOut, dockerPushErr] = await spawn(
+        `docker push ${ImageTag}`,
+      );
+
+      if (dockerPushOut.length && dockerPushErr.length) {
+        throw new Error(`Docker push has been failed!`);
+      }
 
       await saveDeploymentLogs(AllLogs);
     }
