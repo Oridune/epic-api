@@ -77,12 +77,14 @@ export const mergeImports = async (dir: string) => {
 
 export const updateCore = async (options: {
   template?: string;
+  forceSync?: boolean;
   prompt?: boolean;
 }) => {
   try {
     const Options = await e
       .object(
         {
+          forceSync: e.optional(e.boolean()).default(false),
           template: e
             .optional(e.string())
             .default(async () => (await getDenoConfig()).template ?? "master"),
@@ -90,15 +92,14 @@ export const updateCore = async (options: {
         { allowUnexpectedProps: true },
       )
       .validate(options);
+
     if (
       options.prompt &&
       !(await Confirm.prompt({
         message:
           `Updating the core will overwrite any changes made to the core and template files! Are you sure you want to continue?`,
       }))
-    ) {
-      return;
-    }
+    ) return;
 
     const RepositoryPath = "Oridune/epic-api";
     const GitRepoUrl = new URL(RepositoryPath, "https://github.com");
@@ -130,7 +131,10 @@ export const updateCore = async (options: {
     const Status = await Process.status;
 
     updateCore: if (Status.success) {
-      if (Out.find((_) => _.includes("Already up to date"))) break updateCore;
+      if (
+        !Options.forceSync &&
+        Out.find((_) => _.includes("Already up to date"))
+      ) break updateCore;
 
       // Create Files
       for (
@@ -202,10 +206,11 @@ export const updateCore = async (options: {
 };
 
 if (import.meta.main) {
-  const { template, t } = parse(Deno.args);
+  const { template, t, forceSync } = parse(Deno.args);
 
   await updateCore({
     template: template ?? t,
+    forceSync,
     prompt: true,
   });
 

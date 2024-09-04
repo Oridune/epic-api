@@ -2,12 +2,14 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
+import { Loader, SupportedEnv } from "@Core/common/loader.ts";
+import { EnvType } from "@Core/common/env.ts";
 import { ModuleType } from "@Core/scripts/createModule.ts";
 import { Confirm, Select } from "cliffy:prompt";
 import { plural } from "pluralize";
-import { Loader } from "@Core/common/loader.ts";
 
 export const deleteModule = async (options: {
+  env?: SupportedEnv;
   type: ModuleType;
   name: string;
   prompt?: boolean;
@@ -16,6 +18,9 @@ export const deleteModule = async (options: {
     const Options = await e
       .object(
         {
+          env: e.optional(e.in(Object.values(EnvType))).default(
+            "global" as const,
+          ),
           type: e
             .optional(e.enum(Object.values(ModuleType)))
             .default(async (ctx) =>
@@ -33,7 +38,7 @@ export const deleteModule = async (options: {
                 options: Array.from(
                   Loader.getSequence(
                     plural(ctx.parent!.output.type),
-                  )?.includes() ?? [],
+                  )?.includes({ env: ctx.parent!.output.env }) ?? [],
                 ),
               })
               : undefined
@@ -64,11 +69,11 @@ export const deleteModule = async (options: {
         return;
       }
 
-      await Deno.remove(Options.modulePath);
+      await Deno.remove(Options.modulePath).catch(console.error);
       await Loader.getSequence(plural(Options.type))?.set((_) => {
         _.delete(Options.name!);
         return _;
-      });
+      }, { env: Options.env });
     } else {
       throw new Error(
         `We couldn't delete that module! The type or name is missing.`,
@@ -83,7 +88,7 @@ export const deleteModule = async (options: {
 };
 
 if (import.meta.main) {
-  const { type, t, name, n } = parse(Deno.args);
+  const { type, t, name, n, env } = parse(Deno.args);
 
   await Loader.load({
     excludeTypes: ["plugins", "templates"],
@@ -93,6 +98,7 @@ if (import.meta.main) {
   await deleteModule({
     type: type ?? t,
     name: name ?? n,
+    env,
     prompt: true,
   });
 

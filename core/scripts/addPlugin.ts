@@ -3,8 +3,9 @@ import { dirname, isAbsolute, join } from "path";
 import { existsSync, expandGlob } from "dfs";
 import e from "validator";
 
+import { Loader, SupportedEnv } from "@Core/common/loader.ts";
+import { EnvType } from "@Core/common/env.ts";
 import { Input } from "cliffy:prompt";
-import { Loader } from "@Core/common/loader.ts";
 import { run } from "./lib/run.ts";
 
 export enum PluginSource {
@@ -125,6 +126,7 @@ export const updatePluginDeclarationFile = async () => {
 };
 
 export const setupPlugin = async (opts: {
+  env?: SupportedEnv;
   source: PluginSource;
   branch: string;
   name: string;
@@ -182,12 +184,13 @@ export const setupPlugin = async (opts: {
   await Loader.getSequence("plugins")?.add(opts.name, {
     source: opts.source,
     branch: opts.branch,
-  });
+  }, { env: opts.env });
 
   await addPluginToImportMap(opts.name);
 };
 
 export const addPlugin = async (options: {
+  env?: SupportedEnv;
   source?: PluginSource;
   name: string | string[];
   branch?: string;
@@ -197,11 +200,12 @@ export const addPlugin = async (options: {
     const Options = await e
       .object(
         {
-          source: e
-            .optional(e.enum(Object.values(PluginSource)))
+          env: e.optional(e.in(Object.values(EnvType))).default(
+            "global" as const,
+          ),
+          source: e.optional(e.enum(Object.values(PluginSource)))
             .default(PluginSource.GIT),
-          name: e
-            .optional(e.array(e.string(), { cast: true, splitter: "," }))
+          name: e.optional(e.array(e.string(), { cast: true, splitter: "," }))
             .default(async (ctx) =>
               ctx.parent!.input.prompt
                 ? [
@@ -244,6 +248,7 @@ export const addPlugin = async (options: {
             source: Options.source,
             branch: ResolvedBranch,
             name: ResolvedPluginName,
+            env: Options.env,
             sourcePath: TempPath,
             targetPath: join(PluginsDir, ResolvedPluginName),
           });
@@ -284,13 +289,14 @@ export const addPlugin = async (options: {
 };
 
 if (import.meta.main) {
-  const { source, s, name, n } = parse(Deno.args);
+  const { source, s, name, n, env } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
 
   await addPlugin({
     source: source ?? s,
     name: name ?? n,
+    env,
     prompt: true,
   });
 

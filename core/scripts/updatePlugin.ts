@@ -12,9 +12,11 @@ import {
 } from "./addPlugin.ts";
 import { ISequenceDetail, Loader } from "@Core/common/loader.ts";
 import { printStream } from "./lib/utility.ts";
+import { existsSync } from "dfs";
 
 export const updatePlugin = async (options: {
   name: string | string[];
+  forceSync?: boolean;
   prompt?: boolean;
 }) => {
   try {
@@ -37,6 +39,7 @@ export const updatePlugin = async (options: {
                 ]
                 : undefined
             ),
+          forceSync: e.optional(e.boolean()).default(false),
         },
         { allowUnexpectedProps: true },
       )
@@ -54,9 +57,7 @@ export const updatePlugin = async (options: {
             )
           }'?`,
         }))
-      ) {
-        return;
-      }
+      ) return;
 
       const PluginsDir = join(Deno.cwd(), "plugins");
 
@@ -74,7 +75,9 @@ export const updatePlugin = async (options: {
         if (PluginDetail) {
           PluginDetails.push(PluginDetail);
 
+          const GitRepoUrl = new URL(ResolvedPluginName, "https://github.com");
           const TempPath = join(Deno.cwd(), "_temp", ResolvedPluginName);
+          const Pull = existsSync(TempPath);
 
           const [command, commandOptions] =
             PluginDetail.props.source === PluginSource.GIT
@@ -82,15 +85,25 @@ export const updatePlugin = async (options: {
                 "git",
                 {
                   // Pull repository changes from Git.
-                  args: [
-                    "pull",
-                    "origin",
-                    PluginDetail.props.branch,
-                    "--progress",
-                  ].filter(
-                    Boolean,
-                  ),
-                  cwd: TempPath,
+                  args: (Pull
+                    ? [
+                      "pull",
+                      "origin",
+                      PluginDetail.props.branch,
+                      "--progress",
+                    ]
+                    : [
+                      "clone",
+                      "--single-branch",
+                      "--branch",
+                      PluginDetail.props.branch,
+                      GitRepoUrl.toString(),
+                      TempPath,
+                      "--progress",
+                    ]).filter(
+                      Boolean,
+                    ),
+                  cwd: Pull ? TempPath : undefined,
                   stdout: "piped" as const,
                   stderr: "piped" as const,
                 },
@@ -109,9 +122,10 @@ export const updatePlugin = async (options: {
           const UpdatePlugin = await Process.status;
 
           updatePlugin: if (UpdatePlugin.success) {
-            if (Out.find((_) => _.includes("Already up to date"))) {
-              break updatePlugin;
-            }
+            if (
+              !Options.forceSync &&
+              Out.find((_) => _.includes("Already up to date"))
+            ) break updatePlugin;
 
             await setupPlugin({
               source: PluginDetail.props.source as PluginSource,
@@ -139,12 +153,13 @@ export const updatePlugin = async (options: {
 };
 
 if (import.meta.main) {
-  const { name, n } = parse(Deno.args);
+  const { name, n, forceSync } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["plugins"], sequenceOnly: true });
 
   await updatePlugin({
     name: name ?? n,
+    forceSync,
     prompt: true,
   });
 

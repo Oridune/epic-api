@@ -2,6 +2,9 @@ import { parse } from "flags";
 import { join } from "path";
 import e from "validator";
 
+import { Loader, SupportedEnv } from "@Core/common/loader.ts";
+import { EnvType } from "@Core/common/env.ts";
+import { ModuleType } from "@Core/scripts/createModule.ts";
 import { Input, Select } from "cliffy:prompt";
 import { plural, singular } from "pluralize";
 import {
@@ -11,10 +14,9 @@ import {
   pathCase,
   snakeCase,
 } from "stringcase/mod.ts";
-import { Loader } from "@Core/common/loader.ts";
-import { ModuleType } from "@Core/scripts/createModule.ts";
 
 export const renameModule = async (options: {
+  env?: SupportedEnv;
   type: ModuleType;
   module: string;
   rename?: string;
@@ -24,6 +26,9 @@ export const renameModule = async (options: {
     const Options = await e
       .object(
         {
+          env: e.optional(e.in(Object.values(EnvType))).default(
+            "global" as const,
+          ),
           type: e
             .optional(e.enum(Object.values(ModuleType)))
             .default(async (ctx) =>
@@ -41,7 +46,7 @@ export const renameModule = async (options: {
                 options: Array.from(
                   Loader.getSequence(
                     plural(ctx.parent!.output.type),
-                  )?.includes() ?? [],
+                  )?.includes({ env: ctx.parent!.output.env }) ?? [],
                 ),
               })
               : undefined
@@ -161,7 +166,7 @@ export const renameModule = async (options: {
         await Loader.getSequence(plural(Options.type))?.set((_) => {
           _.delete(Options.module!);
           return _.add(Options.newModule!);
-        });
+        }, { env: Options.env });
 
         await Deno.remove(Options.modulePath);
       }
@@ -179,7 +184,7 @@ export const renameModule = async (options: {
 };
 
 if (import.meta.main) {
-  const { type, t, module, m, rename } = parse(Deno.args);
+  const { type, t, module, m, rename, env } = parse(Deno.args);
 
   await Loader.load({
     excludeTypes: ["plugins", "templates"],
@@ -190,6 +195,7 @@ if (import.meta.main) {
     type: type ?? t,
     module: module ?? m,
     rename,
+    env,
     prompt: true,
   });
 
