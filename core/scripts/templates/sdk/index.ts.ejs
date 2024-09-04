@@ -4,6 +4,8 @@
  * This is a generated file. Do not edit the contents of this file!
  */
 
+ // deno-lint-ignore-file no-explicit-any ban-types
+
 import axios, {
     type AxiosInstance,
     type AxiosRequestConfig,
@@ -25,6 +27,12 @@ export type TResponseShape<D> = {
     messages?: Array<{message: string}>
 };
 
+export type TRequestExecutors<R extends TResponseShape<any>, B = any> = {
+    raw: Promise<AxiosResponse<R, B>>;
+    res: Promise<R>;
+    data: Promise<R["data"]>;
+}
+
 <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
 export interface IController$<%- Scope %> {
     <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
@@ -32,10 +40,13 @@ export interface IController$<%- Scope %> {
     <% const QueryShape = await getTypeStr(Routes[0], "query"); %>
     <% const ParamsShape = await getTypeStr(Routes[0], "params"); %>
     <% const BodyShape = await getTypeStr(Routes[0], "body"); %>
+    <% const ReturnShape = await getTypeStr(Routes[0], "return"); %>
 
     <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { %>
     <% if (Route.options.method.toLowerCase() === "get") { %>
-    <%- Route.options.name %>(): Promise<AxiosResponse<TResponseShape<{}>>>;
+    <%- Route.options.name %>(): TRequestExecutors<TResponseShape<
+        <%- ReturnShape.content %>
+    >>;
     <% } %>
     <%- Route.options.name %><
         Method extends "<%- Route.options.method %>",
@@ -47,7 +58,9 @@ export interface IController$<%- Scope %> {
         query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
         params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
         body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
-    } & TRequestOptions): Promise<AxiosResponse<TResponseShape<{}>, BodyShape>>;
+    } & TRequestOptions): TRequestExecutors<TResponseShape<
+        <%- ReturnShape.content %>
+    >, BodyShape>;
     <% } %>
     <% } %>
 }
@@ -56,46 +69,84 @@ export interface IController$<%- Scope %> {
 export class EpicSDK {
     static options?: TSDKOptions;
     static client?: AxiosInstance;
+    static accessToken?: string;
+    static permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
-        this.options = options;
-
-        this.client = axios.create(options);
+        EpicSDK.options = options;
+        EpicSDK.client = axios.create(options);
     }
 
-    static isPermitted(scope: string, permission?: string) {}
+    static isPermitted(scope: string, permission?: string) {
+        if(!(EpicSDK.permissions instanceof Set))
+            return true;
 
-    static getAuthToken(): string | undefined {
-        return "";
+        return EpicSDK.permissions.has(scope) || EpicSDK.permissions.has(`${scope}.${permission}`);
+    }
+
+    static checkPermission(scope: string, permission?: string) {
+        if(!EpicSDK.isPermitted(scope, permission))
+            throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
     }
 
     <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
     static <%- Scope %>: IController$<%- Scope %> = {
         <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
-        async <%- Name %>(data?: any) {
-            EpicSDK.isPermitted("<%- Scope %>", "<%- Name %>");
+        <%- Name %>(data?: any) {
+            const executor = async (): Promise<any> => {
+                EpicSDK.checkPermission("<%- Scope %>", "<%- Name %>");
 
-            const auth = EpicSDK.getAuthToken();
+                const res = await EpicSDK.client?.request({
+                    method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
+                    url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
+                    params: data?.query,
+                    data: data?.body,
+                    ...data?.axiosConfig,
+                    ...(typeof EpicSDK.accessToken === "string"
+                        ? {
+                            headers: {
+                                ...data?.axiosConfig?.headers,
+                                Authorization: `Bearer ${EpicSDK.accessToken}`,
+                            },
+                        }
+                        : {}),
+                });
 
-            const res = await EpicSDK.client?.request({
-                method: data?.method ?? "get",
-                url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
-                params: data?.query,
-                data: data?.body,
-                ...data?.axiosConfig,
-                ...(auth
-                    ? {
-                        headers: {
-                            ...data?.axiosConfig?.headers,
-                            Authorization: `Bearer ${auth}`,
-                        },
-                    }
-                    : {}),
-            });
+                if (!res) throw new Error(`Client not initialized!`, { cause: res });
 
-            if (!res) throw new Error(`Client not initialized!`);
+                return res;
+            }
 
-            return res;
+            const executors = {
+                get raw() {
+                    return executor();
+                },
+                get res() {
+                    return new Promise<any>((resolve, reject) => 
+                        executors.raw
+                            .then(res => {
+                                // Check if the data object exists
+                                if (!res.data || typeof res.data !== 'object')
+                                    reject(new Error(`Response data is missing or invalid!`));
+
+                                else if(!res.data.status)
+                                    reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
+
+                                else resolve(res.data);
+                            })
+                            .catch(err => reject(err))
+                    );
+                },
+                get data() {
+                    return new Promise<any>((resolve, reject) => 
+                        executors.res
+                            .then((res) => resolve(res.data))
+                            .catch(err => reject(err))
+                    );
+                }
+            }
+
+            return executors;
         },
         <% } %>
     };

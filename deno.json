@@ -32,6 +32,7 @@
     "sync:postman": "deno run -A ./core/scripts/syncPostman.ts",
     "generate:erd": "deno run -A ./core/scripts/generateERD.ts",
     "build:docker": "docker compose -f docker-compose.yml build",
-    "deploy:docker": "deno run -A ./core/scripts/deployDocker.ts"
+    "deploy:docker": "deno run -A ./core/scripts/deployDocker.ts",
+    "generate:sdk": "deno run -A ./core/scripts/generateSDK.ts"
   }
 }
