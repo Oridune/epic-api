@@ -82,6 +82,7 @@ _temp/
 terraform/
 *.tfvars
 postman_collection-*.json
+deployment-logs.json
 
 public/*/*
 !public/*/www/

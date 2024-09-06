@@ -6,6 +6,6 @@ WORKDIR /app
 
 ADD . /app
 
-RUN chmod +x /app/start.sh
+RUN chmod +x /app/run.sh
 
-CMD ["/app/start.sh"]
+CMD ["/app/run.sh"]

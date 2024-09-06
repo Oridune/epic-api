@@ -1,0 +1,11 @@
+{
+  "development": {
+    "dockerOrganization": "oridune",
+    "dockerImage": "epic-api",
+    "version": {
+      "major": 0,
+      "minor": 0,
+      "patch": 4
+    }
+  }
+}
