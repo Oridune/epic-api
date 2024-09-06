@@ -19,8 +19,8 @@ import {
   RouterContext,
   Status,
 } from "oak";
-import { join } from "path";
 import { ApplicationListenEvent } from "oak/application.ts";
+import { join } from "path";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
@@ -31,6 +31,7 @@ import { errorHandler } from "@Core/middlewares/errorHandler.ts";
 import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
 import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
+import { serveInspector } from "@Core/middlewares/serveInspector.ts";
 
 export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
   app.use(responseTime());
@@ -220,6 +221,8 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
     // Log routes list
     if (RoutesTableData.length) console.table(RoutesTableData);
   });
+
+  router.get("/:type(json|ws)/:path*", serveInspector());
 
   app.use(router.routes());
   app.use(router.allowedMethods());

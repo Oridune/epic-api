@@ -4,67 +4,12 @@
  * This is a generated file. Do not edit the contents of this file!
  */
 
- // deno-lint-ignore-file no-explicit-any ban-types
+import axios, { AxiosInstance } from "axios";
+import type { TSDKOptions } from "./types.ts";
 
-import axios, {
-    type AxiosInstance,
-    type AxiosRequestConfig,
-    type AxiosResponse,
-    type CreateAxiosDefaults,
-} from "axios";
-
-export type TSDKOptions = CreateAxiosDefaults;
-export type TRequestOptions = {
-    axiosConfig?: Omit<
-        AxiosRequestConfig<unknown>,
-        "method" | "url" | "data" | "params"
-    >;
-};
-
-export type TResponseShape<D> = {
-    status: boolean;
-    data: D;
-    messages?: Array<{message: string}>
-};
-
-export type TRequestExecutors<R extends TResponseShape<any>, B = any> = {
-    raw: Promise<AxiosResponse<R, B>>;
-    res: Promise<R>;
-    data: Promise<R["data"]>;
-}
-
-<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
-export interface IController$<%- Scope %> {
-    <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
-
-    <% const QueryShape = await getTypeStr(Routes[0], "query"); %>
-    <% const ParamsShape = await getTypeStr(Routes[0], "params"); %>
-    <% const BodyShape = await getTypeStr(Routes[0], "body"); %>
-    <% const ReturnShape = await getTypeStr(Routes[0], "return"); %>
-
-    <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { %>
-    <% if (Route.options.method.toLowerCase() === "get") { %>
-    <%- Route.options.name %>(): TRequestExecutors<TResponseShape<
-        <%- ReturnShape.content %>
-    >>;
-    <% } %>
-    <%- Route.options.name %><
-        Method extends "<%- Route.options.method %>",
-        QueryShape extends <%- QueryShape.content %>,
-        ParamsShape extends <%- ParamsShape.content %>,
-        BodyShape extends <%- BodyShape.content %>,
-    >(data: {
-        method?: Method;
-        query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
-        params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
-        body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
-    } & TRequestOptions): TRequestExecutors<TResponseShape<
-        <%- ReturnShape.content %>
-    >, BodyShape>;
-    <% } %>
-    <% } %>
-}
-<% } %>
+<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
+import { IController$<%- Scope %>, <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
+<% } -%>
 
 export class EpicSDK {
     static options?: TSDKOptions;
@@ -89,66 +34,7 @@ export class EpicSDK {
             throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
     }
 
-    <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { %>
-    static <%- Scope %>: IController$<%- Scope %> = {
-        <% for (const [Name, Routes] of Object.entries(RouteGroups)) { %>
-        <%- Name %>(data?: any) {
-            const executor = async (): Promise<any> => {
-                EpicSDK.checkPermission("<%- Scope %>", "<%- Name %>");
-
-                const res = await EpicSDK.client?.request({
-                    method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
-                    url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
-                    params: data?.query,
-                    data: data?.body,
-                    ...data?.axiosConfig,
-                    ...(typeof EpicSDK.accessToken === "string"
-                        ? {
-                            headers: {
-                                ...data?.axiosConfig?.headers,
-                                Authorization: `Bearer ${EpicSDK.accessToken}`,
-                            },
-                        }
-                        : {}),
-                });
-
-                if (!res) throw new Error(`Client not initialized!`, { cause: res });
-
-                return res;
-            }
-
-            const executors = {
-                get raw() {
-                    return executor();
-                },
-                get res() {
-                    return new Promise<any>((resolve, reject) => 
-                        executors.raw
-                            .then(res => {
-                                // Check if the data object exists
-                                if (!res.data || typeof res.data !== 'object')
-                                    reject(new Error(`Response data is missing or invalid!`));
-
-                                else if(!res.data.status)
-                                    reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
-
-                                else resolve(res.data);
-                            })
-                            .catch(err => reject(err))
-                    );
-                },
-                get data() {
-                    return new Promise<any>((resolve, reject) => 
-                        executors.res
-                            .then((res) => resolve(res.data))
-                            .catch(err => reject(err))
-                    );
-                }
-            }
-
-            return executors;
-        },
-        <% } %>
-    };
-    <% } %>
+<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
+    static <%- Scope %>: IController$<%- Scope %> = <%- Scope %>Module(EpicSDK);
+<% } -%>
 }

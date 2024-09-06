@@ -1,0 +1,93 @@
+import type { ObjectId, TRequestOptions, TResponseShape, TRequestExecutors } from "../types.ts";
+
+export interface IController$<%- scope %> {
+    <% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
+
+    <% const QueryShape = await getTypeStr(Routes[0], "query"); -%>
+    <% const ParamsShape = await getTypeStr(Routes[0], "params"); -%>
+    <% const BodyShape = await getTypeStr(Routes[0], "body"); -%>
+    <% const ReturnShape = await getTypeStr(Routes[0], "return"); -%>
+
+    <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
+    <% if (Route.options.method.toLowerCase() === "get") { -%>
+    <%- Route.options.name %>(): TRequestExecutors<TResponseShape<
+        <%- ReturnShape.content %>
+    >>;
+    <% } -%>
+    <%- Route.options.name %><
+        Method extends "<%- Route.options.method %>",
+        QueryShape extends <%- QueryShape.content %>,
+        ParamsShape extends <%- ParamsShape.content %>,
+        BodyShape extends <%- BodyShape.content %>,
+    >(data: {
+        method?: Method;
+        query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
+        params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
+        body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
+    } & TRequestOptions): TRequestExecutors<TResponseShape<
+        <%- ReturnShape.content %>
+    >, BodyShape>;
+    <% } -%>
+    <% } -%>
+}
+
+export const <%- scope %>Module = (sdk: any) => ({
+    <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
+    <%- Name %>(data?: any) {
+        const executor = async (): Promise<any> => {
+            sdk.checkPermission("<%- scope %>", "<%- Name %>");
+
+            const res = await sdk.client?.request({
+                method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
+                url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
+                params: data?.query,
+                data: data?.body,
+                ...data?.axiosConfig,
+                ...(typeof sdk.accessToken === "string"
+                    ? {
+                        headers: {
+                            ...data?.axiosConfig?.headers,
+                            Authorization: `Bearer ${sdk.accessToken}`,
+                        },
+                    }
+                    : {}),
+            });
+
+            if (!res) throw new Error(`Client not initialized!`, { cause: res });
+
+            return res;
+        }
+
+        const executors = {
+            get raw() {
+                return executor();
+            },
+            get res() {
+                return new Promise<any>((resolve, reject) => 
+                    executors.raw
+                        .then(res => {
+                            // Check if the data object exists
+                            if (!res.data || typeof res.data !== 'object')
+                                reject(new Error(`Response data is missing or invalid!`));
+
+                            else if(!res.data.status)
+                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
+
+                            else resolve(res.data);
+                        })
+                        .catch(err => reject(err))
+                );
+            },
+            get data() {
+                return new Promise<any>((resolve, reject) => 
+                    executors.res
+                        .then((res) => resolve(res.data))
+                        .catch(err => reject(err))
+                );
+            }
+        }
+
+        return executors;
+    },
+    <% } %>
+});

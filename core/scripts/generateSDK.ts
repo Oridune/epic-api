@@ -35,6 +35,8 @@ export const createTsConfigJSON = () => ({
     strict: true,
     esModuleInterop: true,
     forceConsistentCasingInFileNames: true,
+    allowImportingTsExtensions: true,
+    emitDeclarationOnly: true,
   },
   include: ["./src/"],
   exclude: ["./test/"],
@@ -66,9 +68,9 @@ export const serializeApiRoutes = (routes: IRoute[]) =>
 export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
   if (!schema) return { optional: true, content: "{}" };
 
-  if (schema.type === "object") {
-    if (schema.description) content += "/*" + schema.description + "*/";
+  if (schema.description) content += "/*" + schema.description + "*/";
 
+  if (schema.type === "object") {
     content += "{\n";
 
     for (const [Key, Schema] of Object.entries(schema.properties ?? {})) {
@@ -90,7 +92,45 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
     return { optional: !schema.requiredProperties?.length, content };
   }
 
-  return { optional: schema.optional ?? false, content: schema.type };
+  if (schema.type === "array") {
+    const ItemType = schemaToTsType(schema.items);
+
+    content = `Array<${ItemType.content}${
+      ItemType.optional ? " | undefined" : ""
+    }>`;
+
+    return { optional: schema.optional ?? false, content };
+  }
+
+  if (schema.type === "or") {
+    content = (schema.anyOf ?? []).map((schema) =>
+      schemaToTsType(schema).content
+    ).join(" | ");
+
+    return { optional: schema.optional ?? false, content };
+  }
+
+  if (schema.type === "and") {
+    content = (schema.anyOf ?? []).map((schema) =>
+      schemaToTsType(schema).content
+    ).join(" & ");
+
+    return { optional: schema.optional ?? false, content };
+  }
+
+  if (schema.type === "enum") {
+    return {
+      optional: schema.optional ?? false,
+      content: schema.choices instanceof Array
+        ? `"${schema.choices?.join(`" | "`)}"`
+        : "string",
+    };
+  }
+
+  return {
+    optional: schema.optional ?? false,
+    content: schema.type,
+  };
 };
 
 export const generateSDK = async (options: {
@@ -108,7 +148,7 @@ export const generateSDK = async (options: {
     const SDKSrc = join(SDKDir, "src");
     const SDKPublicDir = join(SDKDir, "www");
 
-    await Deno.mkdir(SDKSrc, { recursive: true }).catch(() => {
+    await Deno.mkdir(join(SDKSrc, "modules"), { recursive: true }).catch(() => {
       // Do nothing...
     });
 
@@ -155,31 +195,68 @@ export const generateSDK = async (options: {
       return routes;
     });
 
-    await Deno.writeTextFile(
-      join(SDKSrc, "index.ts"),
-      await ejsRender(
-        await Deno.readTextFile(
-          "core/scripts/templates/sdk/index.ts.ejs",
+    const EJSContext = {
+      scopeGroups: serializeApiRoutes(Routes),
+      getTypeStr: async (
+        route: IRoute,
+        shapeType: "query" | "params" | "body" | "return",
+      ) => {
+        const { object: RequestHandler } =
+          (await route.options.buildRequestHandler(route, {
+            version: Options.version,
+          })) ?? {};
+
+        const Shape = RequestHandler?.shape ?? RequestHandler?.postman ?? {};
+
+        const Schema = Shape[shapeType as "query"]?.schema;
+
+        return schemaToTsType(Schema);
+      },
+      generateModule: async (
+        scope: string,
+        routeGroups: Record<string, IRoute[]>,
+      ) => {
+        const ModulePath = `./modules/${scope}.ts`;
+
+        await Deno.writeTextFile(
+          join(SDKSrc, ModulePath),
+          await ejsRender(
+            await Deno.readTextFile(
+              "core/scripts/templates/sdk/module.ts.ejs",
+            ),
+            {
+              ...EJSContext,
+              scope,
+              routeGroups,
+            },
+          ),
+        );
+
+        return ModulePath;
+      },
+    };
+
+    await Promise.all([
+      Deno.writeTextFile(
+        join(SDKSrc, "types.ts"),
+        await ejsRender(
+          await Deno.readTextFile(
+            "core/scripts/templates/sdk/types.ts.ejs",
+          ),
+          EJSContext,
         ),
-        {
-          scopeGroups: serializeApiRoutes(Routes),
-          getTypeStr: async (
-            route: IRoute,
-            shapeType: "query" | "params" | "body" | "return",
-          ) => {
-            const { object: RequestHandler } =
-              (await route.options.buildRequestHandler(route, {
-                version: Options.version,
-              })) ?? {};
-
-            const Schema = RequestHandler?.shape?.[shapeType]
-              ?.schema;
-
-            return schemaToTsType(Schema);
-          },
-        },
       ),
-    );
+
+      Deno.writeTextFile(
+        join(SDKSrc, "index.ts"),
+        await ejsRender(
+          await Deno.readTextFile(
+            "core/scripts/templates/sdk/index.ts.ejs",
+          ),
+          EJSContext,
+        ),
+      ),
+    ]);
 
     await exec("npm run build", { cwd: SDKDir });
     await exec("npm pack", { cwd: SDKDir });
