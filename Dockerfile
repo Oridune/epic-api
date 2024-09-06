@@ -6,4 +6,6 @@ WORKDIR /app
 
 ADD . /app
 
-CMD ["deno", "task", "run"]
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

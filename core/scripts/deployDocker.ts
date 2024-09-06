@@ -72,6 +72,8 @@ export const deployDocker = async (options: {
   prompt?: boolean;
   noConfirm?: boolean;
   skipBuild?: boolean;
+  skipPush?: boolean;
+  skipApply?: boolean;
   deployDirty?: boolean;
 }) => {
   try {
@@ -168,6 +170,8 @@ export const deployDocker = async (options: {
           versionTag: e.optional(e.string()),
           noConfirm: e.optional(e.boolean()),
           skipBuild: e.optional(e.boolean()),
+          skipPush: e.optional(e.boolean()),
+          skipApply: e.optional(e.boolean()),
           deployDirty: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
@@ -225,32 +229,36 @@ export const deployDocker = async (options: {
         `docker tag ${DefaultImageTag} ${ImageTag}`,
       );
 
-      // Push docker image to docker hub
-      const [dockerPushOut, dockerPushErr] = await spawn(
-        `docker push ${ImageTag}`,
-      );
+      if (!Options.skipPush) {
+        // Push docker image to docker hub
+        const [dockerPushOut, dockerPushErr] = await spawn(
+          `docker push ${ImageTag}`,
+        );
 
-      if (dockerPushOut.length && dockerPushErr.length) {
-        throw new Error(`Docker push has been failed!`);
+        if (dockerPushOut.length && dockerPushErr.length) {
+          throw new Error(`Docker push has been failed!`);
+        }
       }
 
       await saveDeploymentLogs(AllLogs);
     }
 
-    if (
-      options.prompt &&
-      !Options.noConfirm &&
-      !(await Confirm.prompt({
-        message:
-          `Make sure you have terraform installed on this machine! Do you want to continue deployment?`,
-      }))
-    ) return;
+    if (!Options.skipApply) {
+      if (
+        options.prompt &&
+        !Options.noConfirm &&
+        !(await Confirm.prompt({
+          message:
+            `Make sure you have terraform installed on this machine! Do you want to continue deployment?`,
+        }))
+      ) return;
 
-    // Push docker image to docker hub
-    await spawn(
-      `terraform apply -var container_image=${ImageTag} -auto-approve`,
-      { cwd: join(Deno.cwd(), "terraform", Options.environment) },
-    );
+      // Push docker image to docker hub
+      await spawn(
+        `terraform apply -var container_image=${ImageTag} -auto-approve`,
+        { cwd: join(Deno.cwd(), "terraform", Options.environment) },
+      );
+    }
 
     console.info("Your deployment was successful!");
   } catch (error) {
@@ -272,6 +280,8 @@ if (import.meta.main) {
     t,
     y,
     skipBuild,
+    skipPush,
+    skipApply,
     deployDirty,
   } = parse(
     Deno.args,
@@ -291,6 +301,8 @@ if (import.meta.main) {
     prompt: true,
     noConfirm: y,
     skipBuild,
+    skipPush,
+    skipApply,
     deployDirty,
   });
 
