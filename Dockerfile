@@ -6,6 +6,8 @@ WORKDIR /app
 
 ADD . /app
 
+RUN sed -i 's/\r$//' /app/run.sh
+
 RUN chmod +x /app/run.sh
 
-CMD ["/app/run.sh"]
+CMD ["bash", "/app/run.sh"]
