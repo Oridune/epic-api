@@ -1,10 +1,12 @@
-FROM denoland/deno
+FROM denoland/deno:alpine
 
 EXPOSE 3742
 
 WORKDIR /app
 
 ADD . /app
+
+RUN apk add bash
 
 RUN sed -i 's/\r$//' /app/run.sh
 
