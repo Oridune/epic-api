@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { join } from "path";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Loader, SupportedEnv } from "@Core/common/loader.ts";
 import { EnvType } from "@Core/common/env.ts";
@@ -82,7 +82,10 @@ export const deleteModule = async (options: {
 
     console.info("Module has been deleted successfully!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

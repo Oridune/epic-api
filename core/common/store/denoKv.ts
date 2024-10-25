@@ -8,22 +8,22 @@ export class DenoKvStore extends StoreBase {
   );
   static denoKv?: Deno.Kv;
 
-  static isConnected() {
+  static override isConnected() {
     return this.denoKv instanceof Deno.Kv;
   }
 
-  static async connect() {
+  static override async connect() {
     if (!(this.denoKv instanceof Deno.Kv)) {
       this.denoKv = await Deno.openKv(this.denoKvConnectionString);
     }
   }
 
-  static async disconnect() {
+  static override async disconnect() {
     if (this.denoKv) await this.denoKv.close();
     delete this.denoKv;
   }
 
-  static async set(
+  static override async set(
     key: string,
     value: unknown,
     options?: {
@@ -49,11 +49,11 @@ export class DenoKvStore extends StoreBase {
     return (await this.denoKv.get<StoreItem>([this.resolveKey(key)])).value;
   }
 
-  static async get<T extends unknown>(key: string): Promise<T | null> {
+  static override async get<T extends unknown>(key: string): Promise<T | null> {
     return (await this._get(key))?.__value as T ?? null;
   }
 
-  static async del(...keys: string[]) {
+  static override async del(...keys: string[]) {
     if (!this.denoKv) throw new Error(`Deno Kv is not connected!`);
 
     await Promise.all(
@@ -61,15 +61,15 @@ export class DenoKvStore extends StoreBase {
     );
   }
 
-  static async has(key: string) {
+  static override async has(key: string) {
     return !!(await this.get(key));
   }
 
-  static async timestamp(key: string) {
+  static override async timestamp(key: string) {
     return (await this._get(key))?.timestamp ?? null;
   }
 
-  static async incr(
+  static override async incr(
     key: string,
     options?: {
       incrBy?: number;

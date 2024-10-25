@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { dirname, join } from "path";
 import { existsSync, expandGlob } from "dfs";
-import { IValidatorJSONSchema } from "validator";
+import { IValidatorJSONSchema, ValidationException } from "validator";
 
 import { Mongo } from "mongo";
 
@@ -302,7 +302,10 @@ export const generateERD = async () => {
       JSON.stringify(await generateERDData()),
     );
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

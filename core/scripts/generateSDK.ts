@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { parse } from "flags";
 import { join } from "path";
-import e, { IValidatorJSONSchema } from "validator";
+import e, { IValidatorJSONSchema, ValidationException } from "validator";
 
 import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
@@ -279,7 +279,10 @@ export const generateSDK = async (options: {
       `${PackageJSON.name}@${Options.version} has been generated!`,
     );
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

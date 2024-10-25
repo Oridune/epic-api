@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { dirname, isAbsolute, join } from "path";
 import { existsSync, expandGlob } from "dfs";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Loader, SupportedEnv } from "@Core/common/loader.ts";
 import { EnvType } from "@Core/common/env.ts";
@@ -283,7 +283,10 @@ export const addPlugin = async (options: {
       await updatePluginDeclarationFile();
     }
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { join } from "path";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Confirm, Select } from "cliffy:prompt";
 import {
@@ -147,7 +147,10 @@ export const updatePlugin = async (options: {
 
     return PluginDetails;
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

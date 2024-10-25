@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { join } from "path";
 import { existsSync } from "dfs";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Confirm } from "cliffy:prompt";
 import { EnvType } from "@Core/common/env.ts";
@@ -94,7 +94,10 @@ export const createEnvironment = async (options: {
 
     console.info("Environment(s) created successfully!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

@@ -8,19 +8,19 @@ export class MapStore extends StoreBase {
 
   static map = StoreMap;
 
-  static isConnected() {
+  static override isConnected() {
     return this.map instanceof Map;
   }
 
-  static async connect() {
+  static override async connect() {
     // Do nothing...
   }
 
-  static async disconnect() {
+  static override async disconnect() {
     // Do nothing...
   }
 
-  static async set(
+  static override async set(
     key: string,
     value: unknown,
     options?: {
@@ -53,23 +53,23 @@ export class MapStore extends StoreBase {
     return Value;
   }
 
-  static async get<T extends unknown>(key: string): Promise<T | null> {
+  static override async get<T extends unknown>(key: string): Promise<T | null> {
     return (this._get(key)?.__value as T) ?? null;
   }
 
-  static async del(...keys: string[]) {
+  static override async del(...keys: string[]) {
     keys.forEach((key) => this.map!.delete(key));
   }
 
-  static async has(key: string) {
+  static override async has(key: string) {
     return this.map.has(key);
   }
 
-  static async timestamp(key: string) {
+  static override async timestamp(key: string) {
     return this._get(key)?.timestamp ?? null;
   }
 
-  static async incr(
+  static override async incr(
     key: string,
     options?: {
       incrBy?: number;

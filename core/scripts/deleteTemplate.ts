@@ -1,6 +1,6 @@
 import { parse } from "flags";
 import { basename, join } from "path";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { listValidTemplates, ModuleType } from "@Core/scripts/createModule.ts";
 import { Confirm, Select } from "cliffy:prompt";
@@ -74,7 +74,10 @@ export const deleteTemplate = async (options: {
 
     console.info("Template has been deleted successfully!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

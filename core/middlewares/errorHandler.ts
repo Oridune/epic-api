@@ -16,7 +16,9 @@ async (
 ) => {
   try {
     await next();
-  } catch (error) {
+  } catch (err) {
+    const error: any = err;
+
     if (error instanceof Response || error instanceof RawResponse) {
       await respondWith(ctx, error);
     } else {

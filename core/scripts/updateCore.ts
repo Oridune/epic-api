@@ -3,7 +3,7 @@ import { dirname, join } from "path";
 import { deepMerge } from "collections/deep_merge.ts";
 import { existsSync, expandGlob } from "dfs";
 import { printStream } from "./lib/utility.ts";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Confirm } from "cliffy:prompt";
 
@@ -200,7 +200,10 @@ export const updateCore = async (options: {
 
     console.info("Core has been updated successfully!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

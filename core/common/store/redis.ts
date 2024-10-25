@@ -6,11 +6,11 @@ export class RedisStore extends StoreBase {
   static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
   static redis?: Redis;
 
-  static isConnected() {
+  static override isConnected() {
     return !!this.redis && !["end", "close"].includes(this.redis.status);
   }
 
-  static async connect() {
+  static override async connect() {
     if (!this.redis && this.redisConnectionString) {
       const { hostname, port, pathname, username, password } = new URL(
         this.redisConnectionString.replace("redis://", "http://"),
@@ -29,12 +29,12 @@ export class RedisStore extends StoreBase {
     }
   }
 
-  static async disconnect() {
+  static override async disconnect() {
     if (this.redis && this.isConnected()) await this.redis.disconnect();
     delete this.redis;
   }
 
-  static async set(
+  static override async set(
     key: string,
     value: unknown,
     options?: {
@@ -63,27 +63,27 @@ export class RedisStore extends StoreBase {
       null;
   }
 
-  static async get<T extends unknown>(key: string): Promise<T | null> {
+  static override async get<T extends unknown>(key: string): Promise<T | null> {
     return (await this._get(key))?.__value as T ?? null;
   }
 
-  static async del(...keys: string[]) {
+  static override async del(...keys: string[]) {
     if (!this.redis) throw new Error(`No redis connection!`);
 
     await this.redis.del(...keys.map(this.resolveKey));
   }
 
-  static async has(key: string) {
+  static override async has(key: string) {
     if (!this.redis) throw new Error(`No redis connection!`);
 
     return !!(await this.redis.exists(this.resolveKey(key)));
   }
 
-  static async timestamp(key: string) {
+  static override async timestamp(key: string) {
     return (await this._get(key))?.timestamp ?? null;
   }
 
-  static async incr(
+  static override async incr(
     key: string,
     options?: {
       incrBy?: number;

@@ -1,7 +1,7 @@
 import { parse } from "flags";
 import { basename, dirname, join } from "path";
 import { existsSync } from "dfs";
-import e from "validator";
+import e, { ValidationException } from "validator";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
 import { plural, singular } from "pluralize";
@@ -89,7 +89,10 @@ export const createTemplate = async (options: {
 
     console.info("Template has been created successfully!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };

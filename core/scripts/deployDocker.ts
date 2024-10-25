@@ -2,7 +2,7 @@ import { parse } from "flags";
 import { join } from "path";
 import { existsSync } from "dfs";
 import { denoConfig } from "@Core/common/mod.ts";
-import e from "validator";
+import e, { ValidationException } from "validator";
 import { exec, spawn } from "./lib/run.ts";
 
 import { Confirm, Input, Select } from "cliffy:prompt";
@@ -262,7 +262,10 @@ export const deployDocker = async (options: {
 
     console.info("Your deployment was successful!");
   } catch (error) {
-    console.error(error, error.issues);
+    if (error instanceof ValidationException) {
+      console.error(error, error.issues);
+    }
+
     throw error;
   }
 };
