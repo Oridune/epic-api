@@ -253,10 +253,15 @@ export const deployDocker = async (options: {
         }))
       ) return;
 
+      const TerraformDir = join(Deno.cwd(), "terraform", Options.environment);
+      const TerraformInit = join(TerraformDir, ".terraform.lock.hcl");
+
+      if (!existsSync(TerraformInit)) await spawn("terraform init");
+
       // Push docker image to docker hub
       await spawn(
         `terraform apply -var container_image=${ImageTag} -auto-approve`,
-        { cwd: join(Deno.cwd(), "terraform", Options.environment) },
+        { cwd: TerraformDir },
       );
     }
 
