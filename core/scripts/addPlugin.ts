@@ -152,10 +152,18 @@ export const setupPlugin = async (opts: {
           /^(\\|\/)?(core)(\\|\/)?/,
           /^(\\|\/)?(docs)(\\|\/)?/,
           /^(\\|\/)?(env)(\\|\/)?/,
+          /^(\\|\/)?(tests)(\\|\/)?/,
           /^(\\|\/)?(terraform)(\\|\/)?/,
           /^(\\|\/)?(database.ts)/,
+          /^(\\|\/)?(i18next.ts)/,
           /^(\\|\/)?(serve.ts)/,
+          /^(\\|\/)?(deno.json)/,
           /^(\\|\/)?(\.lintstagedrc.json)/,
+          /^(\\|\/)?(\.dockerignore)/,
+          /^(\\|\/)?(docker-compose.yml)/,
+          /^(\\|\/)?(docker-compose.yml)/,
+          /^(\\|\/)?(Dockerfile)/,
+          /^(\\|\/)?(new.README.md)/,
         ].reduce(
           (allow, expect) =>
             allow && !expect.test(Entry.path.replace(opts.sourcePath, "")),

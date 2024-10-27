@@ -1,5 +1,6 @@
 {
   "imports": {
+    "@I18n": "./i18next.ts",
     "@Database": "./database.ts",
     "@Core/": "./core/",
     "@Controllers/": "./controllers/",
