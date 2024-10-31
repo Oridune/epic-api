@@ -259,8 +259,9 @@ export const deployDocker = async (options: {
 
       const TerraformDir = join(Deno.cwd(), "terraform", Options.environment);
       const TerraformInit = join(TerraformDir, ".terraform.lock.hcl");
+      const TerraformBin = join(TerraformDir, ".terraform");
 
-      if (!existsSync(TerraformInit)) {
+      if (!existsSync(TerraformInit) || !existsSync(TerraformBin)) {
         await spawn("terraform init", { cwd: TerraformDir });
       }
 
