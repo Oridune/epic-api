@@ -69,6 +69,7 @@ export const deployDocker = async (options: {
   deployment?: DeploymentType;
   version?: TDeploymentVersion;
   versionTag?: string;
+  dockerOrg?: string;
   prompt?: boolean;
   noConfirm?: boolean;
   skipBuild?: boolean;
@@ -108,7 +109,7 @@ export const deployDocker = async (options: {
       ) throw new Error(`No previous deployment logs found!`);
 
       DockerOrg = await Input.prompt({
-        message: "Provide your docker hub id",
+        message: "Provide your docker hub organization/id",
       });
 
       DockerImage = await Input.prompt({
@@ -168,6 +169,7 @@ export const deployDocker = async (options: {
             })
             : VersionSchema,
           versionTag: e.optional(e.string()),
+          dockerOrg: e.optional(e.string()),
           noConfirm: e.optional(e.boolean()),
           skipBuild: e.optional(e.boolean()),
           skipPush: e.optional(e.boolean()),
@@ -179,20 +181,22 @@ export const deployDocker = async (options: {
       .validate(options);
 
     const TargetLogs = AllLogs[InitialOptions.environment] ??= {};
-    DockerOrg = TargetLogs.dockerOrganization ??= DockerOrg;
+    DockerOrg = Options.dockerOrg ??
+      (TargetLogs.dockerOrganization ??= DockerOrg);
     DockerImage = TargetLogs.dockerImage ??= DockerImage;
     TargetLogs.version = Options.version;
 
     const DefaultImageTag = `${denoConfig.id}-image`;
+    const ImageName = `${DockerImage}-${Options.environment}`;
     const ImageVersion = [
-      Options.version.major,
-      Options.version.minor,
-      Options.version.patch,
-    ].join(".");
-    const ImageTag = [
-      `${DockerOrg}/${DockerImage}-${Options.environment}:v${ImageVersion}`,
+      [
+        Options.version.major,
+        Options.version.minor,
+        Options.version.patch,
+      ].join("."),
       Options.versionTag,
     ].filter(Boolean).join("-");
+    const ImageTag = `${DockerOrg}/${ImageName}:v${ImageVersion}`;
 
     if (!Options.skipBuild) {
       if (options.prompt) {
@@ -262,12 +266,12 @@ export const deployDocker = async (options: {
 
       // Push docker image to docker hub
       await spawn(
-        `terraform apply -var container_image=${ImageTag} -auto-approve`,
+        `terraform apply -var default_container_image=${DefaultImageTag} -var container_image=${ImageTag} -var image_name=${ImageName} -var image_version=${ImageVersion} -auto-approve`,
         { cwd: TerraformDir },
       );
     }
 
-    console.info("Your deployment was successful!");
+    console.info("Your deployment was complete!");
   } catch (error) {
     if (error instanceof ValidationException) {
       console.error(error, error.issues);
@@ -287,6 +291,7 @@ if (import.meta.main) {
     minor,
     major,
     versionTag,
+    dockerOrg,
     t,
     y,
     skipBuild,
@@ -308,6 +313,7 @@ if (import.meta.main) {
       }
       : undefined,
     versionTag: versionTag ?? t,
+    dockerOrg,
     prompt: true,
     noConfirm: y,
     skipBuild,
