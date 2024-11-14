@@ -4,7 +4,6 @@ import { Redis } from "redis";
 
 export class RedisStore extends StoreBase {
   static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
-  static redis?: Redis;
 
   static override isConnected() {
     return !!this.redis && !["end", "close"].includes(this.redis.status);

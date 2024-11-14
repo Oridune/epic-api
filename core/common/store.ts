@@ -10,7 +10,7 @@ export enum StoreType {
   DENO_KV = "deno-kv",
 }
 
-export const CurrentStoreType = Env.getSync("STORE_TYPE", true) ??
+export const CurrentStoreType = Env.getSync("STORE_TYPE", true) as StoreType ??
   StoreType.MAP;
 
 export const getStore = (type: string) => {

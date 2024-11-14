@@ -6,7 +6,7 @@ export const StoreMap = new Map<string, StoreItem>();
 export class MapStore extends StoreBase {
   static _freeBytes?: number;
 
-  static map = StoreMap;
+  static override map = StoreMap;
 
   static override isConnected() {
     return this.map instanceof Map;

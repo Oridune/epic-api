@@ -17,6 +17,7 @@
     "ejs": "npm:ejs@3.1.10",
     "mongo": "jsr:@oridune/mongo@0.1.17",
     "validator": "jsr:@oridune/mongo@0.1.17/validator",
+    "queue": "jsr:@oridune/queue@0.0.2",
     "flags": "https://deno.land/std@0.205.0/flags/mod.ts",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts",
     "oak": "https://deno.land/x/oak@v12.6.0/mod.ts",

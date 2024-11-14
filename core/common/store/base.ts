@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-unused-vars require-await
 import { Env } from "@Core/common/env.ts";
 import DenoConfig from "../../../deno.json" with { type: "json" };
+import type { Redis } from "redis";
 
 export interface StoreItem {
   __value: unknown;
@@ -9,6 +10,10 @@ export interface StoreItem {
 }
 
 export abstract class StoreLike {
+  static redis?: Redis;
+  static denoKv?: Deno.Kv;
+  static map?: Map<string, StoreItem>;
+
   /**
    * Is store connected?
    * @returns

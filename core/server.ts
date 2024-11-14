@@ -11,8 +11,10 @@ import {
   Server,
   Store,
 } from "@Core/common/mod.ts";
-import { APIController } from "@Core/controller.ts";
 import { Database } from "@Database";
+import { Queue } from "queue";
+import { StoreType } from "@Core/common/store.ts";
+import { APIController } from "@Core/controller.ts";
 import {
   Application as AppServer,
   Router as AppRouter,
@@ -298,6 +300,17 @@ export const createAppServer = () => {
       (async () => {
         await Store.connect();
         await Database.connect();
+
+        if (
+          await Env.enabled("QUEUE_ENABLED") &&
+          Store.type === StoreType.REDIS
+        ) {
+          await Queue.start({
+            namespace: Env.getType(),
+            logs: Env.is(EnvType.DEVELOPMENT),
+            redis: Store.redis!,
+          });
+        }
 
         const { execPreJobs, execPostJobs } = await loadBackgroundJobs();
 

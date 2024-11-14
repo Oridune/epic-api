@@ -6,7 +6,6 @@ export class DenoKvStore extends StoreBase {
     "DENO_KV_CONNECTION_STRING",
     true,
   );
-  static denoKv?: Deno.Kv;
 
   static override isConnected() {
     return this.denoKv instanceof Deno.Kv;
