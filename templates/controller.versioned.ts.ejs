@@ -25,11 +25,11 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const BodySchema = e.object({});
 
     return new Versioned().add("1.0.0", {
-      shape: {
+      shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
-      },
+      }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
         const Query = await QuerySchema.validate(
@@ -70,10 +70,10 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     const ParamsSchema = e.object({});
 
     return Versioned.add("1.0.0", {
-      shape: {
+      shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
-      },
+      }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
         const Query = await QuerySchema.validate(
