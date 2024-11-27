@@ -326,6 +326,21 @@ export class Sequence {
   }
 
   /**
+   * Enable or disable sequence items
+   * @param id Id of the module
+   */
+  public async toggle(
+    id: string,
+  ) {
+    if (this.Includes.has(id)) {
+      if (this.Excludes.has(id)) this.Excludes.delete(id);
+      else this.Excludes.add(id);
+    }
+
+    await this.persist();
+  }
+
+  /**
    * Converts the Class to a Normalized Object
    * @returns
    */
