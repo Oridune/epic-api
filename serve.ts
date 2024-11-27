@@ -23,5 +23,5 @@ if (import.meta.main) {
     }
   });
 
-  console.time("Server Startup Time:");
+  console.timeEnd("Server Startup Time:");
 }
