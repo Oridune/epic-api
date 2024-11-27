@@ -8,7 +8,7 @@
       "public ${2:create}(_: IRoute) {",
       "\treturn (ctx: IRequestContext<RouterContext<string>>) => {",
       "\t\t$3\n",
-      "\t\treturn Response.status(true);",
+      "\t\treturn Response.true();",
       "\t}",
       "}"
     ]
@@ -27,11 +27,11 @@
       "\t// Define Body Schema",
       "\tconst BodySchema = e.object({});\n",
       "\treturn new Versioned().add(\"1.0.0\", {",
-      "\t\tpostman: {",
+      "\t\tpostman: () => ({",
       "\t\t\tquery: QuerySchema.toSample(),",
       "\t\t\tparams: ParamsSchema.toSample(),",
       "\t\t\tbody: BodySchema.toSample(),",
-      "\t\t},",
+      "\t\t}),",
       "\t\thandler: async (ctx: IRequestContext<RouterContext<string>>) => {",
       "\t\t\t// Query Validation",
       "\t\t\tconst Query = await QuerySchema.validate(",
@@ -48,7 +48,7 @@
       "\t\t\t\t{ name: `${route.scope}.body` }",
       "\t\t\t);\n",
       "\t\t\t$3\n",
-      "\t\t\treturn Response.status(true);",
+      "\t\t\treturn Response.true();",
       "\t\t}",
       "\t});",
       "}"
