@@ -99,9 +99,9 @@ export class APIController extends BaseController {
     );
 
     return {
-      shape: {
+      shape: () => ({
         query: QuerySchema.toSample(),
-      },
+      }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
         const Query = await QuerySchema.validate(

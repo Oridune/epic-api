@@ -165,7 +165,9 @@ export const generatePostmanCollection = async (
         .replace(/\\/g, "/")
         .replace("?", "");
 
-      const Shape = RequestHandler.postman ?? RequestHandler.shape;
+      const RawShape = RequestHandler.postman ?? RequestHandler.shape;
+
+      const Shape = typeof RawShape === "function" ? RawShape() : RawShape;
 
       const QueryParams = Object.entries<string>(
         Shape?.query?.data ?? {},

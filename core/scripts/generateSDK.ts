@@ -206,7 +206,9 @@ export const generateSDK = async (options: {
             version: Options.version,
           })) ?? {};
 
-        const Shape = RequestHandler?.shape ?? RequestHandler?.postman ?? {};
+        const RawShape = RequestHandler?.shape ?? RequestHandler?.postman ?? {};
+
+        const Shape = typeof RawShape === "function" ? RawShape() : RawShape;
 
         const Schema = Shape[shapeType as "query"]?.schema;
 
