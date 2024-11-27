@@ -4,6 +4,8 @@ import { Loader } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 
 if (import.meta.main) {
+  console.time("Server Startup Time:");
+
   await Loader.load({ excludeTypes: ["templates", "models"] });
 
   const { start, end } = createAppServer();
@@ -20,4 +22,6 @@ if (import.meta.main) {
       // Do nothing...
     }
   });
+
+  console.time("Server Startup Time:");
 }
