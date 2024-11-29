@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { parse } from "flags";
 import { join } from "path";
-import e, { ValidationException } from "validator";
+import e, { ValidationException, Value } from "validator";
 
 import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
@@ -169,8 +169,19 @@ export const generatePostmanCollection = async (
 
       const Shape = typeof RawShape === "function" ? RawShape() : RawShape;
 
+      const Headers = Shape?.headers?.data?.toJSON?.();
+      const HeadersSchema = Shape?.headers?.schema;
+
+      const Query = Shape?.query?.data?.toJSON?.();
+      const QuerySchema = Shape?.query?.schema;
+
+      const Params = Shape?.params?.data?.toJSON?.();
+      const ParamsSchema = Shape?.params?.schema;
+
+      const Body = Shape?.body?.data;
+
       const QueryParams = Object.entries<string>(
-        Shape?.query?.data ?? {},
+        Query ?? {},
       );
 
       normalizeRequest(
@@ -197,32 +208,32 @@ export const generatePostmanCollection = async (
                 key,
                 value,
                 description: [
-                  Shape?.query?.schema?.requiredProperties
+                  QuerySchema?.requiredProperties
                       ?.includes(
                         key,
                       )
                     ? undefined
                     : "(Optional)",
-                  Shape?.query?.schema?.properties?.[key]
-                    .description,
+                  QuerySchema?.properties?.[key]
+                    ?.description,
                 ]
                   .filter(Boolean)
                   .join(" "),
               })),
               variable: Object.entries<string>(
-                Shape?.params?.data ?? {},
+                Params ?? {},
               ).map(([key, value]) => ({
                 key,
                 value,
                 description: [
-                  Shape?.params?.schema?.requiredProperties
+                  ParamsSchema?.requiredProperties
                       ?.includes(
                         key,
                       )
                     ? undefined
                     : "(Optional)",
-                  Shape?.params?.schema?.properties?.[key]
-                    .description,
+                  ParamsSchema?.properties?.[key]
+                    ?.description,
                 ]
                   .filter(Boolean)
                   .join(" "),
@@ -231,32 +242,32 @@ export const generatePostmanCollection = async (
             method: Route.options.method
               .toUpperCase() as PostmanRequestMethods,
             header: Object.entries<string>(
-              Shape?.headers?.data ?? {},
+              Headers ?? {},
             ).map(([key, value]) => ({
               key,
               value,
               type: "text",
               description: [
-                Shape?.headers?.schema?.requiredProperties
+                HeadersSchema?.requiredProperties
                     ?.includes(
                       key,
                     )
                   ? undefined
                   : "(Optional)",
-                Shape?.headers?.schema?.properties?.[key]
-                  .description,
+                HeadersSchema?.properties?.[key]
+                  ?.description,
               ]
                 .filter(Boolean)
                 .join(" "),
             })),
-            body: Shape?.body?.data
+            body: Body
               ? {
                 mode: "raw",
-                raw: JSON.stringify(
-                  Shape.body.data,
-                  undefined,
+                raw: Value.stringify(
+                  Body,
+                  null,
                   2,
-                ),
+                ) as string,
                 options: {
                   raw: {
                     language: "json",
