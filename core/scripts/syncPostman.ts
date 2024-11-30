@@ -213,9 +213,8 @@ export const generatePostmanCollection = async (
                         key,
                       )
                     ? undefined
-                    : "(Optional)",
-                  QuerySchema?.properties?.[key]
-                    ?.description,
+                    : QuerySchema?.properties?.[key]
+                      ?.description,
                 ]
                   .filter(Boolean)
                   .join(" "),
@@ -231,9 +230,8 @@ export const generatePostmanCollection = async (
                         key,
                       )
                     ? undefined
-                    : "(Optional)",
-                  ParamsSchema?.properties?.[key]
-                    ?.description,
+                    : ParamsSchema?.properties?.[key]
+                      ?.description,
                 ]
                   .filter(Boolean)
                   .join(" "),
@@ -253,9 +251,8 @@ export const generatePostmanCollection = async (
                       key,
                     )
                   ? undefined
-                  : "(Optional)",
-                HeadersSchema?.properties?.[key]
-                  ?.description,
+                  : HeadersSchema?.properties?.[key]
+                    ?.description,
               ]
                 .filter(Boolean)
                 .join(" "),
