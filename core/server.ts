@@ -12,6 +12,7 @@ import {
   Store,
 } from "@Core/common/mod.ts";
 import { Database } from "@Database";
+import { I18next } from "@I18n";
 import { Queue } from "queue";
 import { StoreType } from "@Core/common/store.ts";
 import { APIController } from "@Core/controller.ts";
@@ -300,6 +301,7 @@ export const createAppServer = () => {
       (async () => {
         await Store.connect();
         await Database.connect();
+        await I18next.init();
 
         if (
           await Env.enabled("QUEUE_ENABLED") &&
