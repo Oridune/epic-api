@@ -1,5 +1,5 @@
 /**
- * Copyright © Oridune <%- new Date().getFullYear() %>
+ * Copyright © Oridune 2024
  *
  * This is a generated file. Do not edit the contents of this file!
  */
@@ -8,11 +8,9 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { encode as base64encode } from "base64-arraybuffer";
 import { sha256 } from "js-sha256";
 
-import type { TSDKOptions, TAuthorization, TResponseShape } from "./types.ts";
+import type { TAuthorization, TResponseShape, TSDKOptions } from "./types.ts";
 
-<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
-import { <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
-<% } -%>
+import { apiModule } from "./modules/api.ts";
 
 export class EpicSDK {
     protected static _refreshRequest?: Promise<TAuthorization>;
@@ -21,18 +19,18 @@ export class EpicSDK {
         const characters =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         let result = "";
-          
+
         for (let i = 0; i < length; i++) {
             const randomIndex = Math.floor(Math.random() * characters.length);
             result += characters.charAt(randomIndex);
         }
-          
+
         return result;
     }
-    
+
     protected static generateCodeChallenge() {
         const verifier = this.generateRandomString(128);
-    
+
         return {
             verifier,
             method: "sha256",
@@ -40,13 +38,12 @@ export class EpicSDK {
                 .replace(/\+/g, "-")
                 .replace(/\//g, "_")
                 .replace(/=/g, ""),
-        };        
+        };
     }
 
     static options?: TSDKOptions;
     static client?: AxiosInstance;
     static auth?: TAuthorization;
-    static accountId?: string;
     static permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
@@ -55,25 +52,48 @@ export class EpicSDK {
 
         this.client.interceptors.request.use(
             async (config) => {
-              if (!config.headers["Authorization"] && this.auth) {
-                const timeInSeconds = Date.now() / 1000;
+                if (!config.headers["Authorization"] && this.auth) {
+                    const timeInSeconds = Date.now() / 1000;
 
-                if(this.auth.access.expiresAtSeconds <= timeInSeconds) {
-                    if(!this.auth.refresh || this.auth.refresh.expiresAtSeconds <= timeInSeconds) {
-                        throw new Error("Access token expired!");
+                    if (this.auth.access.expiresAtSeconds <= timeInSeconds) {
+                        if (
+                            !this.auth.refresh ||
+                            this.auth.refresh.expiresAtSeconds <= timeInSeconds
+                        ) {
+                            throw new Error("Access token expired!");
+                        }
+
+                        await this.refreshAccessToken(this.auth.refresh.token);
                     }
 
-                    await this.refreshAccessToken(this.auth.refresh.token);
+                    config.headers["Authorization"] =
+                        `Bearer ${this.auth.access.token}`;
                 }
 
-                config.headers["Authorization"] = `Bearer ${this.auth.access.token}`;
-              }
-
-              return config;
+                return config;
             },
             (error) => {
-              return Promise.reject(error);
-            }
+                return Promise.reject(error);
+            },
+        );
+
+        this.client.interceptors.response.use(
+            (_) => _,
+            (error) => {
+                const { response, config } = error;
+
+                const originalRequest = config;
+
+                if (
+                    response && response.status === 401 &&
+                    !originalRequest._retry
+                ) {
+                    originalRequest._retry += 1;
+                }
+
+                // If the error isn't a 401 or we've already retried, just reject it.
+                return Promise.reject(error);
+            },
         );
     }
 
@@ -118,8 +138,9 @@ export class EpicSDK {
         });
 
         if (response?.status === 200) {
-            if (response.data.status) return this.auth = response.data.data as TAuthorization;
-            else {
+            if (response.data.status) {
+                return this.auth = response.data.data as TAuthorization;
+            } else {
                 throw new Error(
                     response.data.messages[0].message ??
                         "Your request was failed!",
@@ -128,7 +149,7 @@ export class EpicSDK {
         } else throw new Error("Unable to get access token!");
     }
 
-    static async refreshAccessToken(refreshToken: string) {
+    static refreshAccessToken(refreshToken: string) {
         return this._refreshRequest ??= new Promise((resolve, reject) => {
             this.client?.post("/api/oauth/refresh", { refreshToken })
                 .then((response) => {
@@ -155,15 +176,20 @@ export class EpicSDK {
     }
 
     static isPermitted(scope: string, permission?: string) {
-        if(!(this.permissions instanceof Set))
+        if (!(this.permissions instanceof Set)) {
             return true;
+        }
 
-        return this.permissions.has(scope) || this.permissions.has(`${scope}.${permission}`);
+        return this.permissions.has(scope) ||
+            this.permissions.has(`${scope}.${permission}`);
     }
 
     static checkPermission(scope: string, permission?: string) {
-        if(!this.isPermitted(scope, permission))
-            throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
+        if (!this.isPermitted(scope, permission)) {
+            throw new Error(
+                `You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`,
+            );
+        }
     }
 
     static resolveResponse<T>(executor: () => Promise<AxiosResponse>) {
@@ -172,34 +198,39 @@ export class EpicSDK {
                 return executor();
             },
             get res() {
-                return new Promise<TResponseShape<T>>((resolve, reject) => 
+                return new Promise<TResponseShape<T>>((resolve, reject) =>
                     executors.raw
-                        .then(res => {
+                        .then((res) => {
                             // Check if the data object exists
-                            if (!res.data || typeof res.data !== 'object')
-                                reject(new Error(`Response data is missing or invalid!`));
-
-                            else if(!res.data.status)
-                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
-
-                            else resolve(res.data);
+                            if (!res.data || typeof res.data !== "object") {
+                                reject(
+                                    new Error(
+                                        `Response data is missing or invalid!`,
+                                    ),
+                                );
+                            } else if (!res.data.status) {
+                                reject(
+                                    new Error(
+                                        res.data.messages?.[0]?.message ??
+                                            `failure`,
+                                    ),
+                                );
+                            } else resolve(res.data);
                         })
-                        .catch(err => reject(err))
+                        .catch((err) => reject(err))
                 );
             },
             get data() {
-                return new Promise<T>((resolve, reject) => 
+                return new Promise<T>((resolve, reject) =>
                     executors.res
                         .then((res) => resolve(res.data))
                         .catch(reject)
                 );
-            }
-        }
+            },
+        };
 
         return executors;
     }
 
-<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
-    static <%- Scope %> = <%- Scope %>Module(this);
-<% } -%>
+    static api = apiModule(this);
 }

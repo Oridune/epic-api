@@ -169,7 +169,7 @@ export const generateSDK = async (options: {
       ),
     ]);
 
-    await exec("npm i axios", { cwd: SDKDir });
+    await exec("npm i axios base64-arraybuffer js-sha256", { cwd: SDKDir });
     await exec("npm i -D typescript", { cwd: SDKDir });
 
     const Routes = await new Server(APIController).prepare((routes) => {

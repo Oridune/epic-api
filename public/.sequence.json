@@ -1,5 +1,7 @@
 {
-  "sequence": [],
+  "sequence": [
+    "sdk@latest"
+  ],
   "sequence.development": [],
   "sequence.test": [],
   "sequence.production": [],
