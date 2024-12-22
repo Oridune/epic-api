@@ -5,7 +5,7 @@ import { Context } from "oak/context.ts";
 import lngParser from "lngParser";
 
 export const useTranslator = async () => {
-  const { I18next } = await import("../../i18next.ts");
+  const { I18next } = await import("@I18n");
 
   return async (
     ctx: Context<Record<string, any>, Record<string, any>>,

@@ -2,7 +2,7 @@
 import "ts-reset";
 import "./plugins.d.ts";
 
-import { I18next } from "./i18next.ts";
+import { I18next } from "@I18n";
 import { Context } from "oak/context.ts";
 import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
