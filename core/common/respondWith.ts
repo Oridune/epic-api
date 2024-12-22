@@ -6,6 +6,7 @@ import { Events } from "./events.ts";
 export const respondWith = async (
   ctx: Context,
   res: Response | RawResponse,
+  err?: unknown,
 ) => {
   if (ctx.respond && ctx.response.writable) {
     if (res instanceof Response) {
@@ -33,6 +34,6 @@ export const respondWith = async (
       // Do nothing...
     }
 
-    Events.dispatch("response", { detail: { ctx, res } });
+    Events.dispatch("response", { detail: { ctx, res, err } });
   }
 };

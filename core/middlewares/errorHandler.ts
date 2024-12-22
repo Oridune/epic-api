@@ -46,7 +46,7 @@ async (
           /^x-.*/i.test(key) && ResponseObject.header(key, value),
       );
 
-      await respondWith(ctx, ResponseObject);
+      await respondWith(ctx, ResponseObject, error);
     }
 
     if (!Env.is(EnvType.PRODUCTION)) {
