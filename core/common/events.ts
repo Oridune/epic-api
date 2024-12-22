@@ -73,6 +73,7 @@ export class Events {
     callback: TEventCallback<{
       ctx: Context;
       res: Response | RawResponse;
+      err: unknown;
     }>,
     options?: boolean | AddEventListenerOptions,
   ): IListener;
