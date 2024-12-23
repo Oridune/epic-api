@@ -45,12 +45,16 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
   app.use(errorHandler());
   app.use(gzip());
   app.use(CORS());
-  app.use(
-    rateLimiter({
-      limit: await Env.get("RATE_LIMITER_LIMIT", true),
-      windowMs: await Env.get("RATE_LIMITER_WINDOW_MS", true),
-    }),
-  );
+
+  if (await Env.enabled("RATE_LIMITER_ENABLED")) {
+    app.use(
+      rateLimiter({
+        limit: await Env.get("RATE_LIMITER_LIMIT", true),
+        windowMs: await Env.get("RATE_LIMITER_WINDOW_MS", true),
+      }),
+    );
+  }
+
   app.use(requestId());
 
   const UITableData: Array<{
