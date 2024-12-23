@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-unused-vars require-await
 import { Env } from "@Core/common/env.ts";
+import { LRUCache } from "./utils/lru.ts";
 import DenoConfig from "../../../deno.json" with { type: "json" };
 import type { Redis } from "redis";
 
@@ -12,7 +13,7 @@ export interface StoreItem {
 export abstract class StoreLike {
   static redis?: Redis;
   static denoKv?: Deno.Kv;
-  static map?: Map<string, StoreItem>;
+  static map?: LRUCache<string, StoreItem>;
 
   /**
    * Is store connected?

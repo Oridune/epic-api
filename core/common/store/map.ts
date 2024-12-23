@@ -1,15 +1,16 @@
 // deno-lint-ignore-file require-await
 import { StoreBase, StoreItem } from "./base.ts";
+import { LRUCache } from "./utils/lru.ts";
 
-export const StoreMap = new Map<string, StoreItem>();
+export const Cache = new LRUCache<string, StoreItem>(1000);
 
 export class MapStore extends StoreBase {
   static _freeBytes?: number;
 
-  static override map = StoreMap;
+  static override map = Cache;
 
   static override isConnected() {
-    return this.map instanceof Map;
+    return this.map instanceof LRUCache;
   }
 
   static override async connect() {
@@ -130,7 +131,7 @@ export class MapStore extends StoreBase {
   static cleanup = this.throttle(() => {
     const Timestamp = Date.now();
 
-    for (const [Key, Value] of this.map) {
+    for (const [Key, Value] of this.map.getMap()) {
       if (this.isExpired(Value, Timestamp)) this.del(Key);
     }
   }, 30000);
