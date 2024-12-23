@@ -125,7 +125,7 @@ export default class UsersController extends BaseController {
 
         // Body Validation
         const Body = await BodySchema.validate(
-          await ctx.router.request.body({ type: "json" }).value,
+          await ctx.router.request.body.json(),
           { name: `${route.scope}.body` }
         );
 
@@ -358,7 +358,7 @@ export default class UsersController extends BaseController {
     return async (ctx: IRequestContext<RouterContext<string>>) => {
       // Validate user data
       const User = await BodySchema.validate(
-        await ctx.router.request.body({ type: "json" }).value,
+        await ctx.router.request.body.json(),
         { name: `${route.scope}.body` }
       );
 
