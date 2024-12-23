@@ -1,8 +1,11 @@
 // deno-lint-ignore-file require-await
+import { Env } from "@Core/common/env.ts";
 import { StoreBase, StoreItem } from "./base.ts";
 import { LRUCache } from "./utils/lru.ts";
 
-export const Cache = new LRUCache<string, StoreItem>(1000);
+export const Cache = new LRUCache<string, StoreItem>(
+  parseInt(Env.getSync("STORE_LRU_CAPACITY") ?? "1000"),
+);
 
 export class MapStore extends StoreBase {
   static _freeBytes?: number;
