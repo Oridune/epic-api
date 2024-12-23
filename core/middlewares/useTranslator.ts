@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { Context } from "oak/context.ts";
+import { Context } from "oak/context";
 
 // @deno-types="npm:@types/accept-language-parser"
 import lngParser from "lngParser";

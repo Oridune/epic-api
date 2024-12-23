@@ -3,11 +3,11 @@ import "ts-reset";
 import "./plugins.d.ts";
 
 import { I18next } from "@I18n";
-import { Context } from "oak/context.ts";
+import { Context } from "oak/context";
 import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
-declare module "oak/context.ts" {
+declare module "oak/context" {
   export interface Context {
     /**
      * Access the I18next class constructor

@@ -1,4 +1,4 @@
-import { Application } from "oak/application.ts";
+import { Application } from "oak/application";
 
 export const fetch = (
   app: Application,

@@ -22,7 +22,7 @@ import {
   RouterContext,
   Status,
 } from "oak";
-import { ApplicationListenEvent } from "oak/application.ts";
+import { ApplicationListenEvent } from "oak/application";
 import { join } from "path";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";

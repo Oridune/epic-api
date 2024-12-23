@@ -29,7 +29,7 @@ export const respondWith = async (
     );
 
     try {
-      ctx.state._body = await ctx.request.body().value;
+      ctx.state._body = await ctx.request.body.json();
     } catch {
       // Do nothing...
     }

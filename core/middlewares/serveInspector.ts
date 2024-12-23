@@ -64,9 +64,7 @@ async (
         const res = await fetch(url.href, {
           method: ctx.request.method,
           headers: new Headers(ctx.request.headers),
-          body: ctx.request.hasBody
-            ? ctx.request.body().value as any
-            : undefined,
+          body: ctx.request.hasBody ? await ctx.request.body.json() : undefined,
         });
 
         if (res.status >= 400) {
