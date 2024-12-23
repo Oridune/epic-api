@@ -4,7 +4,7 @@ import { StoreBase, StoreItem } from "./base.ts";
 import { LRUCache } from "./utils/lru.ts";
 
 export const Cache = new LRUCache<string, StoreItem>(
-  parseInt(Env.getSync("STORE_LRU_CAPACITY") ?? "1000"),
+  parseInt(Env.getSync("STORE_LRU_CAPACITY", true) ?? "1000"),
 );
 
 export class MapStore extends StoreBase {
