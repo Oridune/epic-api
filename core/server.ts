@@ -236,7 +236,12 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
           if (typeof IdempotencyKey === "string") {
             await new Promise((resolve) => {
               Queue.acquireLock(
-                ["sequentialRequest", IdempotencyKey],
+                [
+                  "sequentialRequest",
+                  Route.scope,
+                  Route.options.name,
+                  IdempotencyKey,
+                ],
                 async (release) => {
                   await handle();
                   await release();
