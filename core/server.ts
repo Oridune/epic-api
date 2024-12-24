@@ -15,6 +15,7 @@ import { Database } from "@Database";
 import { I18next } from "@I18n";
 import { Queue } from "queue";
 import { StoreType } from "@Core/common/store.ts";
+import { urlToRedisOptions } from "@Core/common/store/redis.ts";
 import { APIController } from "@Core/controller.ts";
 import {
   Application as AppServer,
@@ -196,31 +197,62 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
           RequestContext.version = version ?? RequestContext.version;
 
-          ctx.state._handleStartedAt = Date.now();
+          const handle = async () => {
+            ctx.state._handleStartedAt = Date.now();
 
-          const ReturnedResponse = await RequestHandler?.handler.bind(
-            RequestHandler,
-          )(RequestContext);
+            const ReturnedResponse = await RequestHandler?.handler.bind(
+              RequestHandler,
+            )(RequestContext);
 
-          if (ReturnedResponse instanceof Response) {
-            ReturnedResponse.metrics({
-              handledInMs: Date.now() - ctx.state._handleStartedAt,
+            if (ReturnedResponse instanceof Response) {
+              ReturnedResponse.metrics({
+                handledInMs: Date.now() - ctx.state._handleStartedAt,
+              });
+            }
+
+            for (const Hook of Hooks) {
+              await Hook?.post?.(Route.scope, Route.options.name, {
+                ctx: RequestContext,
+                res: ReturnedResponse,
+              });
+            }
+
+            Events.dispatchRequestEvent(
+              `${Route.scope}.${Route.options.name}`,
+              {
+                ctx: RequestContext,
+                res: ReturnedResponse,
+              },
+            );
+
+            if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
+          };
+
+          const IdempotencyKey =
+            typeof RequestHandler?.idempotencyKey === "function"
+              ? await RequestHandler.idempotencyKey(RequestContext)
+              : RequestHandler?.idempotencyKey;
+
+          if (typeof IdempotencyKey === "string") {
+            await new Promise((resolve) => {
+              Queue.acquireLock(
+                ["sequentialRequest", IdempotencyKey],
+                async (release) => {
+                  await handle();
+                  await release();
+
+                  resolve(0);
+                },
+                () => {
+                  // Do nothing on lock release...
+                },
+                {
+                  ttl: 1000,
+                  wait: 1500,
+                },
+              );
             });
-          }
-
-          for (const Hook of Hooks) {
-            await Hook?.post?.(Route.scope, Route.options.name, {
-              ctx: RequestContext,
-              res: ReturnedResponse,
-            });
-          }
-
-          Events.dispatchRequestEvent(`${Route.scope}.${Route.options.name}`, {
-            ctx: RequestContext,
-            res: ReturnedResponse,
-          });
-
-          if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
+          } else await handle();
         },
       );
     }
@@ -309,12 +341,14 @@ export const createAppServer = () => {
 
         if (
           await Env.enabled("QUEUE_ENABLED") &&
-          Store.type === StoreType.REDIS
+          (Store.type === StoreType.REDIS ||
+            Env.getSync("REDIS_CONNECTION_STRING", true))
         ) {
           await Queue.start({
             namespace: Env.getType(),
             logs: Env.is(EnvType.DEVELOPMENT),
-            redis: Store.redis!,
+            redis: Store.redis ??
+              urlToRedisOptions(Env.getSync("REDIS_CONNECTION_STRING")),
           });
         }
 

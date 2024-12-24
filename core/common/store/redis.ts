@@ -2,6 +2,20 @@ import { Env } from "../env.ts";
 import { StoreBase, StoreItem } from "./base.ts";
 import { Redis } from "redis";
 
+export const urlToRedisOptions = (url: string) => {
+  const { hostname, port, pathname, username, password } = new URL(
+    url.replace("redis://", "http://"),
+  );
+
+  return {
+    host: hostname,
+    port: parseInt(port),
+    db: parseInt(pathname.split("/").filter(Boolean)[0]),
+    username,
+    password,
+  };
+};
+
 export class RedisStore extends StoreBase {
   static redisConnectionString = Env.getSync("REDIS_CONNECTION_STRING", true);
 
@@ -11,17 +25,9 @@ export class RedisStore extends StoreBase {
 
   static override async connect() {
     if (!this.redis && this.redisConnectionString) {
-      const { hostname, port, pathname, username, password } = new URL(
-        this.redisConnectionString.replace("redis://", "http://"),
-      );
-
       this.redis = new Redis({
         lazyConnect: true,
-        host: hostname,
-        port: parseInt(port),
-        db: parseInt(pathname.split("/").filter(Boolean)[0]),
-        username,
-        password,
+        ...urlToRedisOptions(this.redisConnectionString),
       });
 
       await this.redis.connect();

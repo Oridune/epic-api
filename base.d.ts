@@ -4,6 +4,7 @@ import "./plugins.d.ts";
 
 import { I18next } from "@I18n";
 import { Context } from "oak/context";
+import { RouterContext } from "oak/router";
 import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
@@ -40,6 +41,12 @@ type Shape = {
 
 declare module "@Core/common/controller/base.ts" {
   interface IRequestHandlerObjectExtendor {
+    idempotencyKey?:
+      | string
+      | ((
+        ctx: IRequestContext<RouterContext<string>>,
+      ) => string | undefined | Promise<string | undefined>);
+
     shape?: Shape | (() => Shape);
 
     postman?: {
