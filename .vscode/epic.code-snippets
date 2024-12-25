@@ -44,7 +44,7 @@
       "\t\t\t});\n",
       "\t\t\t// Body Validation",
       "\t\t\tconst Body = await BodySchema.validate(",
-      "\t\t\t\tawait ctx.router.request.body({ type: \"json\" }).value,",
+      "\t\t\t\tawait ctx.router.request.body.json(),",
       "\t\t\t\t{ name: `${route.scope}.body` }",
       "\t\t\t);\n",
       "\t\t\t$3\n",
