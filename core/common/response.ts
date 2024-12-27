@@ -99,6 +99,8 @@ export class RawResponse {
    */
   public type(type: string) {
     this.Type = type;
+    this.header("Content-Type", type);
+
     return this;
   }
 

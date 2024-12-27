@@ -119,4 +119,21 @@ export class APIController extends BaseController {
       },
     };
   }
+
+  @Get("/heap/snapshot/:filename?/")
+  public heapSnapshot(_: IRoute) {
+    return {
+      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
+        if (typeof ctx.router.takeHeapSnapshot !== "function") {
+          throw new Error("Heap snapshot is not available.");
+        }
+
+        const snapshotPath = await ctx.router.takeHeapSnapshot();
+
+        const snapshot = await Deno.open(snapshotPath, { read: true });
+
+        return Response.raw(snapshot.readable, "application/octet-stream");
+      },
+    };
+  }
 }

@@ -35,7 +35,7 @@ import { errorHandler } from "@Core/middlewares/errorHandler.ts";
 import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
 import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
-import { serveInspector } from "@Core/middlewares/serveInspector.ts";
+import { useV8Inspector } from "@Core/middlewares/v8Inspector.ts";
 
 export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
   app.use(responseTime());
@@ -266,8 +266,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
     if (RoutesTableData.length) console.table(RoutesTableData);
   });
 
-  router.get("/:type(json|ws)/:path*", serveInspector());
-
+  app.use(useV8Inspector(router));
   app.use(router.routes());
   app.use(router.allowedMethods());
   app.use((ctx) => ctx.throw(Status.NotFound));

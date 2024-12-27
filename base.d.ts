@@ -28,6 +28,12 @@ declare module "oak/context" {
      * @param opts
      */
     tvar(key: string | string[], ...opts: any[]): Record<string, any>;
+
+    /**
+     * Takes the snapshot of the heap memory and returns the file path
+     * @returns
+     */
+    takeHeapSnapshot?: (filename?: string) => Promise<string>;
   }
 }
 
