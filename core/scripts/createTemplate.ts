@@ -1,4 +1,4 @@
-import { parse } from "flags";
+import { parseArgs as parse } from "flags/parse-args";
 import { basename, dirname, join } from "path";
 import { existsSync } from "dfs";
 import e, { ValidationException } from "validator";

@@ -10,7 +10,7 @@ async (
 
   ctx.state._requestId = ID;
 
-  await next().catch((error) => {
+  await next().catch((error: any) => {
     Object.assign(error, { "X-Request-ID": ID });
     throw error;
   });

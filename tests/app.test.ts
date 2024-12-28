@@ -160,10 +160,10 @@ Deno.test({
 
         expect(Response?.headers.get("Content-Type")).toMatch(/json/);
         expect(Response?.headers.get("X-Rate-Limit-Reset")).toMatch(/[0-9]+/);
-        expect(Response?.headers.get("X-Rate-Limit-Limit")).toMatch(
+        expect(Response?.headers.get("X-Rate-Limit-Limit")).toBe(
           RequestLimit.toString(),
         );
-        expect(Response?.headers.get("X-Rate-Limit-Remaining")).toMatch("0");
+        expect(Response?.headers.get("X-Rate-Limit-Remaining")).toBe("0");
         expect(Response?.status).toBe(429);
       },
     );

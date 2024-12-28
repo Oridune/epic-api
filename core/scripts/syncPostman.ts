@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { parse } from "flags";
+import { parseArgs as parse } from "flags/parse-args";
 import { join } from "path";
 import e, { ValidationException, Value } from "validator";
 

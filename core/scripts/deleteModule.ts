@@ -1,4 +1,4 @@
-import { parse } from "flags";
+import { parseArgs as parse } from "flags/parse-args";
 import { join } from "path";
 import e, { ValidationException } from "validator";
 

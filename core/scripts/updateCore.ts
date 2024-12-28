@@ -1,6 +1,6 @@
-import { parse } from "flags";
+import { parseArgs as parse } from "flags/parse-args";
 import { dirname, join } from "path";
-import { deepMerge } from "collections/deep_merge.ts";
+import { deepMerge } from "collections";
 import { existsSync, expandGlob } from "dfs";
 import { printStream } from "./lib/utility.ts";
 import e, { ValidationException } from "validator";

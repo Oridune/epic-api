@@ -1,4 +1,4 @@
-import { config } from "config";
+import { parse } from "dotenv";
 import { join } from "path";
 
 export enum EnvType {
@@ -42,12 +42,12 @@ export class Env {
       ...Deno.env.toObject(),
       ...(Env.configuration ??
         (Env.configuration = {
-          ...config({
-            path: join(Deno.cwd(), `./env/.env`),
-          }),
-          ...config({
-            path: join(Deno.cwd(), `./env/.${Env.getType()}.env`),
-          }),
+          ...parse(Deno.readTextFileSync(join(Deno.cwd(), `./env/.env`))),
+          ...parse(
+            Deno.readTextFileSync(
+              join(Deno.cwd(), `./env/.${Env.getType()}.env`),
+            ),
+          ),
         })),
     };
   }
