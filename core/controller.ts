@@ -5,6 +5,7 @@ import {
   Env,
   EnvType,
   Get,
+  getMemoryUsageDetails,
   type IRequestContext,
   type IRoute,
   Loader,
@@ -133,6 +134,28 @@ export class APIController extends BaseController {
         const snapshot = await Deno.open(snapshotPath, { read: true });
 
         return Response.raw(snapshot.readable, "application/octet-stream");
+      },
+    };
+  }
+
+  @Get("/memory/usage/")
+  public memoryUsage(route: IRoute) {
+    // Define Query Schema
+    const QuerySchema = e.deepCast(
+      e.object({
+        project: e.optional(e.record(e.number().min(0).max(1))),
+      }, { allowUnexpectedProps: true }),
+    );
+
+    return {
+      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
+        // Query Validation
+        const Query = await QuerySchema.validate(
+          Object.fromEntries(ctx.router.request.url.searchParams),
+          { name: `${route.scope}.query` },
+        );
+
+        return Response.data(getMemoryUsageDetails(Query));
       },
     };
   }

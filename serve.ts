@@ -1,6 +1,6 @@
 import "./index.d.ts";
 
-import { Loader } from "@Core/common/mod.ts";
+import { getMemoryUsageDetails, Loader } from "@Core/common/mod.ts";
 import { createAppServer } from "@Core/server.ts";
 
 if (import.meta.main) {
@@ -24,4 +24,14 @@ if (import.meta.main) {
   });
 
   console.timeEnd("Server Startup Time:");
+  console.log(
+    "Initial Memory Footprint:",
+    getMemoryUsageDetails({
+      project: {
+        usageMb: 1,
+        rssPercentage: 1,
+        heapPercentage: 1,
+      },
+    }),
+  );
 }
