@@ -38,18 +38,29 @@ export class Env {
    * @returns
    */
   static getAll() {
-    return {
+    let GlobalEnv: Record<string, string>;
+
+    try {
+      GlobalEnv = parse(Deno.readTextFileSync(join(Deno.cwd(), `./env/.env`)));
+    } catch {
+      GlobalEnv = {};
+    }
+
+    let ScopedEnv: Record<string, string>;
+
+    try {
+      ScopedEnv = parse(
+        Deno.readTextFileSync(join(Deno.cwd(), `./env/.${Env.getType()}.env`)),
+      );
+    } catch {
+      ScopedEnv = {};
+    }
+
+    return (Env.configuration ?? (Env.configuration = {
       ...Deno.env.toObject(),
-      ...(Env.configuration ??
-        (Env.configuration = {
-          ...parse(Deno.readTextFileSync(join(Deno.cwd(), `./env/.env`))),
-          ...parse(
-            Deno.readTextFileSync(
-              join(Deno.cwd(), `./env/.${Env.getType()}.env`),
-            ),
-          ),
-        })),
-    };
+      ...GlobalEnv,
+      ...ScopedEnv,
+    }));
   }
 
   /**
