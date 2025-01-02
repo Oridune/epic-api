@@ -35,6 +35,7 @@ Deno.test({
             type: e.in(Object.values(StoreType)),
             connected: e.boolean(),
           }),
+          languages: e.array(e.string()),
         }),
         metrics: e.record(e.any()),
       },

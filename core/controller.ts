@@ -18,6 +18,7 @@ import e from "validator";
 import { type RouterContext } from "oak";
 import { generatePostmanCollection } from "@Core/scripts/syncPostman.ts";
 import { denoConfig } from "@Core/common/denoConfig.ts";
+import { I18next } from "@I18n";
 
 @Controller("/api/", {
   name: "api",
@@ -61,6 +62,7 @@ export class APIController extends BaseController {
           type: Store.type,
           connected: Store.isConnected(),
         },
+        languages: Array.from(I18next.availableLanguages ?? []),
       });
     };
   }
