@@ -3,9 +3,16 @@ export enum SupportedHashAlg {
   SHA_256 = "SHA-256",
   SHA_384 = "SHA-384",
   SHA_512 = "SHA-512",
+  sha_1 = "sha-1",
+  sha_256 = "sha-256",
+  sha_384 = "sha-384",
+  sha_512 = "sha-512",
 }
 
-export const createHash = async (alg: SupportedHashAlg, data: string) => {
+export const createHash = async (
+  alg: SupportedHashAlg | AlgorithmIdentifier,
+  data: string,
+) => {
   const DataUint8 = new TextEncoder().encode(data);
 
   const Hash = Array.from(
