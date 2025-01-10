@@ -9,8 +9,10 @@ export enum SupportedHashAlg {
   sha_512 = "sha-512",
 }
 
+export type HashAlg = SupportedHashAlg | AlgorithmIdentifier;
+
 export const createHash = async (
-  alg: SupportedHashAlg | AlgorithmIdentifier,
+  alg: HashAlg,
   data: string,
 ) => {
   const DataUint8 = new TextEncoder().encode(data);
@@ -22,7 +24,7 @@ export const createHash = async (
   return Hash.map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
-export const createHashBase64 = async (alg: SupportedHashAlg, data: string) => {
+export const createHashBase64 = async (alg: HashAlg, data: string) => {
   const DataUint8 = new TextEncoder().encode(data);
 
   const Hash = String.fromCharCode(
