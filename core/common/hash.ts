@@ -14,3 +14,13 @@ export const createHash = async (alg: SupportedHashAlg, data: string) => {
 
   return Hash.map((b) => b.toString(16).padStart(2, "0")).join("");
 };
+
+export const createHashBase64 = async (alg: SupportedHashAlg, data: string) => {
+  const DataUint8 = new TextEncoder().encode(data);
+
+  const Hash = String.fromCharCode(
+    ...new Uint8Array(await crypto.subtle.digest(alg, DataUint8)),
+  );
+
+  return btoa(Hash);
+};

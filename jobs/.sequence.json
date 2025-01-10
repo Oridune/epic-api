@@ -1,4 +1,8 @@
 {
   "sequence": [],
-  "excludes": []
+  "sequence.development": [],
+  "sequence.test": [],
+  "sequence.production": [],
+  "excludes": [],
+  "sequenceProps": {}
 }
