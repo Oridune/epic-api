@@ -174,7 +174,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
         },
         ...Middlewares,
         async (ctx) => {
-          const TargetVersion = ctx.request.headers.get("x-app-version") ??
+          const TargetVersion = ctx.request.headers.get("x-api-version") ??
             "latest";
 
           const RequestContext: IRequestContext<RouterContext<string>> = {

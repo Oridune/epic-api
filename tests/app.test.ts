@@ -96,11 +96,11 @@ Deno.test({
     );
 
     await t.step(
-      "GET /api/ Should return 200 ok for x-App-version latest",
+      "GET /api/ Should return 200 ok for x-api-version latest",
       async () => {
         const Response = await fetch(new URL("/api/", APIHost), {
           headers: {
-            "x-App-version": "latest",
+            "x-Api-version": "latest",
           },
         });
 
@@ -117,28 +117,62 @@ Deno.test({
     );
 
     await t.step(
-      "GET /api/test/ Should return 200 ok for x-App-version ^1.0.0",
+      "GET /api/test/ Should return 200 ok for x-api-version 1.0.0",
       async () => {
         const Response = await fetch(new URL("/api/test/", APIHost), {
           headers: {
-            "x-App-version": "^1.0.0",
+            "x-Api-version": "1.0.0",
           },
         });
 
         expect(Response?.headers.get("Content-Type")).toMatch(/json/);
         expect(Response?.status).toBe(200);
         expect(await Response?.text()).toMatch(
-          /Latest test was successful from API version 1.0.5!/,
+          /Your test was successful from API version 1\.0\.0\!/,
         );
       },
     );
 
     await t.step(
-      "GET /api/test/ Should return 404 not found for x-App-version 2.0.0",
+      "GET /api/test/ Should return 200 ok for x-api-version 1.0.2",
       async () => {
         const Response = await fetch(new URL("/api/test/", APIHost), {
           headers: {
-            "x-App-version": "2.0.0",
+            "x-Api-version": "1.0.2",
+          },
+        });
+
+        expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+        expect(Response?.status).toBe(200);
+        expect(await Response?.text()).toMatch(
+          /Latest test was successful from API version 1\.0\.2\!/,
+        );
+      },
+    );
+
+    await t.step(
+      "GET /api/test/ Should return 200 ok for x-api-version ^1.0.0",
+      async () => {
+        const Response = await fetch(new URL("/api/test/", APIHost), {
+          headers: {
+            "x-Api-version": "^1.0.0",
+          },
+        });
+
+        expect(Response?.headers.get("Content-Type")).toMatch(/json/);
+        expect(Response?.status).toBe(200);
+        expect(await Response?.text()).toMatch(
+          /Latest test was successful from API version 1\.0\.5\!/,
+        );
+      },
+    );
+
+    await t.step(
+      "GET /api/test/ Should return 404 not found for x-api-version 2.0.0",
+      async () => {
+        const Response = await fetch(new URL("/api/test/", APIHost), {
+          headers: {
+            "x-Api-version": "2.0.0",
           },
         });
 
