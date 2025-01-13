@@ -20,10 +20,10 @@ export const useTranslator = async () => {
     ctx.i18n = I18next;
 
     // Pass the translator to the request context
-    ctx.t = I18next.translator(Language);
+    ctx.t = I18next.translator(Language).bind(I18next);
 
     // Pass the translator to the request context
-    ctx.tvar = I18next.tvar;
+    ctx.tvar = I18next.tvar.bind(I18next);
 
     await next();
   };
