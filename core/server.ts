@@ -220,8 +220,10 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             Events.dispatchRequestEvent(
               `${Route.scope}.${Route.options.name}`,
               {
-                ctx: RequestContext,
-                res: ReturnedResponse,
+                detail: {
+                  ctx: RequestContext,
+                  res: ReturnedResponse,
+                },
               },
             );
 

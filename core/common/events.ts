@@ -7,19 +7,71 @@ export enum EventChannel {
   CUSTOM = "custom",
 }
 
-export interface IListener {
-  remove: (options?: boolean | EventListenerOptions) => void;
+export interface IEventPayload<T> {
+  type: string;
+  detail: T;
 }
 
 export type TEventCallback<T> = (
-  this: IListener,
-  event: CustomEvent<T>,
+  event: IEventPayload<T>,
 ) => void;
 
 /**
  * Events class is specifically created to reduce the complexity of event system in javascript and provide more developer friendly experience.
  */
 export class Events {
+  protected static events: Partial<
+    Record<string, Set<(event: IEventPayload<any>) => any>>
+  > = {};
+
+  protected static _listen(
+    channel: EventChannel,
+    type: string,
+    callback: TEventCallback<any>,
+  ) {
+    const event = Events.createEventId(channel, type);
+    const listeners = Events.events[event] ??= new Set();
+
+    listeners.add(callback);
+  }
+
+  protected static _dispatch(
+    channel: EventChannel,
+    type: string,
+    payload?: Omit<IEventPayload<any>, "type">,
+  ) {
+    const event = Events.createEventId(channel, type);
+    const listeners = Events.events[event];
+
+    if (!listeners) return false;
+
+    listeners.forEach(async (listener) => {
+      try {
+        await listener({
+          type,
+          detail: payload?.detail ?? null,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    return true;
+  }
+
+  protected static _remove(
+    channel: EventChannel,
+    type: string,
+    callback: TEventCallback<any>,
+  ) {
+    const event = Events.createEventId(channel, type);
+    const listeners = Events.events[event];
+
+    if (!listeners) return;
+
+    listeners.delete(callback);
+  }
+
   /**
    * Creates the identifier for an event on a specific channel
    * @param channel Target channel
@@ -32,31 +84,25 @@ export class Events {
 
   /**
    * Triggers api request related events specifically
-   * @param event Type of event to be triggered
-   * @param detail
+   * @param type Type of event to be triggered
+   * @param payload Event payload
    * @returns
    */
-  static dispatchRequestEvent(event: string, detail?: any) {
-    return dispatchEvent(
-      new CustomEvent(Events.createEventId(EventChannel.REQUEST, event), {
-        detail,
-      }),
-    );
+  static dispatchRequestEvent(
+    type: string,
+    payload?: Omit<IEventPayload<any>, "type">,
+  ) {
+    return Events._dispatch(EventChannel.REQUEST, type, payload);
   }
 
   /**
    * Dispatch a custom event
    * @param event Type of event to be triggered
-   * @param eventInitDict Custom event options
+   * @param payload Event payload
    * @returns
    */
-  static dispatch(event: string, eventInitDict?: CustomEventInit<unknown>) {
-    return dispatchEvent(
-      new CustomEvent(
-        Events.createEventId(EventChannel.CUSTOM, event),
-        eventInitDict,
-      ),
-    );
+  static dispatch(type: string, payload?: Omit<IEventPayload<any>, "type">) {
+    return Events._dispatch(EventChannel.CUSTOM, type, payload);
   }
 
   /**
@@ -64,7 +110,6 @@ export class Events {
    * @param channel Specify the channel to listen on
    * @param event Type of event(s) to listen
    * @param callback This callback is called everytime the event(s) is/are triggered.
-   * @param options
    * @returns
    */
   static listen(
@@ -75,33 +120,20 @@ export class Events {
       res: Response | RawResponse;
       err: unknown;
     }>,
-    options?: boolean | AddEventListenerOptions,
-  ): IListener;
+  ): void;
   static listen<T>(
     channel: EventChannel,
     event: string | string[],
     callback: TEventCallback<T>,
-    options?: boolean | AddEventListenerOptions,
-  ): IListener;
+  ): void;
   static listen<T>(
     channel: EventChannel,
     event: string | string[],
     callback: TEventCallback<T>,
-    options?: boolean | AddEventListenerOptions,
   ) {
-    const Listener: IListener = {
-      remove: (opts) => Events.remove(channel, event, callback, opts),
-    };
-
-    (event instanceof Array ? event : [event]).map((ev) =>
-      addEventListener(
-        Events.createEventId(channel, ev),
-        callback.bind(Listener) as () => void,
-        options,
-      )
+    (event instanceof Array ? event : [event]).forEach((type) =>
+      Events._listen(channel, type, callback)
     );
-
-    return Listener;
   }
 
   /**
@@ -109,20 +141,14 @@ export class Events {
    * @param channel From which channel to be removed
    * @param event Type of event(s) to be removed
    * @param callback Provide the reference to the callback of the removable event(s)
-   * @param options
    */
   static remove<T>(
     channel: EventChannel,
     event: string | string[],
     callback: TEventCallback<T>,
-    options?: boolean | EventListenerOptions,
   ) {
-    (event instanceof Array ? event : [event]).map((ev) =>
-      removeEventListener(
-        Events.createEventId(channel, ev),
-        callback as () => void,
-        options,
-      )
+    (event instanceof Array ? event : [event]).forEach((type) =>
+      Events._remove(channel, type, callback)
     );
   }
 }
