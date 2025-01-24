@@ -27,7 +27,7 @@
       "\t// Define Body Schema",
       "\tconst BodySchema = e.object({});\n",
       "\treturn new Versioned().add(\"1.0.0\", {",
-      "\t\tpostman: () => ({",
+      "\t\tshape: () => ({",
       "\t\t\tquery: QuerySchema.toSample(),",
       "\t\t\tparams: ParamsSchema.toSample(),",
       "\t\t\tbody: BodySchema.toSample(),",

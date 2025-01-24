@@ -58,11 +58,11 @@ export default class UsersController extends BaseController {
     const BodySchema = e.object({});
 
     return {
-      postman: {
+      shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
-      },
+      }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Start coding here...
 
