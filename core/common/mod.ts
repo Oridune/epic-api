@@ -11,6 +11,7 @@ export * from "./response.ts";
 export * from "./transactionQueue.ts";
 export * from "./store.ts";
 export * from "./fetch.ts";
+export * from "./axios.ts";
 export * from "./respondWith.ts";
 export * from "./hash.ts";
 export * from "./flags.ts";

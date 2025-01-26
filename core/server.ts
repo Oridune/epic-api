@@ -28,6 +28,7 @@ import { join } from "path";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { gzip } from "oak:compress";
+import { PORT } from "@Core/constants.ts";
 
 import { responseTime } from "@Core/middlewares/responseTime.ts";
 import { useTranslator } from "@Core/middlewares/useTranslator.ts";
@@ -387,7 +388,7 @@ export const createAppServer = () => {
         Context.app.addEventListener("listen", listenHandler);
 
         Context.app.listen({
-          port: parseInt(Env.getSync("PORT", true) || "3742"),
+          port: PORT,
           signal: Context.abortController.signal,
         });
       })();
