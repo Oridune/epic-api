@@ -20,7 +20,6 @@
     "mongo": "jsr:@oridune/mongo@0.1.29",
     "validator": "jsr:@oridune/mongo@0.1.29/validator",
     "queue": "jsr:@oridune/queue@0.0.6",
-    "axios": "npm:axios@^1.7.9",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.7/prompt/mod.ts",
     "oak": "jsr:@oak/oak@17.1.3",
     "oak:logger": "https://deno.land/x/oak_logger@1.0.0/mod.ts",
