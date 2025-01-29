@@ -243,17 +243,27 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
                   "sequentialRequest",
                   Route.scope,
                   Route.options.name,
+                  "key",
                   IdempotencyKey,
                 ],
                 async (release) => {
+                  let error;
+
                   try {
                     await handle();
-                    await release();
-
-                    resolve(0);
                   } catch (e) {
-                    reject(e);
+                    error = e;
                   }
+
+                  if (error) {
+                    reject(error);
+                  } else {
+                    resolve(0);
+                  }
+
+                  await release().catch(() => {
+                    // Do nothing on lock release error...
+                  });
                 },
                 () => {
                   // Do nothing on lock release...
