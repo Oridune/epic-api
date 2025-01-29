@@ -255,15 +255,15 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
                     error = e;
                   }
 
+                  await release().catch(() => {
+                    // Do nothing on lock release error...
+                  });
+
                   if (error) {
                     reject(error);
                   } else {
                     resolve(0);
                   }
-
-                  await release().catch(() => {
-                    // Do nothing on lock release error...
-                  });
                 },
                 () => {
                   // Do nothing on lock release...
