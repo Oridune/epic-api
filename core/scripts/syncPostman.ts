@@ -299,6 +299,7 @@ export const syncPostman = async (options: {
   name?: string;
   description?: string;
   version?: string;
+  group?: string;
 }) => {
   try {
     const Options = await e
@@ -308,31 +309,38 @@ export const syncPostman = async (options: {
         name: e.optional(e.string()),
         description: e.optional(e.string()),
         version: e.optional(e.string()).default("latest"),
+        group: e.optional(e.string()),
       })
       .validate(options);
 
     const Routes = await new Server(APIController).prepare((routes) => {
-      const RoutesTableData: Array<{
-        Type: string;
-        Method: string;
-        Permission: string;
-        Endpoint: string;
-      }> = [];
-
-      routes.forEach((Route) =>
-        RoutesTableData.push({
-          Type: "Endpoint",
-          Method: Route.options.method.toUpperCase(),
-          Permission: `${Route.scope}.${Route.options.name}`,
-          Endpoint: Route.endpoint,
-        })
-      );
-
-      // Log routes list
-      if (RoutesTableData) console.table(RoutesTableData);
+      if (Options.group) {
+        return routes.filter((route) => route.options.group === Options.group);
+      }
 
       return routes;
     });
+
+    const RoutesTableData: Array<{
+      Type: string;
+      Group?: string;
+      Method: string;
+      Permission: string;
+      Endpoint: string;
+    }> = [];
+
+    Routes.forEach((Route) =>
+      RoutesTableData.push({
+        Type: "Endpoint",
+        Group: Route.options.group,
+        Method: Route.options.method.toUpperCase(),
+        Permission: `${Route.scope}.${Route.options.name}`,
+        Endpoint: Route.endpoint,
+      })
+    );
+
+    // Log routes list
+    if (RoutesTableData) console.table(RoutesTableData);
 
     const PostmanCollectionObject = await generatePostmanCollection(Routes, {
       name: Options.name ?? denoConfig.title ?? Options.collectionId,
@@ -376,8 +384,20 @@ export const syncPostman = async (options: {
 };
 
 if (import.meta.main) {
-  const { key, k, collectionId, c, name, d, description, n, version, v } =
-    parse(Deno.args);
+  const {
+    key,
+    k,
+    collectionId,
+    c,
+    name,
+    d,
+    description,
+    n,
+    version,
+    v,
+    group,
+    g,
+  } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["controllers", "plugins"] });
 
@@ -387,6 +407,7 @@ if (import.meta.main) {
     name: name ?? n,
     description: description ?? d,
     version: version ?? v,
+    group: group ?? g,
   });
 
   Deno.exit();

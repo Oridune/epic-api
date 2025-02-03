@@ -53,7 +53,7 @@ export class APIController extends BaseController {
   @Get("/")
   public home() {
     return () => {
-      return Response.message("Hurry! The API is online!").data({
+      return Response.message("Yahoo! The API is online!").data({
         environment: Env.getType(),
         database: {
           connected: Database.isConnected(),
