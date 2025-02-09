@@ -27,7 +27,6 @@ import { ApplicationListenEvent } from "oak/application";
 import { join } from "path";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
-import { gzip } from "oak:compress";
 import { PORT } from "@Core/constants.ts";
 
 import { responseTime } from "@Core/middlewares/responseTime.ts";
@@ -45,7 +44,6 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
   app.use(await useTranslator());
   app.use(errorHandler());
-  app.use(gzip());
   app.use(CORS());
 
   if (await Env.enabled("RATE_LIMITER_ENABLED")) {

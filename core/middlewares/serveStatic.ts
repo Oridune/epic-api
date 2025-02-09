@@ -1,16 +1,25 @@
 // deno-lint-ignore-file no-explicit-any
-import { send, Context, Status } from "oak";
+import { Context, send, Status } from "oak";
 
-export const serveStatic =
-  (prefix: string, root: string) =>
-  async (
+export const serveStatic = (prefix: string, root: string) => {
+  const Prefix = new RegExp(`^/${prefix}/?`);
+
+  const WWWItems = Deno.readDirSync(root);
+
+  let IndexFile = "index.html";
+
+  for (const item of WWWItems) {
+    if (/^index.*/.test(item.name)) {
+      IndexFile = item.name;
+      break;
+    }
+  }
+
+  return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
-    next: () => Promise<unknown>
+    next: () => Promise<unknown>,
   ) => {
-    const Prefix = new RegExp(`^/${prefix}/?`);
-
     if (Prefix.test(ctx.request.url.pathname)) {
-      const IndexFile = "index.html";
       const SendOptions = { root, index: IndexFile };
       const FilePath = ctx.request.url.pathname.replace(Prefix, "/");
 
@@ -21,9 +30,10 @@ export const serveStatic =
             IsNotFound ? Status.NotFound : Status.Forbidden,
             IsNotFound
               ? `File not found! Invalid path '${FilePath}'.`
-              : undefined
+              : undefined,
           );
         })
       );
     } else await next();
   };
+};
