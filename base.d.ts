@@ -5,11 +5,16 @@ import "./plugins.d.ts";
 import { I18next } from "@I18n";
 import { Context } from "oak/context";
 import { RouterContext } from "oak/router";
-import { IRequestHandlerObjectExtendor } from "@Core/common/controller/base.ts";
+import { IRequestHandlerObjectExtender } from "@Core/common/controller/base.ts";
 import { IValidatorJSONSchema } from "validator";
 
 declare module "oak/context" {
   export interface Context {
+    /**
+     * Requested language
+     */
+    lang: string;
+
     /**
      * Access the I18next class constructor
      */
@@ -46,7 +51,7 @@ type Shape = {
 };
 
 declare module "@Core/common/controller/base.ts" {
-  interface IRequestHandlerObjectExtendor {
+  interface IRequestHandlerObjectExtender {
     idempotencyKey?:
       | string
       | ((

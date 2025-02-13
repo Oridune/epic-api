@@ -41,15 +41,15 @@ export interface IRoute {
   options: IRouteOptions;
 }
 
-export interface IRouterContextExtendor {}
+export interface IRouterContextExtender {}
 
-export interface IRequestHandlerObjectExtendor {}
+export interface IRequestHandlerObjectExtender {}
 
 export interface IRequestContext<RouterContext = any> {
   requestedVersion: string;
   version: string;
   id: string;
-  router: RouterContext & IRouterContextExtendor;
+  router: RouterContext & IRouterContextExtender;
   routes: IRoute[];
   options: IRouteOptions;
 }
@@ -61,7 +61,7 @@ export type TRequestHandler = (
   ...args: any[]
 ) => Promise<TResponse> | TResponse;
 
-export type TRequestHandlerObject = IRequestHandlerObjectExtendor & {
+export type TRequestHandlerObject = IRequestHandlerObjectExtender & {
   handler: TRequestHandler;
   [K: string]: any;
 };

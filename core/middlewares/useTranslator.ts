@@ -16,6 +16,9 @@ export const useTranslator = async () => {
     );
     const Language = Languages[0]?.code;
 
+    // Set request language
+    ctx.lang = Language;
+
     // Pass the translator instance to the request context
     ctx.i18n = I18next;
 
