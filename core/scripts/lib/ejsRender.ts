@@ -7,7 +7,7 @@ import {
   pascalCase,
   pathCase,
   snakeCase,
-} from "stringcase/mod.ts";
+} from "stringcase";
 
 export const ejsRender = (content: string, data?: ejs.Data) => {
   return ejs.render(content, {

@@ -11,7 +11,7 @@ import {
   pascalCase,
   pathCase,
   snakeCase,
-} from "stringcase/mod.ts";
+} from "stringcase";
 import { Loader } from "@Core/common/loader.ts";
 import { ModuleType } from "@Core/scripts/createModule.ts";
 

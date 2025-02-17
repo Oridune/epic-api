@@ -13,7 +13,7 @@ import {
   pascalCase,
   pathCase,
   snakeCase,
-} from "stringcase/mod.ts";
+} from "stringcase";
 
 export const renameModule = async (options: {
   env?: SupportedEnv;

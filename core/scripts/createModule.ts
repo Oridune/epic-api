@@ -11,7 +11,7 @@ import {
   pascalCase,
   pathCase,
   snakeCase,
-} from "stringcase/mod.ts";
+} from "stringcase";
 import { Loader, SupportedEnv } from "@Core/common/loader.ts";
 import { EnvType } from "@Core/common/env.ts";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
