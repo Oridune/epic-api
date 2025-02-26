@@ -225,8 +225,12 @@ export const generateERD = async (options?: {
     const Options = await e
       .object(
         {
-          includes: e.optional(e.cast(e.array(e.string()))),
-          excludes: e.optional(e.cast(e.array(e.string()))),
+          includes: e.optional(
+            e.array(e.string(), { cast: true, splitter: /\s*,\s*/ }),
+          ),
+          excludes: e.optional(
+            e.array(e.string(), { cast: true, splitter: /\s*,\s*/ }),
+          ),
         },
         { allowUnexpectedProps: true },
       )
