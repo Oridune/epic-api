@@ -148,7 +148,9 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
     for (const Route of routes) {
       RoutesTableData.push({
         Type: "Endpoint",
-        Group: Route.options.group,
+        Group: Route.options.group instanceof Array
+          ? Route.options.group.join(", ")
+          : Route.options.group,
         Method: Route.options.method.toUpperCase(),
         Permission: `${Route.scope}.${Route.options.name}`,
         Endpoint: Route.endpoint,
