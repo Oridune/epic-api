@@ -315,7 +315,13 @@ export const syncPostman = async (options: {
 
     const Routes = await new Server(APIController).prepare((routes) => {
       if (Options.group) {
-        return routes.filter((route) => route.options.group === Options.group);
+        return routes.filter((route) => {
+          const group = route.options.group instanceof Array
+            ? route.options.group
+            : [route.options.group];
+
+          return group.includes(Options.group);
+        });
       }
 
       return routes;
@@ -332,7 +338,7 @@ export const syncPostman = async (options: {
     Routes.forEach((Route) =>
       RoutesTableData.push({
         Type: "Endpoint",
-        Group: Route.options.group,
+        Group: Options.group,
         Method: Route.options.method.toUpperCase(),
         Permission: `${Route.scope}.${Route.options.name}`,
         Endpoint: Route.endpoint,

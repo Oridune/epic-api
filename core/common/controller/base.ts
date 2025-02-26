@@ -27,7 +27,7 @@ export interface IRouteOptions {
   description?: string;
   scope?: string;
   method: RequestMethod;
-  group?: string;
+  group?: string | string[];
   path: string;
   buildRequestHandler: TBuildRequestHandler;
   controller: typeof BaseController;

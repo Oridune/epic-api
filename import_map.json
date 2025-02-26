@@ -29,7 +29,7 @@
     "oak:cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
     "u-semver": "npm:u-semver@^0.7.1",
     "ts-reset": "npm:@total-typescript/ts-reset@^0.6.1",
-    "redis": "npm:ioredis@^5.4.2",
+    "redis": "npm:ioredis@^5.5.0",
     "i18next": "https://deno.land/x/i18next@v24.2.0/index.js",
     "lngParser": "npm:accept-language-parser@^1.5.0"
   },
