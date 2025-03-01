@@ -1,9 +1,9 @@
 // deno-lint-ignore-file require-await
 import { Env } from "@Core/common/env.ts";
-import { StoreBase, StoreItem } from "./base.ts";
+import { IStoreItem, StoreBase } from "./base.ts";
 import { LRUCache } from "./utils/lru.ts";
 
-export const Cache = new LRUCache<string, StoreItem>(
+export const Cache = new LRUCache<string, IStoreItem>(
   parseInt(Env.getSync("STORE_LRU_CAPACITY", true) ?? "1000"),
 );
 
@@ -39,14 +39,14 @@ export class MapStore extends StoreBase {
         __value: value,
         timestamp: CurrentTime,
         expiresInMs: options?.expiresInMs,
-      } satisfies StoreItem,
+      } satisfies IStoreItem,
     );
 
     // if (this.isCleanupRequired())
     this.cleanup();
   }
 
-  private static _get(key: string): StoreItem | null {
+  private static _get(key: string): IStoreItem | null {
     const Value = this.map.get(key) ?? null;
 
     if (this.isExpired(Value)) {
@@ -124,7 +124,7 @@ export class MapStore extends StoreBase {
 
   static isCleanupRequired = () => this.usedMemoryPercentage() >= 30;
 
-  static isExpired = (value?: StoreItem | null, timestamp = Date.now()) => {
+  static isExpired = (value?: IStoreItem | null, timestamp = Date.now()) => {
     return (
       typeof value?.expiresInMs === "number" &&
       timestamp >= (value.timestamp ?? 0) + value.expiresInMs

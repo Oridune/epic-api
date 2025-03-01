@@ -2,5 +2,8 @@
   "deno.enable": true,
   "deno.lint": true,
   "deno.unstable": true,
-  "postman.settings.dotenv-detection-notification-visibility": false
+  "postman.settings.dotenv-detection-notification-visibility": false,
+  "cSpell.words": [
+    "ohash"
+  ]
 }

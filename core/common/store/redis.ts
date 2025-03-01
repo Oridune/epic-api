@@ -1,5 +1,5 @@
 import { Env } from "../env.ts";
-import { StoreBase, StoreItem } from "./base.ts";
+import { IStoreItem, StoreBase } from "./base.ts";
 import { Redis } from "redis";
 
 export const urlToRedisOptions = (url: string) => {
@@ -59,12 +59,12 @@ export class RedisStore extends StoreBase {
     } else await this.redis.set(this.resolveKey(key), Value);
   }
 
-  private static async _get(key: string): Promise<StoreItem | null> {
+  private static async _get(key: string): Promise<IStoreItem | null> {
     if (!this.redis) throw new Error(`No redis connection!`);
 
     return (this.deserialize(
       await this.redis.get(this.resolveKey(key)),
-    ) as StoreItem) ??
+    ) as IStoreItem) ??
       null;
   }
 

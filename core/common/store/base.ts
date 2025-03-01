@@ -3,17 +3,20 @@ import { Env } from "@Core/common/env.ts";
 import { LRUCache } from "./utils/lru.ts";
 import DenoConfig from "../../../deno.json" with { type: "json" };
 import type { Redis } from "redis";
+import { hash } from "ohash";
 
-export interface StoreItem {
+export interface IStoreItem {
   __value: unknown;
   timestamp?: number;
   expiresInMs?: number;
 }
 
+export type TStoreKey = string | number | object;
+
 export abstract class StoreLike {
   static redis?: Redis;
   static denoKv?: Deno.Kv;
-  static map?: LRUCache<string, StoreItem>;
+  static map?: LRUCache<string, IStoreItem>;
 
   /**
    * Is store connected?
@@ -116,17 +119,17 @@ export class StoreBase extends StoreLike {
         __value: value,
         timestamp: CurrentTime,
         expiresInMs: options?.expiresInMs,
-      } satisfies StoreItem,
+      } satisfies IStoreItem,
     );
   }
 
-  protected static deserialize(value: unknown): StoreItem {
+  protected static deserialize(value: unknown): IStoreItem {
     if (typeof value === "string" && value) {
       try {
         const RawValue = JSON.parse(value);
 
         if (typeof RawValue === "object" && RawValue && "__value" in RawValue) {
-          return RawValue as StoreItem;
+          return RawValue as IStoreItem;
         }
       } catch {
         // Do nothing...
@@ -141,6 +144,18 @@ export class StoreBase extends StoreLike {
     return [DenoConfig.id, Env.getType(), "store", ...KeyParts].join(":");
   }
 
+  protected static resolveCacheKey(keys: TStoreKey | TStoreKey[]) {
+    const Keys = keys instanceof Array ? keys : [keys];
+
+    const ResolvedKeys = Keys.map((key) => {
+      if (["string", "number"].includes(typeof key)) return key.toString();
+
+      return hash(key);
+    });
+
+    return ResolvedKeys.join(":");
+  }
+
   /**
    * A utility method to cache any computed results and make the process faster.
    * @param key
@@ -149,7 +164,7 @@ export class StoreBase extends StoreLike {
    * @returns
    */
   static async cache<T>(
-    key: string | string[],
+    keys: TStoreKey | TStoreKey[],
     callback: () =>
       | T
       | { result: T; expiresInMs: number }
@@ -159,7 +174,7 @@ export class StoreBase extends StoreLike {
       expiresInMs?: number;
     },
   ) {
-    const Key = key instanceof Array ? key.join(":") : key;
+    const Key = this.resolveCacheKey(keys);
     const Options = typeof options === "number"
       ? { expiresInMs: options }
       : options;

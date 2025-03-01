@@ -1,5 +1,5 @@
 import { Env } from "../env.ts";
-import { StoreBase, StoreItem } from "./base.ts";
+import { IStoreItem, StoreBase } from "./base.ts";
 
 export class DenoKvStore extends StoreBase {
   static denoKvConnectionString = Env.getSync(
@@ -37,15 +37,15 @@ export class DenoKvStore extends StoreBase {
         __value: value,
         timestamp: Date.now(),
         expiresInMs: options?.expiresInMs,
-      } satisfies StoreItem,
+      } satisfies IStoreItem,
       { expireIn: options?.expiresInMs },
     );
   }
 
-  private static async _get(key: string): Promise<StoreItem | null> {
+  private static async _get(key: string): Promise<IStoreItem | null> {
     if (!this.denoKv) throw new Error(`Deno Kv is not connected!`);
 
-    return (await this.denoKv.get<StoreItem>([this.resolveKey(key)])).value;
+    return (await this.denoKv.get<IStoreItem>([this.resolveKey(key)])).value;
   }
 
   static override async get<T extends unknown>(key: string): Promise<T | null> {
@@ -77,7 +77,7 @@ export class DenoKvStore extends StoreBase {
   ) {
     if (!this.denoKv) throw new Error(`Deno Kv is not connected!`);
 
-    const Value = await this.denoKv.get<StoreItem>([this.resolveKey(key)]);
+    const Value = await this.denoKv.get<IStoreItem>([this.resolveKey(key)]);
 
     const Count = ((Value.value?.__value as number) ?? 0) +
       (options?.incrBy ?? 1);
@@ -86,7 +86,7 @@ export class DenoKvStore extends StoreBase {
       __value: Count,
       timestamp: Value.value?.timestamp ?? Date.now(),
       expiresInMs: Value.value?.expiresInMs ?? options?.expiresInMs,
-    } satisfies StoreItem;
+    } satisfies IStoreItem;
 
     await this.denoKv.atomic().check(Value).set(
       [this.resolveKey(key)],
