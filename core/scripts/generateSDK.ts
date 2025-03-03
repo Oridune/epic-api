@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { parseArgs as parse } from "flags/parse-args";
 import { dirname, join } from "path";
-import { expandGlob } from "dfs";
+import { exists, expandGlob } from "dfs";
 import e, { IValidatorJSONSchema, ValidationException } from "validator";
 
 import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
@@ -147,12 +147,14 @@ export const syncSDKExtensions = async (opts: {
   extensionsDir: string;
   sdkDir: string;
 }) => {
+  const SDKExtensionsDir = join(opts.sdkDir, "src/extensions");
+
+  if (!await exists(SDKExtensionsDir)) return [];
+
   const Files = expandGlob("**/**/*", {
     root: opts.extensionsDir,
     globstar: true,
   });
-
-  const SDKExtensionsDir = join(opts.sdkDir, "src/extensions");
 
   for await (const File of Files) {
     if (
