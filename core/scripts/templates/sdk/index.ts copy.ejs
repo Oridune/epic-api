@@ -1,0 +1,205 @@
+/**
+ * Copyright © Oridune <%- new Date().getFullYear() %>
+ *
+ * This is a generated file. Do not edit the contents of this file!
+ */
+
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { encode as base64encode } from "base64-arraybuffer";
+import { sha256 } from "js-sha256";
+
+import type { TSDKOptions, TAuthorization, TResponseShape } from "./types.ts";
+
+<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
+import { <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
+<% } -%>
+
+export class EpicSDK {
+    protected static _refreshRequest?: Promise<TAuthorization>;
+
+    protected static generateRandomString(length: number): string {
+        const characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+          
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            result += characters.charAt(randomIndex);
+        }
+          
+        return result;
+    }
+    
+    protected static generateCodeChallenge() {
+        const verifier = this.generateRandomString(128);
+    
+        return {
+            verifier,
+            method: "sha256",
+            challenge: base64encode(sha256.arrayBuffer(verifier))
+                .replace(/\+/g, "-")
+                .replace(/\//g, "_")
+                .replace(/=/g, ""),
+        };        
+    }
+
+    static options?: TSDKOptions;
+    static client?: AxiosInstance;
+    static auth?: TAuthorization;
+    static accountId?: string;
+    static permissions?: Set<string>;
+
+    static init(options: TSDKOptions) {
+        this.options = options;
+        this.client = axios.create(options);
+
+        this.client.interceptors.request.use(
+            async (config) => {
+              if (!config.headers["Authorization"] && this.auth) {
+                const timeInSeconds = Date.now() / 1000;
+
+                if(this.auth.access.expiresAtSeconds <= timeInSeconds) {
+                    if(!this.auth.refresh || this.auth.refresh.expiresAtSeconds <= timeInSeconds) {
+                        throw new Error("Access token expired!");
+                    }
+
+                    await this.refreshAccessToken(this.auth.refresh.token);
+                }
+
+                config.headers["Authorization"] = `Bearer ${this.auth.access.token}`;
+              }
+
+              return config;
+            },
+            (error) => {
+              return Promise.reject(error);
+            }
+        );
+    }
+
+    static oauth2Login(
+        appId: string,
+        opts: {
+            callbackUrl: string;
+            theme?: "dark" | "light" | "system";
+            lng?: string;
+            username?: string;
+            state?: Record<string, any>;
+        },
+    ) {
+        const { verifier, method, challenge } = this.generateCodeChallenge();
+
+        const url = new URL(
+            `/oauth/login
+            ?appId=${appId}
+            &codeChallengeMethod=${method}
+            &codeChallenge=${challenge}
+            &callbackURL=${opts.callbackUrl}
+            &state=${btoa(JSON.stringify(opts.state))}
+            &theme=${opts.theme}
+            &lng=${opts.lng}
+            ${opts.username ? `&username=${opts.username}` : ""}`,
+            this.options?.baseURL,
+        ).toString();
+
+        return {
+            verifier,
+            url,
+        };
+    }
+
+    static async getAccessToken(code: string, verifier: string, opts: {
+        deviceToken?: string;
+    }) {
+        const response = await this.client?.post("/api/oauth/exchange/code", {
+            code,
+            codeVerifier: verifier,
+            fcmDeviceToken: opts.deviceToken,
+        });
+
+        if (response?.status === 200) {
+            if (response.data.status) return this.auth = response.data.data as TAuthorization;
+            else {
+                throw new Error(
+                    response.data.messages[0].message ??
+                        "Your request was failed!",
+                );
+            }
+        } else throw new Error("Unable to get access token!");
+    }
+
+    static async refreshAccessToken(refreshToken: string) {
+        return this._refreshRequest ??= new Promise((resolve, reject) => {
+            this.client?.post("/api/oauth/refresh", { refreshToken })
+                .then((response) => {
+                    if (response?.status === 200) {
+                        if (response.data.status) {
+                            resolve(this.auth = response.data.data);
+                        } else {
+                            reject(
+                                new Error(
+                                    response.data.messages[0].message ??
+                                        "Your request was failed!",
+                                ),
+                            );
+                        }
+                    } else {reject(
+                            new Error("Unable to refresh access token!"),
+                        );}
+                })
+                .catch(reject)
+                .finally(() => {
+                    delete this._refreshRequest;
+                });
+        });
+    }
+
+    static isPermitted(scope: string, permission?: string) {
+        if(!(this.permissions instanceof Set))
+            return true;
+
+        return this.permissions.has(scope) || this.permissions.has(`${scope}.${permission}`);
+    }
+
+    static checkPermission(scope: string, permission?: string) {
+        if(!this.isPermitted(scope, permission))
+            throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
+    }
+
+    static resolveResponse<T>(executor: () => Promise<AxiosResponse>) {
+        const executors = {
+            get raw() {
+                return executor();
+            },
+            get res() {
+                return new Promise<TResponseShape<T>>((resolve, reject) => 
+                    executors.raw
+                        .then(res => {
+                            // Check if the data object exists
+                            if (!res.data || typeof res.data !== 'object')
+                                reject(new Error(`Response data is missing or invalid!`));
+
+                            else if(!res.data.status)
+                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
+
+                            else resolve(res.data);
+                        })
+                        .catch(err => reject(err))
+                );
+            },
+            get data() {
+                return new Promise<T>((resolve, reject) => 
+                    executors.res
+                        .then((res) => resolve(res.data))
+                        .catch(reject)
+                );
+            }
+        }
+
+        return executors;
+    }
+
+<% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
+    static <%- Scope %> = <%- Scope %>Module(this);
+<% } -%>
+}

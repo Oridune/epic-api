@@ -4,37 +4,80 @@
  * This is a generated file. Do not edit the contents of this file!
  */
 
-import axios, { AxiosInstance } from "axios";
-import type { TSDKOptions } from "./types.ts";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+
+import type { TSDKOptions, TResponseShape } from "./types";
 
 <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
-import { IController$<%- Scope %>, <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
+import { <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
+<% } -%>
+
+<% for (const {name, main} of extensions) { -%>
+import * as <%- name %>Ext from "<%- main %>";
 <% } -%>
 
 export class EpicSDK {
     static options?: TSDKOptions;
     static client?: AxiosInstance;
-    static accessToken?: string;
     static permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
-        EpicSDK.options = options;
-        EpicSDK.client = axios.create(options);
+        this.options = options;
+        this.client = axios.create(options);
     }
 
     static isPermitted(scope: string, permission?: string) {
-        if(!(EpicSDK.permissions instanceof Set))
+        if(!(this.permissions instanceof Set))
             return true;
 
-        return EpicSDK.permissions.has(scope) || EpicSDK.permissions.has(`${scope}.${permission}`);
+        return this.permissions.has(scope) || this.permissions.has(`${scope}.${permission}`);
     }
 
     static checkPermission(scope: string, permission?: string) {
-        if(!EpicSDK.isPermitted(scope, permission))
+        if(!this.isPermitted(scope, permission))
             throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
     }
 
+    static resolveResponse<T>(executor: () => Promise<AxiosResponse>) {
+        const executors = {
+            get raw() {
+                return executor();
+            },
+            get res() {
+                return new Promise<TResponseShape<T>>((resolve, reject) => 
+                    executors.raw
+                        .then(res => {
+                            // Check if the data object exists
+                            if (!res.data || typeof res.data !== 'object')
+                                reject(new Error(`Response data is missing or invalid!`));
+
+                            else if(!res.data.status)
+                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
+
+                            else resolve(res.data);
+                        })
+                        .catch(err => reject(err))
+                );
+            },
+            get data() {
+                return new Promise<T>((resolve, reject) => 
+                    executors.res
+                        .then((res) => resolve(res.data))
+                        .catch(reject)
+                );
+            }
+        }
+
+        return executors;
+    }
+
 <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
-    static <%- Scope %>: IController$<%- Scope %> = <%- Scope %>Module(EpicSDK);
+    static <%- Scope %> = <%- Scope %>Module(this);
 <% } -%>
+
+    static extensions = {
+<% for (const {name} of extensions) { -%>
+        <%- name %>: <%- name %>Ext,
+<% } -%>
+    }
 }

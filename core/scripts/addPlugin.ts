@@ -145,7 +145,9 @@ export const setupPlugin = async (opts: {
     for await (const Entry of Glob) {
       // Do not copy any file or folder from this list
       if (
-        !Entry.isDirectory && [
+        !Entry.isDirectory &&
+        // Do not copy these files and folders
+        [
           /^(\\|\/)?(\.git)(\\|\/)?/,
           /^(\\|\/)?(\.vscode)(\\|\/)?/,
           /^(\\|\/)?(\.husky)(\\|\/)?/,
@@ -160,7 +162,6 @@ export const setupPlugin = async (opts: {
           /^(\\|\/)?(deno.json)/,
           /^(\\|\/)?(\.lintstagedrc.json)/,
           /^(\\|\/)?(\.dockerignore)/,
-          /^(\\|\/)?(docker-compose.yml)/,
           /^(\\|\/)?(docker-compose.yml)/,
           /^(\\|\/)?(Dockerfile)/,
           /^(\\|\/)?(new.README.md)/,

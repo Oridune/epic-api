@@ -1,4 +1,4 @@
-import type { ObjectId, TRequestOptions, TResponseShape, TRequestExecutors } from "../types.ts";
+import type { ObjectId, TRequestOptions, TResponseShape, TRequestExecutors } from "../types";
 
 export interface IController$<%- scope %> {
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
@@ -31,10 +31,10 @@ export interface IController$<%- scope %> {
     <% } -%>
 }
 
-export const <%- scope %>Module = (sdk: any) => ({
+export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
     <%- Name %>(data?: any) {
-        const executor = async (): Promise<any> => {
+        return sdk.resolveResponse(async () => {
             sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
             const res = await sdk.client?.request({
@@ -43,51 +43,12 @@ export const <%- scope %>Module = (sdk: any) => ({
                 params: data?.query,
                 data: data?.body,
                 ...data?.axiosConfig,
-                ...(typeof sdk.accessToken === "string"
-                    ? {
-                        headers: {
-                            ...data?.axiosConfig?.headers,
-                            Authorization: `Bearer ${sdk.accessToken}`,
-                        },
-                    }
-                    : {}),
             });
 
             if (!res) throw new Error(`Client not initialized!`, { cause: res });
 
             return res;
-        }
-
-        const executors = {
-            get raw() {
-                return executor();
-            },
-            get res() {
-                return new Promise<any>((resolve, reject) => 
-                    executors.raw
-                        .then(res => {
-                            // Check if the data object exists
-                            if (!res.data || typeof res.data !== 'object')
-                                reject(new Error(`Response data is missing or invalid!`));
-
-                            else if(!res.data.status)
-                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
-
-                            else resolve(res.data);
-                        })
-                        .catch(err => reject(err))
-                );
-            },
-            get data() {
-                return new Promise<any>((resolve, reject) => 
-                    executors.res
-                        .then((res) => resolve(res.data))
-                        .catch(err => reject(err))
-                );
-            }
-        }
-
-        return executors;
+        });
     },
     <% } %>
 });
