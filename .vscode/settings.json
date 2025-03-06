@@ -4,6 +4,7 @@
   "deno.unstable": true,
   "postman.settings.dotenv-detection-notification-visibility": false,
   "cSpell.words": [
+    "childs",
     "ohash"
   ]
 }

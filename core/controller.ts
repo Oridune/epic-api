@@ -19,6 +19,8 @@ import { type RouterContext } from "oak";
 import { generatePostmanCollection } from "@Core/scripts/syncPostman.ts";
 import { denoConfig } from "@Core/common/denoConfig.ts";
 import { I18next } from "@I18n";
+import { StoreType } from "@Core/common/store.ts";
+import { responseValidator } from "@Core/common/validators.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -52,18 +54,33 @@ import { I18next } from "@I18n";
 export class APIController extends BaseController {
   @Get("/")
   public home() {
-    return () => {
-      return Response.message("Yahoo! The API is online!").data({
-        environment: Env.getType(),
-        database: {
-          connected: Database.isConnected(),
-        },
-        store: {
-          type: Store.type,
-          connected: Store.isConnected(),
-        },
-        languages: Array.from(I18next.availableLanguages ?? []),
-      });
+    return {
+      shape: () => ({
+        return: responseValidator(e.object({
+          environment: e.in(Object.values(EnvType)),
+          database: e.object({
+            connected: e.boolean(),
+          }),
+          store: e.object({
+            type: e.in(Object.values(StoreType)),
+            connected: e.boolean(),
+          }),
+          languages: e.array(e.string()),
+        })).toSample(),
+      }),
+      handler: () => {
+        return Response.message("Yahoo! The API is online!").data({
+          environment: Env.getType(),
+          database: {
+            connected: Database.isConnected(),
+          },
+          store: {
+            type: Store.type,
+            connected: Store.isConnected(),
+          },
+          languages: Array.from(I18next.availableLanguages ?? []),
+        });
+      },
     };
   }
 

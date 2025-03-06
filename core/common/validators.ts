@@ -1,4 +1,5 @@
-import e from "validator";
+// deno-lint-ignore-file no-explicit-any
+import e, { ObjectValidator, RecordValidator } from "validator";
 
 export const queryValidator = () =>
   e.deepCast(e.object(
@@ -24,3 +25,29 @@ export const queryValidator = () =>
     },
     { allowUnexpectedProps: true },
   ));
+
+export const responseValidator = <
+  T extends (ObjectValidator<any> | RecordValidator<any>),
+>(data?: T) =>
+  e.object({
+    status: e.boolean(),
+    messages: e.optional(e.array(
+      e.partial(
+        e.object({
+          message: e.string(),
+          location: e.string(),
+          name: e.string(),
+        }).rest(e.any()),
+      ),
+    )),
+    ...(data ? { data } : {}),
+    metrics: e.optional(
+      e.partial(
+        e.object({
+          handledInMs: e.number(),
+          respondInMs: e.number(),
+        }).rest(e.any()),
+      ),
+    ),
+    metadata: e.optional(e.record(e.any())),
+  });

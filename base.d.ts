@@ -59,12 +59,5 @@ declare module "@Core/common/controller/base.ts" {
       ) => string | undefined | Promise<string | undefined>);
 
     shape?: Shape | (() => Shape);
-
-    postman?: {
-      headers?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
-      query?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
-      params?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
-      body?: { data: Record<string, any>; schema?: IValidatorJSONSchema };
-    };
   }
 }
