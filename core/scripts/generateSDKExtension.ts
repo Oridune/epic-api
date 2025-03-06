@@ -59,6 +59,7 @@ export const generateSDKExtension = async (options: {
       const PackageJSON = createPackageJSON({
         name: Options.name,
         version: Options.version,
+        main: "./dist/entry.js",
       });
 
       const TsConfigJSON = createTsConfigJSON();
@@ -77,11 +78,18 @@ export const generateSDKExtension = async (options: {
       await exec(`npm i -D ${SDKDir}`, { cwd: ExtensionDir });
 
       await Deno.writeTextFile(
-        join(ExtensionSrc, "README.md"),
+        join(ExtensionSrc, "entry.ts"),
         (`
-          This SDK extension is used within SDK generation process
-          You cannot import any files from the epic api or any of its sources here cause it will not work.
-          Your code should be written in a frontend library context.
+          /**
+           * This SDK extension is used within SDK generation process
+           * You cannot import any files from the epic api or any of its sources here cause it will not work.
+           * Your code should be written in a frontend library context (isolated in the current/this folder).
+           * 
+           */
+
+          import { EpicSDK } from "epic-api-sdk";
+
+          export class ${Options.name}Entry {}
         `).trim().split("\n").map(($) => $.trim()).join("\n"),
       );
 

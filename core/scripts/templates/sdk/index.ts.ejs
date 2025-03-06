@@ -12,8 +12,8 @@ import type { TSDKOptions } from "./types";
 import { <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
 <% } -%>
 
-<% for (const {name, main} of extensions) { -%>
-import * as <%- name %>Ext from "<%- main %>";
+<% for (const {name, entry} of extensions) { -%>
+import { <%- name %>Entry } from "<%- entry %>";
 <% } -%>
 
 export class EpicSDK {
@@ -91,7 +91,7 @@ export class EpicSDK {
 
     static extensions = {
 <% for (const {name} of extensions) { -%>
-        <%- name %>: <%- name %>Ext,
+        <%- name %>: <%- name %>Entry,
 <% } -%>
     }
 }

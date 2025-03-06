@@ -149,7 +149,7 @@ export const syncSDKExtensions = async (opts: {
 }) => {
   const SDKExtensionsDir = join(opts.sdkDir, "src/extensions");
 
-  if (!await exists(SDKExtensionsDir)) return [];
+  if (!await exists(opts.sdkDir)) return [];
 
   const Files = expandGlob("**/**/*", {
     root: opts.extensionsDir,
@@ -201,7 +201,7 @@ export const syncSDKExtensions = async (opts: {
   const Extensions: Array<{
     name: string;
     package: IPackageJSON;
-    main: string;
+    entry: string;
   }> = [];
 
   for await (const Entry of Deno.readDir(SDKExtensionsDir)) {
@@ -213,7 +213,7 @@ export const syncSDKExtensions = async (opts: {
             join(SDKExtensionsDir, Entry.name, "package.json"),
           ),
         ) as IPackageJSON,
-        main: `./extensions/${Entry.name}/src/index`,
+        entry: `./extensions/${Entry.name}/src/entry`,
       });
     }
   }
