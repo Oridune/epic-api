@@ -13,7 +13,9 @@ export type TRequestOptions = {
 export type TResponseShape<D> = {
     status: boolean;
     data: D;
-    messages?: Array<{ message: string, location?: string }>
+    messages?: Array<Partial<
+        { message: string, location: string }
+    >>
 };
 
 export type TRequestExecutors<R extends TResponseShape<any>, B = any> = {

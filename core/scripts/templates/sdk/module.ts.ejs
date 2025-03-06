@@ -1,4 +1,4 @@
-import type { ObjectId, TRequestOptions, TResponseShape, TRequestExecutors } from "../types";
+import type { ObjectId, TRequestOptions, TRequestExecutors } from "../types";
 
 export interface IController$<%- scope %> {
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
@@ -10,9 +10,9 @@ export interface IController$<%- scope %> {
 
     <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
     <% if (Route.options.method.toLowerCase() === "get") { -%>
-    <%- Route.options.name %>(): TRequestExecutors<TResponseShape<
-        <%- ReturnShape.content %>
-    >>;
+    <%- Route.options.name %>(): TRequestExecutors<
+        <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>
+    >;
     <% } -%>
     <%- Route.options.name %><
         Method extends "<%- Route.options.method %>",
@@ -24,9 +24,9 @@ export interface IController$<%- scope %> {
         query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
         params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
         body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
-    } & TRequestOptions): TRequestExecutors<TResponseShape<
-        <%- ReturnShape.content %>
-    >, BodyShape>;
+    } & TRequestOptions): TRequestExecutors<
+        <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>
+    , BodyShape>;
     <% } -%>
     <% } -%>
 }
@@ -34,18 +34,18 @@ export interface IController$<%- scope %> {
 export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
     <%- Name %>(data?: any) {
-        return sdk.resolveResponse(async () => {
+        return sdk.resolveAxiosResponse(async () => {
+            if (!sdk.axios) throw new Error("Axios not initialized!");
+
             sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
-            const res = await sdk.client?.request({
+            const res = await sdk.axios.request({
                 method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
                 url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
                 params: data?.query,
                 data: data?.body,
                 ...data?.axiosConfig,
             });
-
-            if (!res) throw new Error(`Client not initialized!`, { cause: res });
 
             return res;
         });

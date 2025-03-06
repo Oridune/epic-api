@@ -92,11 +92,11 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
     content += "}";
 
     if (schema.additionalProperties) {
-      const { optional, content: c } = schemaToTsType(
+      const { content: c } = schemaToTsType(
         schema.additionalProperties,
       );
 
-      content += ` & { [K: string]${optional ? "?" : ""}: ${c} }\n`;
+      content += ` & { [K: string]: ${c} }\n`;
     }
 
     return { optional: !schema.requiredProperties?.length, content };

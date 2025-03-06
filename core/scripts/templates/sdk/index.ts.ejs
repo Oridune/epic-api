@@ -6,7 +6,7 @@
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
-import type { TSDKOptions, TResponseShape } from "./types";
+import type { TSDKOptions } from "./types";
 
 <% for (const [Scope, RouteGroups] of Object.entries(scopeGroups)) { -%>
 import { <%- Scope %>Module } from "<%- await generateModule(Scope, RouteGroups) %>";
@@ -18,12 +18,12 @@ import * as <%- name %>Ext from "<%- main %>";
 
 export class EpicSDK {
     static options?: TSDKOptions;
-    static client?: AxiosInstance;
+    static axios?: AxiosInstance;
     static permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
         this.options = options;
-        this.client = axios.create(options);
+        this.axios = axios.create(options);
     }
 
     static isPermitted(scope: string, permission?: string) {
@@ -38,35 +38,49 @@ export class EpicSDK {
             throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
     }
 
-    static resolveResponse<T>(executor: () => Promise<AxiosResponse>) {
+    static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>) {
+        const verifyData = (res: AxiosResponse) => {
+            // Check if the data object exists
+            if (!res.data || typeof res.data !== "object") {
+                throw new Error("Response data is missing or invalid!");
+            } else if (!res.data.status) {
+                throw new Error(res.data.messages?.[0]?.message ?? "failure");
+            }
+
+            return res.data;
+        };
+
         const executors = {
             get raw() {
                 return executor();
             },
             get res() {
-                return new Promise<TResponseShape<T>>((resolve, reject) => 
+                return new Promise<T>((resolve, reject) =>
                     executors.raw
-                        .then(res => {
-                            // Check if the data object exists
-                            if (!res.data || typeof res.data !== 'object')
-                                reject(new Error(`Response data is missing or invalid!`));
-
-                            else if(!res.data.status)
-                                reject(new Error(res.data.messages?.[0]?.message ?? `failure`));
-
-                            else resolve(res.data);
+                        .then((res) => {
+                            try {
+                                resolve(verifyData(res));
+                            } catch (err) {
+                                reject(err);
+                            }
                         })
-                        .catch(err => reject(err))
+                        .catch((err) => reject(err))
                 );
             },
             get data() {
-                return new Promise<T>((resolve, reject) => 
-                    executors.res
-                        .then((res) => resolve(res.data))
-                        .catch(reject)
-                );
-            }
-        }
+                return (async () => {
+                    const res = await executors.res;
+
+                    if (
+                        typeof res === "object" && res !== null && "data" in res
+                    ) return res.data;
+
+                    throw new Error(
+                        "Unexpected response! Data is not available or valid!",
+                    );
+                })();
+            },
+        };
 
         return executors;
     }
