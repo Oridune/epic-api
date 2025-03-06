@@ -1,5 +1,5 @@
 {
-  "!((public|plugins|templates)/**/*)*.ts": [
+  "!((public|plugins|templates|sdk-extensions)/**/*)*.ts": [
     "deno fmt",
     "deno lint",
     "deno check index.d.ts"
