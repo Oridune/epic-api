@@ -1,7 +1,6 @@
 {
   "sequence": [
     "controller.blank.ts.ejs",
-    "controller.validated.ts.ejs",
     "controller.versioned.ts.ejs",
     "controller.crud.ts.ejs",
     "model.blank.ts.ejs",

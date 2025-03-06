@@ -25,9 +25,12 @@ export const queryValidator = () =>
     { allowUnexpectedProps: true },
   ));
 
-export const responseValidator = <T extends (BaseValidator)>(data?: T) =>
+export const responseValidator = <T extends (BaseValidator)>(data?: T, opts?: {
+  falseResponse?: boolean;
+}) =>
   e.object({
-    status: e.boolean(),
+    status: opts?.falseResponse ? e.false() : e.true(),
+    ...(data ? { data } : {}),
     messages: e.optional(e.array(
       e.partial(
         e.object({
@@ -37,7 +40,6 @@ export const responseValidator = <T extends (BaseValidator)>(data?: T) =>
         }).rest(e.any()),
       ),
     )),
-    ...(data ? { data } : {}),
     metrics: e.optional(
       e.partial(
         e.object({

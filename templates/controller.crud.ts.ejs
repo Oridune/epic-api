@@ -10,6 +10,7 @@ import {
   Response,
   Versioned,
 } from "@Core/common/mod.ts";
+import { responseValidator } from "@Core/common/validator.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { queryValidator } from "@Core/common/validators.ts";
@@ -35,6 +36,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
+        return: responseValidator(<%- utils.pascalCase(utils.singular(name)) %>Model.getSchema()).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -84,6 +86,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
+        return: responseValidator(e.partial(<%- utils.pascalCase(utils.singular(name)) %>Model.getSchema())).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -132,6 +135,10 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
       shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
+        return: responseValidator(e.object({
+          totalCount: e.optional(e.number()),
+          results: e.array(<%- utils.pascalCase(utils.singular(name)) %>Model.getSchema())
+        })).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
