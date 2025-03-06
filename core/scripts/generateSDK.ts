@@ -198,6 +198,8 @@ export const syncSDKExtensions = async (opts: {
     }
   }
 
+  if (!await exists(SDKExtensionsDir)) return [];
+
   const Extensions: Array<{
     name: string;
     package: IPackageJSON;
