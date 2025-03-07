@@ -1,7 +1,17 @@
 // deno-lint-ignore-file no-explicit-any
+import { existsSync } from "dfs";
 import { Context, send, Status } from "oak";
 
 export const serveStatic = (prefix: string, root: string) => {
+  if (!existsSync(root)) {
+    return async (
+      _ctx: Context<Record<string, any>, Record<string, any>>,
+      next: () => Promise<unknown>,
+    ) => {
+      await next();
+    };
+  }
+
   const Prefix = new RegExp(`^/${prefix}/?`);
 
   const WWWItems = Deno.readDirSync(root);
