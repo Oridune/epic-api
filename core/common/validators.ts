@@ -3,17 +3,23 @@ import e, { BaseValidator } from "validator";
 export const queryValidator = () =>
   e.deepCast(e.object(
     {
-      search: e.optional(e.string()),
+      search: e.optional(e.string()).describe("Enter your search term"),
       range: e.optional(
         e.tuple([e.date(), e.date()]),
+      ).describe(
+        "Provide a date range as an array of date object. E.g: [date1, date2]",
       ),
       offset: e.optional(e.number().min(0)).default(0),
       limit: e.optional(e.number().max(2000)).default(2000),
       sort: e.optional(
         e.record(e.number().min(-1).max(1)),
-      ).default({ _id: -1 }),
+      ).default({ _id: -1 }).describe(
+        "Provide a sorting information in mongodb sort object format",
+      ),
       project: e.optional(
         e.record(e.number().min(0).max(1)),
+      ).describe(
+        "Provide a projection information in mongodb project object format",
       ),
       includeTotalCount: e.optional(
         e.boolean()
