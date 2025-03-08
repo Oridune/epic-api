@@ -166,7 +166,7 @@ export const generatePostmanCollection = async (
     const normalizeParamValue = (value: any) => {
       const $ = `${value}`;
 
-      if ($ === "[object Object]") return JSON.stringify($);
+      if ($ === "[object Object]") return JSON.stringify(value);
 
       return $;
     };
@@ -220,34 +220,14 @@ export const generatePostmanCollection = async (
           query: QueryParams.map(([key, value]) => ({
             key,
             value: normalizeParamValue(value),
-            description: [
-              QuerySchema?.requiredProperties
-                  ?.includes(
-                    key,
-                  )
-                ? undefined
-                : QuerySchema?.properties?.[key]
-                  ?.description,
-            ]
-              .filter(Boolean)
-              .join(" "),
+            description: QuerySchema?.properties?.[key]?.description,
           })),
           variable: Object.entries<string>(
             Params ?? {},
           ).map(([key, value]) => ({
             key,
             value: normalizeParamValue(value),
-            description: [
-              ParamsSchema?.requiredProperties
-                  ?.includes(
-                    key,
-                  )
-                ? undefined
-                : ParamsSchema?.properties?.[key]
-                  ?.description,
-            ]
-              .filter(Boolean)
-              .join(" "),
+            description: ParamsSchema?.properties?.[key]?.description,
           })),
         },
         method: Route.options.method
@@ -258,17 +238,7 @@ export const generatePostmanCollection = async (
           key,
           value: normalizeParamValue(value),
           type: "text",
-          description: [
-            HeadersSchema?.requiredProperties
-                ?.includes(
-                  key,
-                )
-              ? undefined
-              : HeadersSchema?.properties?.[key]
-                ?.description,
-          ]
-            .filter(Boolean)
-            .join(" "),
+          description: HeadersSchema?.properties?.[key]?.description,
         })),
         body: Body
           ? {
