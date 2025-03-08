@@ -163,6 +163,14 @@ export const generatePostmanCollection = async (
       return requestGroups;
     };
 
+    const normalizeParamValue = (value: any) => {
+      const $ = `${value}`;
+
+      if ($ === "[object Object]") return JSON.stringify($);
+
+      return $;
+    };
+
     const { object: RequestHandler } =
       (await Route.options.buildRequestHandler(Route, {
         version: data.version,
@@ -200,7 +208,7 @@ export const generatePostmanCollection = async (
             (QueryParams.length
               ? `?${
                 QueryParams.map(
-                  ([key, value]) => key + "=" + value,
+                  ([key, value]) => key + "=" + normalizeParamValue(value),
                 ).join("&")
               }`
               : ""),
@@ -211,7 +219,7 @@ export const generatePostmanCollection = async (
             .map((path) => path.replace(/\?$/, "")),
           query: QueryParams.map(([key, value]) => ({
             key,
-            value,
+            value: normalizeParamValue(value),
             description: [
               QuerySchema?.requiredProperties
                   ?.includes(
@@ -228,7 +236,7 @@ export const generatePostmanCollection = async (
             Params ?? {},
           ).map(([key, value]) => ({
             key,
-            value,
+            value: normalizeParamValue(value),
             description: [
               ParamsSchema?.requiredProperties
                   ?.includes(
@@ -248,7 +256,7 @@ export const generatePostmanCollection = async (
           Headers ?? {},
         ).map(([key, value]) => ({
           key,
-          value,
+          value: normalizeParamValue(value),
           type: "text",
           description: [
             HeadersSchema?.requiredProperties
