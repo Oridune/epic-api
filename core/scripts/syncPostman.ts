@@ -2,6 +2,7 @@
 import { parseArgs as parse } from "flags/parse-args";
 import { join } from "path";
 import e, { ValidationException, Value } from "validator";
+import { exists } from "dfs";
 
 import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
@@ -23,47 +24,40 @@ export type PostmanRequestMethods =
   | "PROPFIND"
   | "VIEW";
 
-export type PostmanHeader = Array<{
+export type PostmanVariable = {
   key: string;
   value: string;
-  type: string;
+  description?: string;
+  type?: string;
   disabled?: boolean;
-}>;
+};
+
+export interface PostmanCollectionInterface {
+  info: {
+    _postman_id?: string;
+    name: string;
+    description?: string;
+    version: string;
+    schema: string;
+  };
+  item: Array<IPostmanCollection>;
+  variable: Array<PostmanVariable>;
+}
 
 export interface IPostmanCollection {
   name: string;
   request?: {
     auth?: {
       type: "bearer" | "basic";
-      bearer?: Array<{
-        key: string;
-        value: string;
-        type: string;
-      }>;
-      basic?: Array<{
-        key: string;
-        value: string;
-        type: string;
-      }>;
+      bearer?: Array<PostmanVariable>;
+      basic?: Array<PostmanVariable>;
     };
     method: PostmanRequestMethods;
-    header?: PostmanHeader;
+    header?: Array<PostmanVariable>;
     body?: {
       mode: "urlencoded" | "formdata" | "raw";
-      urlencoded?: Array<{
-        key: string;
-        value: string;
-        description: string;
-        type: string;
-        disabled?: boolean;
-      }>;
-      formdata?: Array<{
-        key: string;
-        value: string;
-        description: string;
-        type: string;
-        disabled?: boolean;
-      }>;
+      urlencoded?: Array<PostmanVariable>;
+      formdata?: Array<PostmanVariable>;
       raw?: string;
       options?: {
         raw?: {
@@ -77,8 +71,8 @@ export interface IPostmanCollection {
         raw?: string;
         host: string[];
         path: string[];
-        query?: Array<{ key: string; value: string }>;
-        variable?: Array<{ key: string; value: string }>;
+        query?: Array<PostmanVariable>;
+        variable?: Array<PostmanVariable>;
         protocol?: "http" | "https";
         port?: string;
       };
@@ -89,22 +83,11 @@ export interface IPostmanCollection {
     status: string;
     code: number;
     _postman_previewlanguage: string;
-    header?: PostmanHeader;
+    header?: Array<PostmanVariable>;
     cookie?: any[];
     body?: string;
   }>;
   item?: Array<IPostmanCollection>;
-}
-
-export interface PostmanCollectionInterface {
-  info: {
-    _postman_id?: string;
-    name: string;
-    description?: string;
-    version: string;
-    schema: string;
-  };
-  item: Array<IPostmanCollection>;
 }
 
 export const generatePostmanCollection = async (
@@ -114,6 +97,7 @@ export const generatePostmanCollection = async (
     description: string;
     version: string;
   },
+  variables?: Record<string, string>,
 ) => {
   // Create Empty Collection
   const PostmanCollectionObject: PostmanCollectionInterface = {
@@ -125,6 +109,10 @@ export const generatePostmanCollection = async (
         "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     },
     item: [],
+    variable: Object.entries(variables ?? {}).map(([key, value]) => ({
+      key,
+      value,
+    })),
   };
 
   type NestedRequests = {
@@ -307,6 +295,7 @@ export const syncPostman = async (options: {
   description?: string;
   version?: string;
   group?: string;
+  variables?: Record<string, string>;
 }) => {
   try {
     const Options = await e
@@ -317,6 +306,7 @@ export const syncPostman = async (options: {
         description: e.optional(e.string()),
         version: e.optional(e.string()).default("latest"),
         group: e.optional(e.string()),
+        variables: e.optional(e.record(e.string())),
       })
       .validate(options);
 
@@ -355,11 +345,16 @@ export const syncPostman = async (options: {
     // Log routes list
     if (RoutesTableData) console.table(RoutesTableData);
 
+    const IntegrationDocPath = join(Deno.cwd(), "INTEGRATION.md");
+    const Description = (await exists(IntegrationDocPath))
+      ? await Deno.readTextFile(IntegrationDocPath)
+      : (Options.description ?? denoConfig.description);
+
     const PostmanCollectionObject = await generatePostmanCollection(Routes, {
       name: Options.name ?? denoConfig.title ?? Options.collectionId,
-      description: Options.description ?? denoConfig.description,
+      description: Description,
       version: Options.version,
-    });
+    }, Options.variables);
 
     await Deno.writeTextFile(
       `postman_collection-${Options.version}.json`,
@@ -410,9 +405,14 @@ if (import.meta.main) {
     v,
     group,
     g,
+    vars,
   } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["controllers", "plugins"] });
+
+  const variables = vars
+    ? Object.fromEntries(new URLSearchParams(vars))
+    : undefined;
 
   await syncPostman({
     key: key ?? k,
@@ -421,6 +421,7 @@ if (import.meta.main) {
     description: description ?? d,
     version: version ?? v,
     group: group ?? g,
+    variables,
   });
 
   Deno.exit();
