@@ -75,7 +75,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
     // Define Params Schema
     const ParamsSchema = e.object({
-      id: e.string(),
+      id: e.instanceOf(ObjectId, { instantiate: true })
     });
 
     // Define Body Schema
@@ -193,7 +193,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
   public delete(route: IRoute) {
     // Define Params Schema
     const ParamsSchema = e.object({
-      id: e.string(),
+      id: e.instanceOf(ObjectId, { instantiate: true })
     });
 
     return Versioned.add("1.0.0", {
