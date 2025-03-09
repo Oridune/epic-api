@@ -20,18 +20,14 @@ export class EpicSDK {
     static _apiVersion = "<%- apiVersion %>";
     static _options?: TSDKOptions;
     static _axios?: AxiosInstance;
-    static _permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
         this._options = options;
         this._axios = axios.create(options);
     }
 
-    static isPermitted(scope: string, permission?: string) {
-        if(!(this._permissions instanceof Set))
-            return true;
-
-        return this._permissions.has(scope) || this._permissions.has(`${scope}.${permission}`);
+    static isPermitted = (scope: string, permission?: string): boolean => {
+        return true;
     }
 
     static checkPermission(scope: string, permission?: string) {
