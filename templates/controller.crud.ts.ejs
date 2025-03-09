@@ -10,7 +10,7 @@ import {
   Response,
   Versioned,
 } from "@Core/common/mod.ts";
-import { responseValidator } from "@Core/common/validator.ts";
+import { responseValidator } from "@Core/common/validators.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { queryValidator } from "@Core/common/validators.ts";
@@ -128,7 +128,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
     // Define Params Schema
     const ParamsSchema = e.object({
-      id: e.optional(e.string()),
+      id: e.optional(e.instanceOf(ObjectId, { instantiate: true }))
     });
 
     return Versioned.add("1.0.0", {

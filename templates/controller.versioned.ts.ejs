@@ -8,6 +8,7 @@ import {
   type IRoute,
   type IRequestContext,
 } from "@Core/common/mod.ts";
+import { responseValidator } from "@Core/common/validators.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
 
@@ -29,6 +30,9 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
+        return: responseValidator(e.object({
+          // Define a response type here
+        })).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
@@ -61,18 +65,23 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     });
   }
 
-  @Get("/")
-  public list(route: IRoute) {
+  @Get("/:id?/")
+  public get(route: IRoute) {
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
     // Define Params Schema
-    const ParamsSchema = e.object({});
+    const ParamsSchema = e.object({
+      id: e.optional(e.instanceOf(ObjectId, { instantiate: true }))
+    });
 
     return Versioned.add("1.0.0", {
       shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
+        return: responseValidator(e.object({
+          // Define a response type here
+        })).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
