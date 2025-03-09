@@ -66,7 +66,7 @@ export class Env {
   /**
    * Asynchronously get a specific environment variable
    *
-   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   * It is recommended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
    *
    * You can assign a custom backup method on Env.onGetFailed if it is not already assigned.
    * @param key Key of the variable
@@ -77,11 +77,11 @@ export class Env {
   /**
    * Asynchronously get a specific environment variable
    *
-   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   * It is recommended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
    *
    * You can assign a custom backup method on Env.onGetFailed if it is not already assigned.
    * @param key Key of the variable
-   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined`.
+   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined` if not found.
    */
   static async get(key: string, silent: true): Promise<string | undefined>;
   static async get(key: string, silent?: true) {
@@ -104,27 +104,50 @@ export class Env {
   /**
    * Asynchronously get a specific environment variable and cast to boolean
    * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning a `boolean` if not found.
    * @returns
    */
-  static async enabled(key: string): Promise<boolean> {
-    return ["true", "1"].includes(await this.get(key, true) as string);
+  static async enabled(key: string, silent = true): Promise<boolean> {
+    return ["true", "1"].includes(
+      await this.get(key, silent as true) as string,
+    );
   }
 
   /**
-   * Get a specific environment variable
+   * Asynchronously get a specific environment variable and cast to number
+   * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning a `0 or NaN` if not found.
+   * @returns
+   */
+  static async number(key: string, silent = true): Promise<number> {
+    return Number(await this.get(key, silent as true));
+  }
+
+  /**
+   * Asynchronously get a specific environment variable and cast to an array of string
+   * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning an `empty array` if not found.
+   * @returns
+   */
+  static async list(key: string, silent = true): Promise<string[]> {
+    return (await this.get(key, silent as true))?.split(/\s*,\s*/) ?? [];
+  }
+
+  /**
+   * Synchronously get a specific environment variable
    *
-   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   * It is recommended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
    * @param key Key of the variable
    * @returns
    */
   static getSync(key: string): string;
 
   /**
-   * Get a specific environment variable
+   * Synchronously get a specific environment variable
    *
-   * It is recomended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
+   * It is recommended to use get method instead of getSync because it makes a backup call (to a database or some other configured source) to ensure the availability of the environment variable.
    * @param key Key of the variable
-   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined`.
+   * @param silent By passing `true` this function will not throw an error and instead it will return `undefined` if not found.
    * @returns
    */
   static getSync(key: string, silent: true): string | undefined;
@@ -139,7 +162,33 @@ export class Env {
     return Value;
   }
 
-  static enabledSync(key: string): boolean {
-    return ["true", "1"].includes(this.getSync(key, true) as string);
+  /**
+   * Synchronously get a specific environment variable and cast to boolean
+   * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning a `boolean` if not found.
+   * @returns
+   */
+  static enabledSync(key: string, silent = true): boolean {
+    return ["true", "1"].includes(this.getSync(key, silent as true) as string);
+  }
+
+  /**
+   * Synchronously get a specific environment variable and cast to number
+   * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning a `0 or NaN` if not found.
+   * @returns
+   */
+  static numberSync(key: string, silent = true): number {
+    return Number(this.getSync(key, silent as true));
+  }
+
+  /**
+   * Synchronously get a specific environment variable and cast to an array of string
+   * @param key Key of the variable
+   * @param silent By passing `false` this function will throw an error instead of returning an `empty array` if not found.
+   * @returns
+   */
+  static listSync(key: string, silent = true): string[] {
+    return this.getSync(key, silent as true)?.split(/\s*,\s*/) ?? [];
   }
 }
