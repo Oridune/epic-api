@@ -12,7 +12,7 @@ export type TRequestOptions = {
 
 export type TResponseShape<D> = {
     status: boolean;
-    data: D;
+    data?: D;
     messages?: Array<Partial<
         { message: string, location: string }
     >>

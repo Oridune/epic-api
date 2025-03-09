@@ -144,83 +144,94 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
 };
 
 export const syncSDKExtensions = async (opts: {
-  extensionsDir: string;
   sdkDir: string;
 }) => {
-  const SDKExtensionsDir = join(opts.sdkDir, "src/extensions");
-
   if (!await exists(opts.sdkDir)) return [];
 
-  const Files = expandGlob("**/**/*", {
-    root: opts.extensionsDir,
-    globstar: true,
-  });
+  const ExtensionsSourceFolder = "sdk-extensions";
+  const SDKExtensionsDir = join(opts.sdkDir, "src/extensions");
 
-  for await (const File of Files) {
-    if (
-      !File.isDirectory &&
-      // Do not copy these files and folders
-      [
-        /^(\\|\/)?(\.git)(\\|\/)?/,
-        /^(\\|\/)?(\.vscode)(\\|\/)?/,
-        /^(\\|\/)?(\.husky)(\\|\/)?/,
-        /(\\|\/)?(node_modules)(\\|\/)?/,
-      ].reduce(
-        (allow, expect) =>
-          allow &&
-          !expect.test(File.path.replace(opts.extensionsDir, "")),
-        true,
-      )
-    ) {
-      const SourcePath = File.path;
-      const TargetPath = SourcePath.replace(
-        opts.extensionsDir,
-        SDKExtensionsDir,
-      );
+  const pluginsDirNames = Loader.getSequence("plugins")?.list() ?? [];
 
-      const TargetDirectory = dirname(TargetPath);
+  const ExtensionsDirs = [
+    join(Deno.cwd(), ExtensionsSourceFolder),
+    ...pluginsDirNames.map((dir) =>
+      join(Deno.cwd(), "plugins", dir, ExtensionsSourceFolder)
+    ),
+  ];
 
-      await Deno.mkdir(TargetDirectory, { recursive: true }).catch(
-        () => {
-          // Do nothing...
-        },
-      );
+  return (await Promise.all(ExtensionsDirs.map(async (extensionDir) => {
+    const Files = expandGlob("**/**/*", {
+      root: extensionDir,
+      globstar: true,
+    });
 
-      const sourceContent = await Deno.readTextFile(SourcePath);
+    for await (const File of Files) {
+      if (
+        !File.isDirectory &&
+        // Do not copy these files and folders
+        [
+          /^(\\|\/)?(\.git)(\\|\/)?/,
+          /^(\\|\/)?(\.vscode)(\\|\/)?/,
+          /^(\\|\/)?(\.husky)(\\|\/)?/,
+          /(\\|\/)?(node_modules)(\\|\/)?/,
+        ].reduce(
+          (allow, expect) =>
+            allow &&
+            !expect.test(File.path.replace(extensionDir, "")),
+          true,
+        )
+      ) {
+        const SourcePath = File.path;
+        const TargetPath = SourcePath.replace(
+          extensionDir,
+          SDKExtensionsDir,
+        );
 
-      await Deno.writeTextFile(
-        TargetPath,
-        sourceContent.replace(
-          /from\s*"epic-api-sdk"/g,
-          'from "../../../"',
-        ),
-      );
-    }
-  }
+        const TargetDirectory = dirname(TargetPath);
 
-  if (!await exists(SDKExtensionsDir)) return [];
+        await Deno.mkdir(TargetDirectory, { recursive: true }).catch(
+          () => {
+            // Do nothing...
+          },
+        );
 
-  const Extensions: Array<{
-    name: string;
-    package: IPackageJSON;
-    entry: string;
-  }> = [];
+        const sourceContent = await Deno.readTextFile(SourcePath);
 
-  for await (const Entry of Deno.readDir(SDKExtensionsDir)) {
-    if (Entry.isDirectory) {
-      Extensions.push({
-        name: Entry.name,
-        package: JSON.parse(
-          await Deno.readTextFile(
-            join(SDKExtensionsDir, Entry.name, "package.json"),
+        await Deno.writeTextFile(
+          TargetPath,
+          sourceContent.replace(
+            /from\s*"epic-api-sdk"/g,
+            'from "../../../"',
           ),
-        ) as IPackageJSON,
-        entry: `./extensions/${Entry.name}/src/entry`,
-      });
+        );
+      }
     }
-  }
 
-  return Extensions;
+    if (!await exists(SDKExtensionsDir)) return [];
+
+    const Extensions: Array<{
+      name: string;
+      package: IPackageJSON;
+      entry: string;
+    }> = [];
+
+    for await (const Entry of Deno.readDir(SDKExtensionsDir)) {
+      if (Entry.isDirectory) {
+        Extensions.push({
+          name: Entry.name,
+          package: JSON.parse(
+            await Deno.readTextFile(
+              join(SDKExtensionsDir, Entry.name, "package.json"),
+            ),
+          ) as IPackageJSON,
+          entry: `./extensions/${Entry.name}/src/entry`,
+        });
+      }
+    }
+
+    return Extensions;
+  }))).flat();
 };
 
 export const generateSDK = async (options: {
@@ -237,14 +248,12 @@ export const generateSDK = async (options: {
     const SDKDir = join(Deno.cwd(), `public/${SDKName}/`);
     const SDKSrc = join(SDKDir, "src");
     const SDKPublicDir = join(SDKDir, "www");
-    const ExtensionsDir = join(Deno.cwd(), "sdk-extensions");
 
     await Deno.mkdir(join(SDKSrc, "modules"), { recursive: true }).catch(() => {
       // Do nothing...
     });
 
     const Extensions = await syncSDKExtensions({
-      extensionsDir: ExtensionsDir,
       sdkDir: SDKDir,
     });
 
