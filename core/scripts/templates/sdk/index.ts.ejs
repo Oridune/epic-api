@@ -17,13 +17,14 @@ import { <%- name %>Entry } from "<%- entry %>";
 <% } -%>
 
 export class EpicSDK {
-    static options?: TSDKOptions;
-    static axios?: AxiosInstance;
-    static permissions?: Set<string>;
+    static _apiVersion = <%- apiVersion %>;
+    static _options?: TSDKOptions;
+    static _axios?: AxiosInstance;
+    static _permissions?: Set<string>;
 
     static init(options: TSDKOptions) {
         this.options = options;
-        this.axios = axios.create(options);
+        this._axios = axios.create(options);
     }
 
     static isPermitted(scope: string, permission?: string) {

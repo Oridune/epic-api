@@ -35,11 +35,11 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
     <%- Name %>(data?: any) {
         return sdk.resolveAxiosResponse(async () => {
-            if (!sdk.axios) throw new Error("Axios not initialized!");
+            if (!sdk._axios) throw new Error("Axios not initialized!");
 
             sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
-            const res = await sdk.axios.request({
+            const res = await sdk._axios.request({
                 method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
                 url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
                 params: data?.query,

@@ -304,6 +304,7 @@ export const generateSDK = async (options: {
     });
 
     const EJSContext = {
+      apiVersion: Options.version,
       scopeGroups: serializeApiRoutes(Routes),
       getTypeStr: async (
         route: IRoute,
