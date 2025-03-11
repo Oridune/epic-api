@@ -1,4 +1,4 @@
-import type { ObjectId, TRequestOptions, TRequestExecutors } from "../types";
+import type { ObjectId, TRequestOptions, TRequestExecutors, TResponseShape } from "../types";
 
 export interface IController$<%- scope %> {
     <% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
@@ -19,14 +19,13 @@ export interface IController$<%- scope %> {
         QueryShape extends <%- QueryShape.content %>,
         ParamsShape extends <%- ParamsShape.content %>,
         BodyShape extends <%- BodyShape.content %>,
+        ReturnShape extends TResponseShape<any> = <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>,
     >(data: {
         method?: Method;
         query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
         params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
         body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
-    } & TRequestOptions): TRequestExecutors<
-        <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>
-    , BodyShape>;
+    } & TRequestOptions<ReturnShape>): TRequestExecutors<ReturnShape, BodyShape>;
     <% } -%>
     <% } -%>
 }
@@ -48,7 +47,7 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
             });
 
             return res;
-        });
+        }, data);
     },
     <% } %>
 });
