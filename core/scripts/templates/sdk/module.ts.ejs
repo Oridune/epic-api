@@ -1,37 +1,49 @@
 import type { ObjectId, TRequestOptions, TRequestExecutors, TResponseShape } from "../types";
 
+<% const TypeMap = new Map(); -%>
+
+<% for (const [Name, [Route]] of Object.entries(routeGroups)) { -%>
+
+<% const QueryShape = await getTypeStr(Route, "query"); -%>
+<% const ParamsShape = await getTypeStr(Route, "params"); -%>
+<% const BodyShape = await getTypeStr(Route, "body"); -%>
+<% const ReturnShape = await getTypeStr(Route, "return"); -%>
+
+<% TypeMap.set(Route.options.name, { query: QueryShape, params: ParamsShape, body: BodyShape, return: ReturnShape }) -%>
+
+export type TRoute$<%- scope %>$<%- Route.options.name %> = {
+    query: <%- QueryShape.content %>,
+    params: <%- ParamsShape.content %>,
+    body: <%- BodyShape.content %>,
+    return: <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>,
+};
+
+<% } -%>
+
 export interface IController$<%- scope %> {
-    <% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
-
-    <% const QueryShape = await getTypeStr(Routes[0], "query"); -%>
-    <% const ParamsShape = await getTypeStr(Routes[0], "params"); -%>
-    <% const BodyShape = await getTypeStr(Routes[0], "body"); -%>
-    <% const ReturnShape = await getTypeStr(Routes[0], "return"); -%>
-
-    <% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
-    <% if (Route.options.method.toLowerCase() === "get") { -%>
-    <%- Route.options.name %>(): TRequestExecutors<
-        <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>
-    >;
-    <% } -%>
+<% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
+<% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
+<% if (Route.options.method.toLowerCase() === "get") { -%>
+    <%- Route.options.name %>(): TRequestExecutors<TRoute$<%- scope %>$<%- Route.options.name %>["return"]>;
+<% } -%>
     <%- Route.options.name %><
         Method extends "<%- Route.options.method %>",
-        QueryShape extends <%- QueryShape.content %>,
-        ParamsShape extends <%- ParamsShape.content %>,
-        BodyShape extends <%- BodyShape.content %>,
-        ReturnShape extends TResponseShape<any> = <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>,
+        QueryShape extends TRoute$<%- scope %>$<%- Route.options.name %>["query"],
+        ParamsShape extends TRoute$<%- scope %>$<%- Route.options.name %>["params"],
+        BodyShape extends TRoute$<%- scope %>$<%- Route.options.name %>["body"],
+        ReturnShape extends TResponseShape<any> = TRoute$<%- scope %>$<%- Route.options.name %>["return"],
     >(data: {
         method?: Method;
-        query<%- QueryShape.optional ? "?" : "" %>: QueryShape;
-        params<%- ParamsShape.optional ? "?" : "" %>: ParamsShape;
-        body<%- BodyShape.optional ? "?" : "" %>: BodyShape;
+        query<%- TypeMap.get(Route.options.name).query.optional ? "?" : "" %>: QueryShape;
+        params<%- TypeMap.get(Route.options.name).params.optional ? "?" : "" %>: ParamsShape;
+        body<%- TypeMap.get(Route.options.name).body.optional ? "?" : "" %>: BodyShape;
     } & TRequestOptions<ReturnShape>): TRequestExecutors<ReturnShape, BodyShape>;
-    <% } -%>
-    <% } -%>
+<% } -%>
+<% } -%>
 }
 
 export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
-    <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
+<% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
     <%- Name %>(data?: any) {
         return sdk.resolveAxiosResponse(async () => {
             if (!sdk._axios) throw new Error("Axios not initialized!");
@@ -49,5 +61,5 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
             return res;
         }, data);
     },
-    <% } %>
+<% } %>
 });
