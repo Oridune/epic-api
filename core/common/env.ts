@@ -37,7 +37,7 @@ export class Env {
    * Get all environment variables
    * @returns
    */
-  static getAll() {
+  static getAll<T extends Record<string, string>>(): T {
     let GlobalEnv: Record<string, string>;
 
     try {
@@ -60,7 +60,7 @@ export class Env {
       ...Deno.env.toObject(),
       ...GlobalEnv,
       ...ScopedEnv,
-    }));
+    })) as T;
   }
 
   /**
@@ -72,7 +72,7 @@ export class Env {
    * @param key Key of the variable
    * @returns
    */
-  static async get(key: string): Promise<string>;
+  static async get<T extends string>(key: string): Promise<T>;
 
   /**
    * Asynchronously get a specific environment variable
@@ -83,7 +83,10 @@ export class Env {
    * @param key Key of the variable
    * @param silent By passing `true` this function will not throw an error and instead it will return `undefined` if not found.
    */
-  static async get(key: string, silent: true): Promise<string | undefined>;
+  static async get<T extends string>(
+    key: string,
+    silent: true,
+  ): Promise<T | undefined>;
   static async get(key: string, silent?: true) {
     let Data: string | null | undefined = Env.getAll()[key];
 
@@ -119,8 +122,11 @@ export class Env {
    * @param silent By passing `false` this function will throw an error instead of returning a `0 or NaN` if not found.
    * @returns
    */
-  static async number(key: string, silent = true): Promise<number> {
-    return Number(await this.get(key, silent as true));
+  static async number<T extends number>(
+    key: string,
+    silent = true,
+  ): Promise<T> {
+    return Number(await this.get(key, silent as true)) as T;
   }
 
   /**
@@ -129,8 +135,11 @@ export class Env {
    * @param silent By passing `false` this function will throw an error instead of returning an `empty array` if not found.
    * @returns
    */
-  static async list(key: string, silent = true): Promise<string[]> {
-    return (await this.get(key, silent as true))?.split(/\s*,\s*/) ?? [];
+  static async list<T extends string[]>(
+    key: string,
+    silent = true,
+  ): Promise<T> {
+    return ((await this.get(key, silent as true))?.split(/\s*,\s*/) ?? []) as T;
   }
 
   /**
@@ -140,7 +149,7 @@ export class Env {
    * @param key Key of the variable
    * @returns
    */
-  static getSync(key: string): string;
+  static getSync<T extends string>(key: string): T;
 
   /**
    * Synchronously get a specific environment variable
@@ -150,7 +159,7 @@ export class Env {
    * @param silent By passing `true` this function will not throw an error and instead it will return `undefined` if not found.
    * @returns
    */
-  static getSync(key: string, silent: true): string | undefined;
+  static getSync<T extends string>(key: string, silent: true): T | undefined;
   static getSync(key: string, silent?: true) {
     const Value: string | null | undefined = Env.getAll()[key];
 
@@ -178,8 +187,8 @@ export class Env {
    * @param silent By passing `false` this function will throw an error instead of returning a `0 or NaN` if not found.
    * @returns
    */
-  static numberSync(key: string, silent = true): number {
-    return Number(this.getSync(key, silent as true));
+  static numberSync<T extends number>(key: string, silent = true): T {
+    return Number(this.getSync(key, silent as true)) as T;
   }
 
   /**
@@ -188,7 +197,7 @@ export class Env {
    * @param silent By passing `false` this function will throw an error instead of returning an `empty array` if not found.
    * @returns
    */
-  static listSync(key: string, silent = true): string[] {
-    return this.getSync(key, silent as true)?.split(/\s*,\s*/) ?? [];
+  static listSync<T extends string[]>(key: string, silent = true): T {
+    return (this.getSync(key, silent as true)?.split(/\s*,\s*/) ?? []) as T;
   }
 }
