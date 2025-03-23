@@ -16,45 +16,24 @@ import e from "validator";
 import { queryValidator } from "@Core/common/validators.ts";
 import { ObjectId } from "mongo";
 
-import { <%- utils.pascalCase(utils.singular(name)) %>Model } from "@Models/<%- utils.singular(name) %>.ts";
+import { 
+  <%- utils.pascalCase(utils.singular(name)) %>Model, 
+  Input<%- utils.pascalCase(utils.singular(name)) %>Schema
+} from "@Models/<%- utils.singular(name) %>.ts";
 
 @Controller("/<%- utils.pathCase(name) %>/", { name: "<%- utils.camelCase(name) %>" })
 export default class <%- utils.pascalCase(name) %>Controller extends BaseController {
   @Post("/")
   public create(route: IRoute) {
-    // Define Query Schema
-    const QuerySchema = e.object({}, { allowUnexpectedProps: true });
-
-    // Define Params Schema
-    const ParamsSchema = e.object({});
-
     // Define Body Schema
-    const BodySchema = e.object({});
+    const BodySchema = Input<%- utils.pascalCase(utils.singular(name)) %>Schema;
 
     return new Versioned().add("1.0.0", {
       shape: () => ({
-        query: QuerySchema.toSample(),
-        params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
         return: responseValidator(<%- utils.pascalCase(utils.singular(name)) %>Model.getSchema()).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // Query Validation
-        const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: `${route.scope}.query` },
-        );
-
-        /**
-         * It is recommended to keep the following validators in place even if you don't want to validate any data.
-         * It will prevent the client from injecting unexpected data into the request.
-         */
-
-        // Params Validation
-        const Params = await ParamsSchema.validate(ctx.router.params, {
-          name: `${route.scope}.params`,
-        });
-
         // Body Validation
         const Body = await BodySchema.validate(
           await ctx.router.request.body.json(),
@@ -70,36 +49,21 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
   @Patch("/:id/")
   public update(route: IRoute) {
-    // Define Query Schema
-    const QuerySchema = e.object({}, { allowUnexpectedProps: true });
-
     // Define Params Schema
     const ParamsSchema = e.object({
       id: e.instanceOf(ObjectId, { instantiate: true })
     });
 
     // Define Body Schema
-    const BodySchema = e.object({});
+    const BodySchema = e.partial(Input<%- utils.pascalCase(utils.singular(name)) %>Schema);
 
     return new Versioned().add("1.0.0", {
       shape: () => ({
-        query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
         return: responseValidator(e.partial(<%- utils.pascalCase(utils.singular(name)) %>Model.getSchema())).toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // Query Validation
-        const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
-          { name: `${route.scope}.query` },
-        );
-
-        /**
-         * It is recommended to keep the following validators in place even if you don't want to validate any data.
-         * It will prevent the client from injecting unexpected data into the request.
-         */
-
         // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
           name: `${route.scope}.params`,
@@ -172,9 +136,9 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         const <%- utils.pascalCase(name) %>ListQuery = <%- utils.pascalCase(utils.singular(name)) %>Model
           .search(Query.search)
           .filter(<%- utils.pascalCase(name) %>BaseFilters)
+          .sort(Query.sort)
           .skip(Query.offset)
-          .limit(Query.limit)
-          .sort(Query.sort);
+          .limit(Query.limit);
 
         if (Query.project) <%- utils.pascalCase(name) %>ListQuery.project(Query.project);
 
@@ -199,6 +163,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
     return Versioned.add("1.0.0", {
       shape: () => ({
         params: ParamsSchema.toSample(),
+        return: responseValidator().toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Params Validation
