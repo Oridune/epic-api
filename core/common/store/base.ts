@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-unused-vars require-await
-import { Env } from "@Core/common/env.ts";
+import { Env, EnvType } from "@Core/common/env.ts";
 import { LRUCache } from "./utils/lru.ts";
 import DenoConfig from "../../../deno.json" with { type: "json" };
 import type { Redis } from "redis";
@@ -180,7 +180,9 @@ export class StoreBase extends StoreLike {
       : options;
     const Store = Options?.store ?? this;
 
-    const Cached = await Store.get<T>(Key);
+    const IsCacheEnabled = Env.is(EnvType.PRODUCTION);
+
+    const Cached = IsCacheEnabled ? await Store.get<T>(Key) : null;
 
     if (Cached !== null) return Cached;
 
@@ -201,7 +203,7 @@ export class StoreBase extends StoreLike {
     }
 
     // deno-lint-ignore no-explicit-any
-    if (![null, undefined].includes(Value as any)) {
+    if (IsCacheEnabled && ![null, undefined].includes(Value as any)) {
       await Store.set(Key, Value, { expiresInMs: ExpiresInMs });
     }
 
