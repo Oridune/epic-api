@@ -198,6 +198,9 @@ export const deployDocker = async (options: {
     ].filter(Boolean).join("-");
     const ImageTag = `${DockerOrg}/${ImageName}:v${ImageVersion}`;
 
+    let built = false;
+    let applied = false;
+
     if (!Options.skipBuild) {
       if (options.prompt) {
         if (!Options.deployDirty) {
@@ -245,6 +248,8 @@ export const deployDocker = async (options: {
       }
 
       await saveDeploymentLogs(AllLogs);
+
+      built = true;
     }
 
     if (!Options.skipApply) {
@@ -269,6 +274,19 @@ export const deployDocker = async (options: {
       await spawn(
         `terraform apply -var default_container_image=${DefaultImageTag} -var container_image=${ImageTag} -var image_name=${ImageName} -var image_version=${ImageVersion} -auto-approve`,
         { cwd: TerraformDir },
+      );
+
+      applied = true;
+    }
+
+    // git commit
+    if (built || applied) {
+      await spawn(
+        `git add .`,
+      );
+
+      await spawn(
+        `git commit -m "Automated deployment: ${ImageTag}"`,
       );
     }
 
