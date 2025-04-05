@@ -5,6 +5,7 @@ import {
 } from "node:child_process";
 import { promisify } from "node:util";
 import { nodeReadableToDenoReadableStream, printStream } from "./utility.ts";
+import { shellParse } from "shell-args";
 
 export const exec = promisify(_exec);
 
@@ -23,7 +24,8 @@ export const spawn = async (
   command: string,
   options?: SpawnOptionsWithoutStdio,
 ) => {
-  const [executable, ...args] = command.split(" ");
+  const [executable, ...args] = shellParse(command);
+
   const Process = _spawn(executable, args, options);
 
   return await Promise.all([

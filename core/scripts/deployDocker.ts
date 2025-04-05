@@ -73,8 +73,9 @@ export const deployDocker = async (options: {
   prompt?: boolean;
   noConfirm?: boolean;
   skipBuild?: boolean;
-  skipPush?: boolean;
+  skipPublish?: boolean;
   skipApply?: boolean;
+  skipCommit?: boolean;
   deployDirty?: boolean;
 }) => {
   try {
@@ -172,8 +173,9 @@ export const deployDocker = async (options: {
           dockerOrg: e.optional(e.string()),
           noConfirm: e.optional(e.boolean()),
           skipBuild: e.optional(e.boolean()),
-          skipPush: e.optional(e.boolean()),
+          skipPublish: e.optional(e.boolean()),
           skipApply: e.optional(e.boolean()),
+          skipCommit: e.optional(e.boolean()),
           deployDirty: e.optional(e.boolean()),
         },
         { allowUnexpectedProps: true },
@@ -236,7 +238,7 @@ export const deployDocker = async (options: {
         `docker tag ${DefaultImageTag} ${ImageTag}`,
       );
 
-      if (!Options.skipPush) {
+      if (!Options.skipPublish) {
         // Push docker image to docker hub
         const [dockerPushOut, dockerPushErr] = await spawn(
           `docker push ${ImageTag}`,
@@ -280,7 +282,7 @@ export const deployDocker = async (options: {
     }
 
     // git commit
-    if (built || applied) {
+    if (!Options.skipCommit && (built || applied)) {
       await spawn(
         `git add .`,
       );
@@ -314,8 +316,9 @@ if (import.meta.main) {
     t,
     y,
     skipBuild,
-    skipPush,
+    skipPublish,
     skipApply,
+    skipCommit,
     deployDirty,
   } = parse(
     Deno.args,
@@ -336,8 +339,9 @@ if (import.meta.main) {
     prompt: true,
     noConfirm: y,
     skipBuild,
-    skipPush,
+    skipPublish,
     skipApply,
+    skipCommit,
     deployDirty,
   });
 

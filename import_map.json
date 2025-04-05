@@ -32,7 +32,8 @@
     "redis": "npm:ioredis@^5.5.0",
     "i18next": "https://deno.land/x/i18next@v24.2.0/index.js",
     "lngParser": "npm:accept-language-parser@^1.5.0",
-    "ohash": "npm:ohash@2.0.7"
+    "ohash": "npm:ohash@2.0.7",
+    "shell-args": "npm:shell-args@1.0.0"
   },
   "scopes": {}
 }
