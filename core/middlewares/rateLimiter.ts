@@ -30,8 +30,10 @@ export const rateLimiter = (options?: RateLimitOptions) => {
   ) => {
     const { ip } = ctx.request;
 
-    const Count = await Store.incr(ip, { expiresInMs: WindowMs });
-    const CountTimestamp = (await Store.timestamp(ip)) ?? Date.now();
+    const rateLimitKey = `rateLimitIp:${ip}`;
+
+    const Count = await Store.incr(rateLimitKey, { expiresInMs: WindowMs });
+    const CountTimestamp = (await Store.timestamp(rateLimitKey)) ?? Date.now();
 
     const XRateLimitReset = Math.round(
       (CountTimestamp + WindowMs) / 1000,
@@ -53,7 +55,11 @@ export const rateLimiter = (options?: RateLimitOptions) => {
           limit: Limit,
           windowMs: WindowMs,
         });
-      } else ctx.throw(Status.TooManyRequests, undefined, ErrorProps);
+      } else {ctx.throw(
+          Status.TooManyRequests,
+          "You've reached your request limits!",
+          ErrorProps,
+        );}
     } else {
       await next().catch((error: any) => {
         Object.assign(error, ErrorProps);
