@@ -259,9 +259,12 @@ export const generateSDK = async (options: {
 
     const PackageJSON = createPackageJSON({
       version: Options.version,
-      dependencies: Extensions.map(($) => $.package.dependencies).filter(
-        Boolean,
-      ).reduce<Record<string, string>>(($, deps) => ({ ...$, ...deps }), {}),
+      dependencies: {
+        "epic-api-sdk": "file:.",
+        ...Extensions.map(($) => $.package.dependencies).filter(
+          Boolean,
+        ).reduce<Record<string, string>>(($, deps) => ({ ...$, ...deps }), {}),
+      },
     });
 
     const TsConfigJSON = createTsConfigJSON();
