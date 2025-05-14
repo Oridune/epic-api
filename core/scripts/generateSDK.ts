@@ -258,7 +258,7 @@ export const generateSDK = async (options: {
     });
 
     const PackageJSON = createPackageJSON({
-      version: Options.version,
+      ...(Options.version === "latest" ? {} : { version: Options.version }),
       dependencies: {
         "epic-api-sdk": "file:.",
         ...Extensions.map(($) => $.package.dependencies).filter(
