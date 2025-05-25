@@ -92,19 +92,26 @@ export interface IPostmanCollection {
 
 export const generatePostmanCollection = async (
   routes: IRoute[],
-  data: {
-    name: string;
-    description: string;
-    version: string;
+  data?: {
+    name?: string;
+    description?: string;
+    version?: string;
   },
   variables?: Record<string, string>,
 ) => {
+  const Name = data?.name ?? "epic-api";
+  const IntegrationDocPath = join(Deno.cwd(), "INTEGRATION.md");
+  const Description = (await exists(IntegrationDocPath))
+    ? await Deno.readTextFile(IntegrationDocPath)
+    : data?.description;
+  const Version = data?.version ?? "1.0.0";
+
   // Create Empty Collection
   const PostmanCollectionObject: PostmanCollectionInterface = {
     info: {
-      name: data.name,
-      description: data.description,
-      version: data.version,
+      name: Name,
+      description: Description,
+      version: Version,
       schema:
         "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     },
@@ -161,7 +168,7 @@ export const generatePostmanCollection = async (
 
     const { object: RequestHandler } =
       (await Route.options.buildRequestHandler(Route, {
-        version: data.version,
+        version: Version,
       })) ?? {};
 
     if (typeof RequestHandler === "object") {
@@ -345,14 +352,9 @@ export const syncPostman = async (options: {
     // Log routes list
     if (RoutesTableData) console.table(RoutesTableData);
 
-    const IntegrationDocPath = join(Deno.cwd(), "INTEGRATION.md");
-    const Description = (await exists(IntegrationDocPath))
-      ? await Deno.readTextFile(IntegrationDocPath)
-      : (Options.description ?? denoConfig.description);
-
     const PostmanCollectionObject = await generatePostmanCollection(Routes, {
       name: Options.name ?? denoConfig.title ?? Options.collectionId,
-      description: Description,
+      description: (Options.description ?? denoConfig.description),
       version: Options.version,
     }, Options.variables);
 
