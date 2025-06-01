@@ -31,6 +31,8 @@ export class MapStore extends StoreBase {
       expiresInMs?: number;
     },
   ) {
+    if (Env.enabledSync("DISABLE_MAP_STORE_SET")) return;
+
     const CurrentTime = Date.now();
 
     this.map.set(
