@@ -24,14 +24,6 @@ export const takeHeapSnapshot = async (fileName?: string) => {
     const socket = new WebSocket(webSocketUrl);
 
     socket.onopen = async () => {
-      // Enable Heap Profiler
-      socket.send(JSON.stringify({ id: 1, method: "HeapProfiler.enable" }));
-
-      // Take Heap Snapshot
-      socket.send(
-        JSON.stringify({ id: 2, method: "HeapProfiler.takeHeapSnapshot" }),
-      );
-
       const snapshotFileName = fileName ?? "epic_api.heapsnapshot";
       const tempSnapshotPath = await Deno.makeTempFile({
         prefix: snapshotFileName,
@@ -41,6 +33,8 @@ export const takeHeapSnapshot = async (fileName?: string) => {
         write: true,
         truncate: true,
       });
+
+      console.log("Creating heapsnapshot at:", tempSnapshotPath);
 
       // Receive Snapshot Data
       socket.onmessage = (event) => {
@@ -59,6 +53,14 @@ export const takeHeapSnapshot = async (fileName?: string) => {
           resolve(tempSnapshotPath);
         }
       };
+
+      // Enable Heap Profiler
+      socket.send(JSON.stringify({ id: 1, method: "HeapProfiler.enable" }));
+
+      // Take Heap Snapshot
+      socket.send(
+        JSON.stringify({ id: 2, method: "HeapProfiler.takeHeapSnapshot" }),
+      );
     };
   });
 };

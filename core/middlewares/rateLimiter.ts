@@ -28,7 +28,9 @@ export const rateLimiter = (options?: RateLimitOptions) => {
     ctx: Context<Record<string, any>, Record<string, any>>,
     next: () => Promise<unknown>,
   ) => {
-    const { ip } = ctx.request;
+    const ip =
+      ctx.request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      ctx.request.ip;
 
     const rateLimitKey = `rateLimitIp:${ip}`;
 
