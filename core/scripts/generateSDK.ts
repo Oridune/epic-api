@@ -99,7 +99,10 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
       content += ` & { [K: string]: ${c} }\n`;
     }
 
-    return { optional: !schema.requiredProperties?.length, content };
+    return {
+      optional: schema.optional ?? !schema.requiredProperties?.length,
+      content,
+    };
   }
 
   if (schema.type === "array") {
@@ -134,6 +137,13 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
       content: schema.choices instanceof Array
         ? `"${schema.choices?.join(`" | "`)}"`
         : "string",
+    };
+  }
+
+  if (schema.type === "any") {
+    return {
+      optional: true,
+      content: schema.type,
     };
   }
 
@@ -257,11 +267,15 @@ export const generateSDK = async (options: {
       sdkDir: SDKDir,
     });
 
+    const UniqueExtensions = Array.from(
+      new Map(Extensions.map((item) => [item.name, item])).values(),
+    );
+
     const PackageJSON = createPackageJSON({
       ...(Options.version === "latest" ? {} : { version: Options.version }),
       dependencies: {
         "epic-api-sdk": "file:.",
-        ...Extensions.map(($) => $.package.dependencies).filter(
+        ...UniqueExtensions.map(($) => $.package.dependencies).filter(
           Boolean,
         ).reduce<Record<string, string>>(($, deps) => ({ ...$, ...deps }), {}),
       },
@@ -348,7 +362,7 @@ export const generateSDK = async (options: {
 
         return ModulePath.replace(/\.ts$/, "");
       },
-      extensions: Extensions,
+      extensions: UniqueExtensions,
     };
 
     await Promise.all([
