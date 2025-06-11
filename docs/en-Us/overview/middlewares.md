@@ -31,7 +31,7 @@ export default () =>
 ```
 {% endcode %}
 
-By default, Epic API registers middleware on a global level. If you want to add this middleware to a specific controller or a route, then you can add this middleware to the `excludes` array in the `middlewares/.sequence.json` file. Your file should look like the following:
+By default, Epic API registers middleware on a global level. If you want to add this middleware to a specific controller or a route, then you can add this middleware to the `excludes` array in the `middlewares/.sequence.json` file. Your file should look similar to the following:
 
 {% code title="middlewares/.sequence.json" lineNumbers="true" %}
 ```json
@@ -93,7 +93,7 @@ export default class UsersController extends BaseController {
 Use the following command to delete the middleware:
 
 {% hint style="warning" %}
-**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command during a real development.
 {% endhint %}
 
 ```bash
