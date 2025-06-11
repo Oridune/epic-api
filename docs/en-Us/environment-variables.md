@@ -78,6 +78,24 @@ await Env.get("your-key", true); // returns string | undefined
 Always use the `Env` class to access the environment variables. Avoid accessing the environment variables through `process.env` or `Deno.env` because these methods may not return all environment variables.
 {% endhint %}
 
+#### Some other utility methods
+
+The `Env` class provides different utility methods that you can use to make your life easier when working with the environment variables. See the following example snippet:
+
+```typescript
+import { Env } from "@Core/common/mod.ts";
+
+// Gets the environment variable and parses it to a number
+await Env.number("your-key");
+
+// Gets the environment variable and parses it to a boolean
+await Env.enabled("your-key");
+
+// Gets the environment variable and parses it to an array of string
+await Env.list("your-key");
+
+```
+
 #### Handling missing environment variables
 
 Epic API’s `Env` class offers a reliable mechanism for handling missing environment variables using a fallback method. This method allows you to retrieve missing variables from an external source, such as a database or an external API.
