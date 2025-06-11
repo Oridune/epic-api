@@ -4,6 +4,7 @@
 * [Environment variables](environment-variables.md)
 * [Project structure](project-structure.md)
 * [Architecture](architecture.md)
+* [Modules](modules.md)
 * [Testing](testing.md)
 
 ## OVERVIEW
@@ -26,6 +27,7 @@
 
 ## Examples
 
+* [Blog API CRUD](examples/blog-api-crud.md)
 * [Authentication](examples/authentication.md)
 * [Authorization](examples/authorization.md)
 * [Caching](examples/caching.md)

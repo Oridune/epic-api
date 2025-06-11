@@ -4,7 +4,7 @@ description: Models provide a systematic approach for interacting with databases
 
 # Models
 
-By default, Epic API uses [MongoDB](https://www.mongodb.com/) with [Oridune Mongo ODM](https://deno.land/x/oridune\_mongo), which serves as the default method for interacting with MongoDB, a popular NoSQL database.&#x20;
+By default, Epic API uses [MongoDB](https://www.mongodb.com/) with [Oridune Mongo ODM](https://deno.land/x/oridune_mongo), which serves as the default method for interacting with MongoDB, a popular NoSQL database.&#x20;
 
 In this documentation, we will delve into the concept of models within Epic API, exploring their significance and how they streamline the interaction between the application and the MongoDB database. Understanding the fundamental principles of models will empower developers to design and implement robust and scalable database structures, ultimately enhancing their applications' overall functionality and performance.
 
@@ -27,20 +27,44 @@ It will generate the following model:
 
 {% code title="models/user.ts" lineNumbers="true" %}
 ```typescript
-import e, { inferInput, inferOutput } from "validator";
-import { Mongo, ObjectId, InputDocument, OutputDocument } from "mongo";
+import e, {
+  // Following typescript utilities are used to infer the type of a validator schema. See the implementation below.
+  type inferInput,
+  type inferOutput,
+} from "validator";
+import {
+  Mongo,
+  ObjectId,
+  
+  // The following typescript utilities are used to extend any MongoDB's built-in fields like _id in the given type. It is used to convert a normal object type into a MongoDB document type. See the implementation below.
+  type InputDocument,
+  type OutputDocument
+} from "mongo";
 
 // Use Epic Validator to create a model schema
-export const UserSchema = () =>
-  e.object({
-    _id: e.optional(e.instanceOf(ObjectId, { instantiate: true })),
-    createdAt: e.optional(e.date()).default(() => new Date()),
-    updatedAt: e.optional(e.date()).default(() => new Date()),
-  });
+// We can use the InputUserSchema code below in other parts of our application!
+// For example, if you want to write a create post endpoint in a posts controller, you don't need to write the body validator of the create endpoint! Instead, you can import this InputUserSchema validator in your controller and use it as a validator schema.
+export const InputUserSchema = e.object({
+  // Write your publicly exposable fields here
+});
 
+export const UserSchema = e.object({
+  _id: e.optional(e.instanceOf(ObjectId, { instantiate: true })),
+  createdAt: e.optional(e.date()).default(() => new Date()),
+  updatedAt: e.optional(e.date()).default(() => new Date()),
+  
+  // Write your private or hidden fields here
+})
+// We have extended the InputUserSchema to the UserSchema to combine all fields into one schema
+.extends(InputUserSchema);
+
+// The following are the typescript utility types that can be used in any part of the application to infer the type of the above schema.
+// Use the following type to infer the input data type of the schema, which will include the types of any optional fields. E.g. { foo?: string | undefined }
 export type TUserInput = InputDocument<
   inferInput<typeof UserSchema>
 >;
+
+// Use the following type to infer the output data type of the schema, which will infer optional fields as required, but possibly undefined. E.g. { foo: string | undefined }
 export type TUserOutput = OutputDocument<
   inferOutput<typeof UserSchema>
 >;
@@ -57,7 +81,7 @@ UserModel.pre("update", (details) => {
 ```
 {% endcode %}
 
-Now you can import `UserModel` in your controllers and start interacting with the database. If you don't know how to use Oridune Mongo ODM, [read this](https://deno.land/x/oridune\_mongo).
+Now you can import `UserModel` in your controllers and start interacting with the database. If you don't know how to use Oridune Mongo ODM, [read this](https://deno.land/x/oridune_mongo).
 
 Use the following command to delete the model:
 
