@@ -4,7 +4,7 @@ description: Learn about the major modules in the framework that makeup the whol
 
 # Modules
 
-Epic API is designed with flexibility and power, comprising five distinct module types. Each module is created as a separate file in the project, and later these modules can be seamlessly integrated to create a robust and dynamic API.
+The Epic API framework is built for flexibility and scalability, structured around five distinct module types. Each module is defined in its own file within a dedicated module folder, promoting clean organization and modular development. These modules can be independently created and later integrated to form a powerful, dynamic API.
 
 The following is the list of modules that can be created in the Epic API framework:
 
@@ -38,7 +38,7 @@ Middleware in Epic API is based on the Oak framework and follows a clean, compos
 
 ### Hook
 
-Hooks in the Epic API framework provide a flexible way to extend request handling by allowing custom logic to run before or after a route’s handler. These are categorized into pre-hooks and post-hooks. Pre-hooks execute before the request handler and are commonly used for tasks like authentication, validation, or modifying request data. Post-hooks run after the handler completes and can be used for response formatting, logging, or caching. This structured approach enables developers to inject custom behavior at different stages of the request lifecycle, with full support for clean, maintainable code execution.
+Hooks in the Epic API framework provide a flexible way to extend request handling by allowing custom logic to run before or after a route’s handler. These are categorized into pre-hooks and post-hooks. Pre-hooks execute before the request handler and are commonly used for tasks like authentication, validation, or modifying request data. Post-hooks run after the handler completes and can be used for response formatting, logging, or caching. This structured approach enables developers to inject custom behavior at various stages of the request lifecycle, with full support for clean, maintainable code execution.
 
 ### Job
 
