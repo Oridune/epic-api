@@ -19,6 +19,9 @@ This command is going to generate the following code:
 ```typescript
 import { Application } from "oak";
 
+// If the sequence of the execution doesn't matter, you can also write your code here in this scope...
+
+// But it is recommended to write the code in the following default function if the sequence does matter:
 export default async (app: Application) => {
   // Write the logic to execute on app start (before server starts listening)...
 
@@ -34,7 +37,7 @@ export default async (app: Application) => {
 Use the following command to delete the job:
 
 {% hint style="warning" %}
-**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command during a real development.
 {% endhint %}
 
 ```bash
