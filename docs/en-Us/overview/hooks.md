@@ -38,8 +38,11 @@ export default {
   // This function is executed when a request is received from the client
   // and it passes all the middlewares.
   pre: (
+    // scope is the name of the controller to which the request is hitting.
     scope: string,
+    // name refers to the name of the request handler endpoint.
     name: string,
+    
     ctx: IRequestContext<RouterContext<string>>
   ) => {
     console.info(
