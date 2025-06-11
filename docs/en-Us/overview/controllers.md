@@ -33,11 +33,16 @@ export default class UsersController extends BaseController {
     // Write any validation schemas or metalogic here.
     // Information returned from this function can be used to generate docs etc.
   
-    return (ctx: IRequestContext<RouterContext<string>>) => {
-      // This function handles all the requests received from the clients!
-      // Write your request handler code here...
-
-      return Response.status(true);
+    return {
+      handler: (ctx: IRequestContext<RouterContext<string>>) => {
+        // ctx is the context of the current request provided by Epic API framework. It contains the necessary information about the current endpoint.
+        // If you want to access the request details from Oak context you will access ctx.router
+          
+        // This function handles all the requests received from the clients!
+        // Write your request handler code here...
+  
+        return Response.status(true);
+      }
     };
   }
 }
@@ -67,7 +72,7 @@ This command will create a new file in the `controllers/` directory and also add
 You may have noticed the flag `--template` , which is set to `validated.ts`. This flag tells the script to create a controller with a validation-included controller boilerplate in the `templates/controller.validated.ts` file, so you don't have to write the validation code from scratch!
 
 {% hint style="info" %}
-**Note:** Epic API has a built-in validation library called `validator`. The API of this library is almost the same as [Zod](https://zod.dev/)! However, it is extended with some extra features to level up the power of Epic API. [See here](../techniques/validations.md).
+**Note:** Epic API has a built-in validation library called `validator`. The API of this library is almost the same as [Zod](https://zod.dev/)! However, it is extended with some extra features to level up the power of the Epic API. [See the validator documentation for more details](../techniques/validations.md).
 {% endhint %}
 
 This is what the generated controller looks like:
@@ -91,24 +96,37 @@ export default class UsersController extends BaseController {
   @Post("/")
   public create(route: IRoute) {
     // Define Query Schema
+    // Following schema code will be used to validate the request's query parameters like /something?foo=bar
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
     // Define Params Schema
+    // Following schema code will be used to validate the request's params like /:foo
     const ParamsSchema = e.object({});
 
     // Define Body Schema
+    // Following schema code will be used to validate the request's body in case of post method
     const BodySchema = e.object({});
+    
+    // Define Response Schema
+    // Following schema code will be used to generate the shape of the response returned from this endpoint.
+    const ResponseSchema = e.object({});
 
     return {
+      // Pass the above schema shapes of the query, params, body and response here
+      // These shapes are used for automatic postman collection and SDK generation
       shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
+        return: ResponseSchema.toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
+        // The following code validates the query params based on the schema defined above
         const Query = await QuerySchema.validate(
+          // Extract search params (query params) from the request URL (ctx.router.request.url.searchParams) and pass it to validator as a normal object
           Object.fromEntries(ctx.router.request.url.searchParams),
+          // Pass a name of the validation (Used to identify the location/source of the validation error)
           { name: `${route.scope}.query` }
         );
 
@@ -119,18 +137,22 @@ export default class UsersController extends BaseController {
          * */
 
         // Params Validation
+        // The following code validates the url params based on the schema defined above
         const Params = await ParamsSchema.validate(ctx.router.params, {
           name: `${route.scope}.params`,
         });
 
         // Body Validation
+        // The following code validates the json body based on the schema defined above
         const Body = await BodySchema.validate(
           await ctx.router.request.body.json(),
           { name: `${route.scope}.body` }
         );
 
         // Start coding here...
+        // Your main business logic will be written here.
 
+        // After the business logic has been executed you can return a response using the built-in Response class
         return Response.statusCode(Status.Created);
       },
     };
@@ -138,10 +160,7 @@ export default class UsersController extends BaseController {
 
   @Get("/")
   public list(route: IRoute) {
-    // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
-
-    // Define Params Schema
     const ParamsSchema = e.object({});
 
     return {
@@ -150,19 +169,11 @@ export default class UsersController extends BaseController {
         params: ParamsSchema.toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
-        // Query Validation
         const Query = await QuerySchema.validate(
           Object.fromEntries(ctx.router.request.url.searchParams),
           { name: `${route.scope}.query` }
         );
 
-        /**
-         * It is recommended to keep the following validators in place even if you don't want to validate any data.
-         * It will prevent the client from injecting unexpected data into the request.
-         *
-         * */
-
-        // Params Validation
         const Params = await ParamsSchema.validate(ctx.router.params, {
           name: `${route.scope}.params`,
         });
@@ -191,11 +202,11 @@ The routes for this controller will be accessible on the following endpoint: `{{
 {% endhint %}
 
 {% hint style="success" %}
-**Did you notice the postman property?**
+**Did you notice the shape property?**
 
 This property is returned as the metadata of this controller's request. You may pass a sample data shape to this property so that the postman can document what information shape this route accepts! [See how it works](../utilities/postman.md).
 
-Defining the data shapes during development is a headache! And this is where `validator` got you covered! The `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
+Defining the data shapes for postman collections, building SDKs or typescript interfaces during development is a headache! And this is where `validator` got you covered! The `validator` will generate the shape of information based on the schema you've defined. It will be better to review the upper example code for better understanding.
 {% endhint %}
 
 ### Controller Components
@@ -224,7 +235,7 @@ In order to understand the workings of each component above, we need to create a
 
 #### Step 1:
 
-Let's suppose we are working on a controller file called `controllers/users.ts`, start by writing the following code:
+Let's suppose we are working on a controller file called `controllers/users.ts`, start by writing the basic structure of the controller:
 
 {% code title="controllers/users.ts" lineNumbers="true" %}
 ```typescript
@@ -265,18 +276,25 @@ export default class UsersController extends BaseController {
 
   @Get("/")
   public list() {
-    // Return a request handler function.
-    return () => {
-      // You will write your fetch users logic here.
-      const Users = UsersController.getUsers();
-
-      // Return a response instance.
-      if (Users)
-        return Response.message("Listing the users.").data({
-          users: Users, // Users list here...
-        });
-
-      return Response.status(false).message("No users found!");
+    // This scope never handles the requests keep that in mind!
+    // This scope only executes once in the lifecycle of the app remember!
+    
+    // Return a request handler object with a handler function.
+    return {
+      handler: () => {
+        // This is where the requests are handled.
+      
+        // You will write your fetch users logic here.
+        const Users = UsersController.getUsers();
+  
+        // Return a response instance.
+        if (Users)
+          return Response.message("Listing the users.").data({
+            users: Users, // Users list here...
+          });
+  
+        return Response.status(false).message("No users found!");
+      }
     };
   }
 }
@@ -284,10 +302,10 @@ export default class UsersController extends BaseController {
 ```
 {% endcode %}
 
-In this code, we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` a module. Then we created a service method `getUsers` for the `UsersController` class. And then, we created a `list` method decorated with the `Get` decorator on the `UsersController` a class that returns a request handler function. You will write your fetch users logic in this handler and return a `Response` instance accordingly.
+In this code, we have imported a `Get` decorator and a `Response` class from `@Core/common/mod.ts` a module. Then we created a service method `getUsers` for the `UsersController` class. And then, we created a `list` method decorated with the `Get` decorator on the `UsersController` a class that returns a request handler object with a handler function in it. You will write your fetch users logic in the handler function and return a `Response` instance accordingly. You have to strictly follow the above code structure in order to make it work.
 
 {% hint style="info" %}
-You can either return a request handler function directly from the `list` method or you can also return an object that contains a property `handler` which will be the request handler function. This object will also allow you to pass extra information like you've seen `postman` property in the above examples.
+You can either return a request handler function directly from the `list` method or you can also return an object that contains a property `handler` which will be the request handler function as shown above. This object will also allow you to pass extra information like you've seen `shape` property in the above examples.
 {% endhint %}
 
 Now spin up the server with the following command:
@@ -297,7 +315,7 @@ Now spin up the server with the following command:
 deno task dev
 ```
 
-Now if we test our endpoint in the Postman, we get the following result:
+Now if we test our endpoint in the Postman, we will get our desired response as shown in the following image:
 
 <figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
@@ -332,20 +350,23 @@ export default class UsersController extends BaseController {
   @Get("/")
   public list(route: IRoute) {
     // Return a request handler function.
-    return () => {
-      // You will write your fetch users logic here.
-      const Users = UsersController.getUsers();
-
-      // Return a response instance.
-      if (Users)
-        return Response.message("Listing the users.").data({
-          users: Users, // Users list here...
-        });
-
-      return Response.status(false).message("No users found!");
+    return {
+      handler: () => {
+        // You will write your fetch users logic here.
+        const Users = UsersController.getUsers();
+  
+        // Return a response instance.
+        if (Users)
+          return Response.message("Listing the users.").data({
+            users: Users, // Users list here...
+          });
+  
+        return Response.status(false).message("No users found!");
+      }
     };
   }
 
+  // We added a new endpoint with a post method. See the following code:
   @Post("/")
   public create(route: IRoute) {
     // Create a body validator schema.
@@ -355,20 +376,22 @@ export default class UsersController extends BaseController {
     });
 
     // Return a request handler function.
-    return async (ctx: IRequestContext<RouterContext<string>>) => {
-      // Validate user data
-      const User = await BodySchema.validate(
-        await ctx.router.request.body.json(),
-        { name: `${route.scope}.body` }
-      );
-
-      // Create user
-      UsersController.createUser(User);
-
-      // Return a response instance.
-      return Response.statusCode(Status.Created).data({
-        user: User,
-      });
+    return {
+      handler: async (ctx: IRequestContext<RouterContext<string>>) => {
+        // Validate user data in the body
+        const User = await BodySchema.validate(
+          await ctx.router.request.body.json(),
+          { name: `${route.scope}.body` }
+        );
+  
+        // Create user
+        UsersController.createUser(User);
+  
+        // Return a response instance.
+        return Response.statusCode(Status.Created).data({
+          user: User,
+        });
+      }
     };
   }
 }
@@ -376,20 +399,20 @@ export default class UsersController extends BaseController {
 ```
 {% endcode %}
 
-Now if we test our endpoint in the Postman, we get the following result:
+Now if we test our endpoint in the Postman, we will get our desired response as shown in the following image:
 
 <figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>POST http://localhost:3742/api/users/</p></figcaption></figure>
 
-Let's try to execute the previous route again and we get the following result:
+Let's try to execute the previous route again and we can see that we got the new user added to the users list as shown in the response below:
 
 <figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>GET http://localhost:3742/api/users/</p></figcaption></figure>
 
 Congratulations! You have successfully created your first Epic API :tada:
 
-Now you can use the following command to delete the controller:
+Now if you want to delete this controller you can use the following command:
 
 {% hint style="warning" %}
-**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command.
+**Warning!** You cannot undo the following command, which can lead to a code deletion! Be careful when using this command in a real development.
 {% endhint %}
 
 ```bash
