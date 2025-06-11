@@ -62,7 +62,7 @@ The `Env` class also provides an Async method to access environment variables. T
 ```typescript
 import { Env } from "@Core/common/mod.ts";
 
-// Sync access
+// Async access
 await Env.get("your-key"); // This method will either return a string or throw an error if undefined.
 await Env.get("your-key", true); // returns string | undefined
 ```
