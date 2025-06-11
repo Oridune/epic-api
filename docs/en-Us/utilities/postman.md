@@ -4,7 +4,7 @@ description: Generate postman collections automatically!
 
 # Postman
 
-Epic API can generate a detailed Postman collection for you automatically without writing a single line of instruction!
+Epic API can generate a detailed Postman collection for you automatically without writing a single line of code!
 
 Just execute the following command to generate a collection:
 
@@ -26,7 +26,7 @@ The `sync:postman` command accepts the following arguments:
 
 ### Postman Metadata
 
-When you are working on a controller in Epic API, you can optionally pass some extra Postman metadata that can be used to make your Postman collection more developer-friendly!
+When you are working on a controller in Epic API, you can optionally pass some extra Postman metadata in the `shape` property of the request handler object that can be used to make your Postman collection more developer-friendly!
 
 Take a look at the following controller:
 
@@ -48,6 +48,7 @@ import e from "validator";
 export default class UsersController extends BaseController {
   @Post("/")
   public create(_: IRoute) {
+    // Usually, you may write the validation schema as follows to validate the incoming request inputs
     // Define Query Schema
     const QuerySchema = e.object({}, { allowUnexpectedProps: true });
 
@@ -56,12 +57,17 @@ export default class UsersController extends BaseController {
 
     // Define Body Schema
     const BodySchema = e.object({});
+    
+    // Define Response Schema
+    const ResponseSchema = e.object({});
 
     return {
+      // This is where you pass the input and output shapes so that the Epic framework can build a Postman collection.
       shape: () => ({
         query: QuerySchema.toSample(),
         params: ParamsSchema.toSample(),
         body: BodySchema.toSample(),
+        return: ResponseSchema.toSample(),
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Start coding here...
@@ -75,6 +81,6 @@ export default class UsersController extends BaseController {
 ```
 {% endcode %}
 
-The `create` endpoint method above returns an object that contains a Postman property with the handler function. This property allows you to pass metadata to the Postman, which is then used to generate the Postman collection.
+The `create` endpoint method above returns an object that contains a `shape` property. This property allows you to pass metadata to Postman, which is then used to generate a Postman collection.
 
-Currently, you can pass the shapes of `headers`, `query`, `params`, and `body`. You can either pass an object that contains sample data or you can use the Validator schema to generate a sample that will be passed as a shape as shown in the above example.
+Currently, you can pass the shapes of `headers`, `query`, `params`, `body`, and `return`. You can either pass an object that contains sample data, or you can use the Validator schema to generate a sample that will be passed as a shape, as shown in the above example.
