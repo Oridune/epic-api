@@ -80,19 +80,25 @@ Always use the `Env` class to access the environment variables. Avoid accessing 
 
 #### Some other utility methods
 
-The `Env` class provides different utility methods that you can use to make your life easier when working with the environment variables. See the following example snippet:
+The `Env` class provides different utility methods along with their sync versions, that you can use to make your life easier when working with the environment variables. See the following example snippet:
 
 ```typescript
 import { Env } from "@Core/common/mod.ts";
 
 // Gets the environment variable and parses it to a number
-await Env.number("your-key");
+await Env.number("your-key"); // "10" -> 10
+// Or
+Env.numberSync("your-key");
 
 // Gets the environment variable and parses it to a boolean
-await Env.enabled("your-key");
+await Env.enabled("your-key"); // "0 | 1 | true | false" -> true | false
+// Or
+Env.enabledSync("your-key");
 
 // Gets the environment variable and parses it to an array of string
-await Env.list("your-key");
+await Env.list("your-key"); // "foo,bar,baz" -> ["foo", "bar", "baz"]
+// Or
+Env.listSync("your-key");
 
 ```
 
@@ -113,7 +119,13 @@ Env.onGetFailed = async (key) => {
 
 The `onGetFailed` function is triggered when `Env.get` cannot find a variable locally.
 
+{% hint style="warning" %}
+Remember that the above fallback method doesn't work for any sync methods of the `Env` class. Because sync methods are only designed to fetch the variables from the local environment files or the system environment variables.
+{% endhint %}
+
+{% hint style="danger" %}
 This fallback should be defined globally and initialized only once during the application's lifecycle.
+{% endhint %}
 
 {% hint style="info" %}
 **Pro Tip:** You will have to use the [job module](overview/jobs.md) to assign a custom function for `onGetFailed` method.
