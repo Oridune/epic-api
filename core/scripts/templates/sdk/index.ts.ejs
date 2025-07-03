@@ -74,7 +74,15 @@ export class EpicSDK {
         const Cached = options?.cacheKey ? await this.getCache<T>(options.cacheKey) : null;
 
         returnCache: if (Cached !== null) {
-            if(options?.cacheTTL && (Cached.timestamp + (typeof options.cacheTTL === "function" ? options.cacheTTL(Cached.value, Cached.timestamp) : options.cacheTTL)) < Date.now()) {
+            if(
+                options?.cacheTTL && (
+                    Cached.timestamp + (
+                        typeof options.cacheTTL === "function"
+                        ? options.cacheTTL(Cached.value, Cached.timestamp)
+                        : options.cacheTTL
+                    )
+                ) < Date.now()
+            ) {
                 await this.delCache(options.cacheKey!);
 
                 break returnCache;
@@ -94,7 +102,7 @@ export class EpicSDK {
     }
 
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
-        const verifyData = (res: AxiosResponse) => {
+        const verifyResponseShape = (res: AxiosResponse) => {
             // Check if the data object exists
             if (!res.data || typeof res.data !== "object") {
                 throw new Error("Response data is missing or invalid!");
@@ -115,7 +123,7 @@ export class EpicSDK {
                         executors.raw
                             .then((res) => {
                                 try {
-                                    resolve(verifyData(res));
+                                    resolve(verifyResponseShape(res));
                                 } catch (err) {
                                     reject(err);
                                 }
