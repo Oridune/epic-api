@@ -50,9 +50,14 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
 
             sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
+            const url = Object.entries(data?.params ?? {}).reduce(
+                (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value).replace(/:\w+\?\//g, ""),
+                "<%- Routes[0].endpoint %>"
+            );
+
             const res = await sdk._axios.request({
                 method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
-                url: `<%- Routes[0].endpoint %>/${Object.values(data?.params ?? {}).join("/")}`,
+                url,
                 params: data?.query,
                 data: data?.body,
                 ...data?.axiosConfig,
