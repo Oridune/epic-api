@@ -21,11 +21,25 @@ export class EpicSDK {
     static _options?: TSDKOptions;
     static _axios?: AxiosInstance;
 
-    protected static resolveCacheKey(keys: TCacheKey, namespace = "__epic-sdk:cache") {
+    static init(options?: TSDKOptions) {
+        this._options = options;
+        this._axios = axios.create(options?.axiosConfig);
+    }
+
+    static isPermitted = (scope: string, permission?: string): boolean => {
+        return true;
+    }
+
+    static checkPermission(scope: string, permission?: string) {
+        if(!this.isPermitted(scope, permission))
+            throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
+    }
+
+    static resolveCacheKey(keys: TCacheKey, namespace = "__epic-sdk:cache") {
         return `${namespace}:${(keys instanceof Array ? keys : [keys]).join(":")}`;
     }
 
-    protected static async setCache(keys: TCacheKey, value: any) {
+    static async setCache(keys: TCacheKey, value: any) {
         if(typeof this._options?.cache?.setter !== "function")
             throw new Error("A cache setter is not defined!");
 
@@ -35,7 +49,7 @@ export class EpicSDK {
         );
     }
 
-    protected static async getCache<T>(keys: TCacheKey) {
+    static async getCache<T>(keys: TCacheKey) {
         if(typeof this._options?.cache?.getter !== "function")
             throw new Error("A cache getter is not defined!");
 
@@ -49,25 +63,11 @@ export class EpicSDK {
         };
     }
 
-    protected static async delCache(keys: TCacheKey) {
+    static async delCache(keys: TCacheKey) {
         if(typeof this._options?.cache?.delete !== "function")
             throw new Error("A cache delete function is not defined!");
 
         return await this._options.cache.delete(this.resolveCacheKey(keys));
-    }
-
-    static init(options?: TSDKOptions) {
-        this._options = options;
-        this._axios = axios.create(options?.axiosConfig);
-    }
-
-    static isPermitted = (scope: string, permission?: string): boolean => {
-        return true;
-    }
-
-    static checkPermission(scope: string, permission?: string) {
-        if(!this.isPermitted(scope, permission))
-            throw new Error(`You are not authorized to perform this action! Missing permission '${scope}.${permission}'!`);
     }
 
     static async useCache<T>(callback: () => T | Promise<T>, options?: TCacheOptions<T>) {

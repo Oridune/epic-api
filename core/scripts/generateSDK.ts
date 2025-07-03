@@ -106,6 +106,18 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
   }
 
   if (schema.type === "array") {
+    if (schema.tuple instanceof Array && schema.tuple.length) {
+      const types = schema.tuple.map((schema) => {
+        const { optional, content } = schemaToTsType(schema);
+
+        return optional ? `${content} | undefined` : content;
+      });
+
+      content = `[${types}]`;
+
+      return { optional: schema.optional ?? false, content };
+    }
+
     const ItemType = schemaToTsType(schema.items);
 
     content = `Array<${ItemType.content}${
@@ -140,16 +152,9 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
     };
   }
 
-  if (schema.type === "any") {
-    return {
-      optional: true,
-      content: schema.type,
-    };
-  }
-
   return {
-    optional: schema.optional ?? false,
-    content: schema.type,
+    optional: schema.type === "any" ? true : (schema.optional ?? false),
+    content: schema.tsType ?? schema.type,
   };
 };
 
@@ -387,7 +392,13 @@ export const generateSDK = async (options: {
       ),
     ]);
 
-    await exec("npm run build", { cwd: SDKDir });
+    await exec("npm run build", { cwd: SDKDir }).catch((error) => {
+      if (error instanceof Error && "stdout" in error) {
+        console.log(error.stdout);
+      }
+
+      throw error;
+    });
     await exec("npm pack", { cwd: SDKDir });
 
     await Deno.mkdir(SDKPublicDir, { recursive: true }).catch(() => {
