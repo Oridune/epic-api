@@ -50,7 +50,7 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
 
             sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
-            const url = Object.entries(data?.params ?? {}).reduce(
+            const url = Object.entries<string>(data?.params ?? {}).reduce(
                 (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value).replace(/:\w+\?\//g, ""),
                 "<%- Routes[0].endpoint %>"
             );
