@@ -53,7 +53,7 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
             const url = Object.entries<string>(data?.params ?? {}).reduce(
                 (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value),
                 "<%- Routes[0].endpoint %>"
-            ).replace(/:\w+\?\//g, "");
+            ).replace(/:\w+\?\/?/g, "");
 
             const res = await sdk._axios.request({
                 method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
