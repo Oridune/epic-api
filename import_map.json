@@ -19,7 +19,7 @@
     "ejs": "npm:ejs@3.1.10",
     "mongo": "jsr:@oridune/mongo@0.1.35",
     "validator": "jsr:@oridune/mongo@0.1.35/validator",
-    "queue": "jsr:@oridune/queue@1.0.0",
+    "queue": "jsr:@oridune/queue@1.0.1",
     "cliffy:prompt": "https://deno.land/x/cliffy@v0.25.7/prompt/mod.ts",
     "oak": "jsr:@oak/oak@17.1.3",
     "oak/router": "jsr:@oak/oak@17.1.3/router",
