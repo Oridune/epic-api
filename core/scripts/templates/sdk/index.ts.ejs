@@ -107,15 +107,15 @@ export class EpicSDK {
             ...options,
         });
 
-        const delete = () => this.delCache(cacheKey);
+        const del = () => this.delCache(cacheKey);
 
         const invalidate = async () => {
-            await delete();
+            await del();
             
             return await get();
         }
 
-        return { get, delete, invalidate };
+        return { get, del, invalidate };
     }
 
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
