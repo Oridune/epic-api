@@ -101,6 +101,23 @@ export class EpicSDK {
         return Results as T;
     }
 
+    static useCaching<T>(cacheKey: TCacheKey, callback: () => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">) {
+        const get = () => this.useCache<T>(callback, {
+            cacheKey,
+            ...options,
+        });
+
+        const delete = () => this.delCache(cacheKey);
+
+        const invalidate = async () => {
+            await delete();
+            
+            return await get();
+        }
+
+        return { get, delete, invalidate };
+    }
+
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
         const verifyResponseShape = (res: AxiosResponse) => {
             // Check if the data object exists
