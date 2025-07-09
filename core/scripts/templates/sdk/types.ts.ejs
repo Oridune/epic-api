@@ -27,6 +27,7 @@ export type TRequestOptions<T> = {
         AxiosRequestConfig<unknown>,
         "method" | "url" | "data" | "params"
     >;
+    signal?: AbortSignal
 } & TCacheOptions<T>;
 
 export type TResponseShape<D> = {

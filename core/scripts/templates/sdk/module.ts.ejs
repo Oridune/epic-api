@@ -55,11 +55,14 @@ export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
                 "<%- Routes[0].endpoint %>"
             ).replace(/:\w+\?\/?/g, "");
 
+            
+
             const res = await sdk._axios.request({
                 method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
                 url,
                 params: data?.query,
                 data: data?.body,
+                signal: data?.signal,
                 ...data?.axiosConfig,
             });
 
