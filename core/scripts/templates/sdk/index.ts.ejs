@@ -106,12 +106,12 @@ export class EpicSDK {
     static useCaching<T>(cacheKey: TCacheKey, callback: (opts: { signal: AbortSignal }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">) {
         const resolvedCacheKey = this.resolveCacheKey(cacheKey);
 
-        const controller = this._cachingAborts.get(resolvedCacheKey) ?? new AbortController();
-
-        this._cachingAborts.set(resolvedCacheKey, controller);
-
         const get = () => {
-            controller.abort();
+            this._cachingAborts.get(resolvedCacheKey)?.abort();
+
+            const controller = new AbortController();
+
+            this._cachingAborts.set(resolvedCacheKey, controller);
 
             return this.useCache<T>(() => callback({ signal: controller.signal }), {
                 cacheKey,
