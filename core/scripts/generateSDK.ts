@@ -152,6 +152,13 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
     };
   }
 
+  if (schema.type === "string" && schema.choices?.length) {
+    return {
+      optional: schema.optional ?? false,
+      content: `"${schema.choices?.join(`" | "`)}"`,
+    };
+  }
+
   return {
     optional: schema.type === "any" ? true : (schema.optional ?? false),
     content: schema.tsType ?? schema.type,
