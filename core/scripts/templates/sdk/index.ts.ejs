@@ -153,20 +153,21 @@ export class EpicSDK {
                 return executor();
             },
             get res() {
-                return EpicSDK.useCache(
-                    () => new Promise<T>((resolve, reject) => {
-                        executors.raw
-                            .then((res) => {
-                                try {
-                                    resolve(verifyResponseShape(res));
-                                } catch (err) {
-                                    reject(err);
-                                }
-                            })
-                            .catch((err) => reject(err))
-                    }),
-                    options,
-                );
+                const callback = () => new Promise<T>((resolve, reject) => {
+                    executors.raw
+                        .then((res) => {
+                            try {
+                                resolve(verifyResponseShape(res));
+                            } catch (err) {
+                                reject(err);
+                            }
+                        })
+                        .catch((err) => reject(err))
+                });
+
+                if(options.cacheKey) return EpicSDK.useCache(callback, options);
+
+                return callback();
             },
             get data() {
                 return (async () => {
