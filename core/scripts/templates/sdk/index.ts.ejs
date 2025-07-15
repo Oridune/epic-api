@@ -165,7 +165,7 @@ export class EpicSDK {
                         .catch((err) => reject(err))
                 });
 
-                if(options.cacheKey) return EpicSDK.useCache(callback, options);
+                if(options?.cacheKey) return EpicSDK.useCache(callback, options);
 
                 return callback();
             },
