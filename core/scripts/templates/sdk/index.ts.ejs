@@ -75,8 +75,6 @@ export class EpicSDK {
     static async useCache<T>(callback: () => T | Promise<T>, options?: TCacheOptions<T>) {
         const Cached = options?.cacheKey ? await this.getCache<T>(options.cacheKey) : null;
 
-            console.log("Cache:", Cached, options?.cacheKey);
-
         returnCache: if (Cached !== null) {
             if(
                 options?.cacheTTL && (
@@ -96,8 +94,6 @@ export class EpicSDK {
         }
 
         const Results = await callback();
-
-        console.log("Results:", Results, Cached, options?.cacheKey);
 
         // deno-lint-ignore no-explicit-any
         if (options?.cacheKey && ![null, undefined].includes(Results as any)) {
