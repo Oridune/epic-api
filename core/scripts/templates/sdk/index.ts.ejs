@@ -123,13 +123,29 @@ export class EpicSDK {
 
         const del = () => this.delCache(cacheKey);
 
+        const invalidateCallbacks = new Set<(data: T) => void>();
+
+        const onInvalidate = (callback: (data: T) => void) => {
+            invalidateCallbacks.add(callback);
+        }
+
+        const offInvalidate = (callback: (data: T) => void) => {
+            invalidateCallbacks.delete(callback);
+        }
+
         const invalidate = async () => {
             await del();
             
-            return await get();
+            const data = await get();
+
+            for (const callback of invalidateCallbacks) {
+                callback(data);
+            }
+
+            return data;
         }
 
-        return { get, del, invalidate };
+        return { get, del, invalidate, onInvalidate, offInvalidate };
     }
 
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
