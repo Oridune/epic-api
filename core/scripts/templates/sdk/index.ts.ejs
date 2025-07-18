@@ -103,7 +103,7 @@ export class EpicSDK {
         return Results as T;
     }
 
-    static useCaching<T>(cacheKey: TCacheKey, callback: (opts: { signal: AbortSignal }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">) {
+    static useCaching<Args, T = unknown>(cacheKey: TCacheKey | (() => TCacheKey), callback: (opts: { signal: AbortSignal, args: Args }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">) {
         const resolvedCacheKey = this.resolveCacheKey(cacheKey);
 
         const get = () => {
