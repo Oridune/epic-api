@@ -115,7 +115,7 @@ export class EpicSDK {
 
                 this._cachingAborts.set(resolvedCacheKey, controller);
 
-                return callback({ signal: controller.signal })
+                return callback({ signal: controller.signal, args: {} as Args })
             }, {
                 cacheKey: resolvedCacheKey,
                 ...options,
