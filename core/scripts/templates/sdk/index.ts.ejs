@@ -122,7 +122,12 @@ export class EpicSDK {
             })
         };
 
-        const del = () => this.delCache(cacheKey);
+        const del = () => {
+            const preparedKey = typeof cacheKey === "function" ? cacheKey() : cacheKey;
+            const resolvedCacheKey = this.resolveCacheKey(preparedKey);
+
+            return this.delCache(resolvedCacheKey);
+        }
 
         const invalidateCallbacks = new Set<(data: T) => void>();
 
