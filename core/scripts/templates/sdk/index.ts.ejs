@@ -22,6 +22,7 @@ export class EpicSDK {
     static _apiVersion = "<%- apiVersion %>";
     static _options?: TSDKOptions;
     static _axios?: AxiosInstance;
+    static _useCachingMethods = new Map<string, unknown>();
 
     static init(options?: TSDKOptions) {
         this._options = options;
@@ -83,7 +84,7 @@ export class EpicSDK {
                         ? options.cacheTTL(Cached.value, Cached.timestamp)
                         : options.cacheTTL
                     )
-                ) < Date.now()
+                ) < (Date.now() / 1000)
             ) {
                 await this.delCache(options.cacheKey!);
 
@@ -103,11 +104,14 @@ export class EpicSDK {
         return Results as T;
     }
 
-    static useCaching<Args, T = unknown>(cacheKey: TCacheKey | (() => TCacheKey), callback: (opts: { signal: AbortSignal, args: Args }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">) {
-        const get = () => {
-            const preparedKey = typeof cacheKey === "function" ? cacheKey() : cacheKey;
-            const resolvedCacheKey = this.resolveCacheKey(preparedKey);
+    static useCaching<T>(cacheKey: TCacheKey, callback: (opts: { signal: AbortSignal }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">, freshMethods = false) {
+        const resolvedCacheKey = this.resolveCacheKey(cacheKey);
 
+        const _methods = this._useCachingMethods.get(resolvedCacheKey) as typeof methods;
+
+        if(_methods && !freshMethods) return _methods;
+
+        const get = () => {
             return this.useCache<T>(() => {
                 this._cachingAborts.get(resolvedCacheKey)?.abort();
 
@@ -115,19 +119,14 @@ export class EpicSDK {
 
                 this._cachingAborts.set(resolvedCacheKey, controller);
 
-                return callback({ signal: controller.signal, args: {} as Args })
+                return callback({ signal: controller.signal })
             }, {
-                cacheKey: resolvedCacheKey,
+                cacheKey,
                 ...options,
             })
         };
 
-        const del = () => {
-            const preparedKey = typeof cacheKey === "function" ? cacheKey() : cacheKey;
-            const resolvedCacheKey = this.resolveCacheKey(preparedKey);
-
-            return this.delCache(resolvedCacheKey);
-        }
+        const del = () => this.delCache(cacheKey);
 
         const invalidateCallbacks = new Set<(data: T) => void>();
 
@@ -151,7 +150,11 @@ export class EpicSDK {
             return data;
         }
 
-        return { get, del, invalidate, onInvalidate, offInvalidate };
+        const methods = { get, del, invalidate, onInvalidate, offInvalidate };
+
+        this._useCachingMethods.set(resolvedCacheKey, methods);
+
+        return methods;
     }
 
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
