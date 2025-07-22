@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  denoConfig,
   Env,
   EnvType,
   Events,
@@ -368,7 +369,7 @@ export const createAppServer = () => {
             Env.getSync("REDIS_CONNECTION_STRING", true))
         ) {
           await Queue.start({
-            namespace: Env.getType(),
+            namespace: `${denoConfig.id}:${Env.getType()}`,
             logs: Env.is(EnvType.DEVELOPMENT),
             redis: Store.redis ??
               urlToRedisOptions(Env.getSync("REDIS_CONNECTION_STRING")),
