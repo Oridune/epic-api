@@ -8,11 +8,7 @@ import { Confirm, Input } from "cliffy:prompt";
 import { exec } from "@Core/scripts/lib/run.ts";
 import { writeJSONFile } from "@Core/scripts/lib/utility.ts";
 
-import {
-  createPackageJSON,
-  createTsConfigJSON,
-  generateSDK,
-} from "@Core/scripts/generateSDK.ts";
+import { createDenoJSON, generateSDK } from "@Core/scripts/generateDenoSDK.ts";
 
 export const generateSDKExtension = async (options: {
   name: string;
@@ -41,49 +37,42 @@ export const generateSDKExtension = async (options: {
 
     if (Options.name) {
       const SDKName = `sdk@${Options.version}`;
-      const SDKDir = join(Deno.cwd(), `public/${SDKName}/`);
 
       const ExtensionDir = join(Deno.cwd(), `sdk-extensions/${Options.name}`);
-      const ExtensionSrc = join(ExtensionDir, "src");
 
       if (await exists(ExtensionDir)) {
         throw new Error(`SDK extension already exists: ${ExtensionDir}`);
       }
 
-      await Deno.mkdir(ExtensionSrc, { recursive: true }).catch(
+      await Deno.mkdir(ExtensionDir, { recursive: true }).catch(
         () => {
           // Do nothing...
         },
       );
 
-      const PackageJSON = createPackageJSON({
-        name: Options.name,
-        version: Options.version,
-        main: "./dist/entry.js",
+      const DenoJSON = createDenoJSON({
+        name: `${Options.name}-extension`,
+        ...(Options.version === "latest" ? {} : { version: Options.version }),
+        exports: {
+          ".": "./entry.ts",
+        },
+        imports: {
+          "epic-api-sdk": `../../public/${SDKName}/www/index.ts`,
+        },
       });
 
-      const TsConfigJSON = createTsConfigJSON();
-
-      await Promise.all([
-        writeJSONFile(
-          join(ExtensionDir, "package.json"),
-          PackageJSON,
-        ),
-        writeJSONFile(
-          join(ExtensionDir, "tsconfig.json"),
-          TsConfigJSON,
-        ),
-      ]);
-
-      await exec(`npm i -D ${SDKDir}`, { cwd: ExtensionDir });
+      await writeJSONFile(
+        join(ExtensionDir, "deno.json"),
+        DenoJSON,
+      );
 
       await Deno.writeTextFile(
-        join(ExtensionSrc, "entry.ts"),
+        join(ExtensionDir, "entry.ts"),
         (`
           /**
            * This SDK extension is used within SDK generation process
            * You cannot import any files from the epic api or any of its sources here cause it will not work.
-           * Your code should be written in a frontend library context (isolated in the current/this folder).
+           * Your code should be isolated in the this/current folder.
            * 
            */
 

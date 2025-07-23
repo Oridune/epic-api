@@ -32,7 +32,7 @@
     "generate:erd": "deno run -A ./core/scripts/generateERD.ts",
     "build:docker": "docker compose -f docker-compose.yml build",
     "deploy:docker": "deno run -A ./core/scripts/deployDocker.ts",
-    "generate:sdk": "deno run -A ./core/scripts/generateSDK.ts",
-    "generate:sdk:extension": "deno run -A ./core/scripts/generateSDKExtension.ts"
+    "generate:sdk": "deno run -A ./core/scripts/generateDenoSDK.ts",
+    "generate:sdk:extension": "deno run -A ./core/scripts/generateDenoSDKExtension.ts"
   }
 }

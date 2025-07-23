@@ -1,0 +1,71 @@
+import type { ObjectId, TRequestOptions, TRequestExecutors, TResponseShape } from "../types.ts";
+
+<% const TypeMap = new Map(); -%>
+
+<% for (const [Name, [Route]] of Object.entries(routeGroups)) { -%>
+
+<% const QueryShape = await getTypeStr(Route, "query"); -%>
+<% const ParamsShape = await getTypeStr(Route, "params"); -%>
+<% const BodyShape = await getTypeStr(Route, "body"); -%>
+<% const ReturnShape = await getTypeStr(Route, "return"); -%>
+
+<% TypeMap.set(Route.options.name, { query: QueryShape, params: ParamsShape, body: BodyShape, return: ReturnShape }) -%>
+
+export type TRoute$<%- scope %>$<%- Route.options.name %> = {
+    query: <%- QueryShape.content %>,
+    params: <%- ParamsShape.content %>,
+    body: <%- BodyShape.content %>,
+    return: <%- ReturnShape.content.trim() === "{}" ? "{ status: boolean; data: undefined }" : ReturnShape.content %>,
+};
+
+<% } -%>
+
+export interface IController$<%- scope %> {
+<% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
+<% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
+<% if (Route.options.method.toLowerCase() === "get") { -%>
+    <%- Route.options.name %>(): TRequestExecutors<TRoute$<%- scope %>$<%- Route.options.name %>["return"]>;
+<% } -%>
+    <%- Route.options.name %><
+        Method extends "<%- Route.options.method %>",
+        QueryShape extends TRoute$<%- scope %>$<%- Route.options.name %>["query"],
+        ParamsShape extends TRoute$<%- scope %>$<%- Route.options.name %>["params"],
+        BodyShape extends TRoute$<%- scope %>$<%- Route.options.name %>["body"],
+        ReturnShape extends TResponseShape<any> = TRoute$<%- scope %>$<%- Route.options.name %>["return"],
+    >(data: {
+        method?: Method;
+        query<%- TypeMap.get(Route.options.name).query.optional ? "?" : "" %>: QueryShape;
+        params<%- TypeMap.get(Route.options.name).params.optional ? "?" : "" %>: ParamsShape;
+        body<%- TypeMap.get(Route.options.name).body.optional ? "?" : "" %>: BodyShape;
+    } & TRequestOptions<ReturnShape>): TRequestExecutors<ReturnShape, BodyShape>;
+<% } -%>
+<% } -%>
+}
+
+export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
+<% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
+    <%- Name %>(data?: any) {
+        return sdk.resolveAxiosResponse(async () => {
+            if (!sdk._axios) throw new Error("Axios not initialized!");
+
+            sdk.checkPermission("<%- scope %>", "<%- Name %>");
+
+            const url = Object.entries<string>(data?.params ?? {}).reduce(
+                (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value),
+                "<%- Routes[0].endpoint %>"
+            ).replace(/:\w+\?\/?/g, "");
+
+            const res = await sdk._axios.request({
+                method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
+                url,
+                params: data?.query,
+                data: data?.body,
+                signal: data?.signal,
+                ...data?.axiosConfig,
+            });
+
+            return res;
+        }, data);
+    },
+<% } %>
+});

@@ -1,0 +1,1 @@
+{"name":"oauth-extension","version":"0.0.0","exports":{".":"./entry.ts"},"imports":{"epic-api-sdk":"../../index.ts"}}

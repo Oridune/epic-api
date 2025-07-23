@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Readable } from "node:stream";
 import { Buffer } from "node:buffer";
 
@@ -48,3 +49,13 @@ export const nodeReadableToDenoReadableStream = (nodeReadable: Readable) => {
     },
   });
 };
+
+export const writeJSONFile = (path: string, data: any) =>
+  Deno.writeTextFile(
+    path,
+    JSON.stringify(
+      data,
+      undefined,
+      2,
+    ),
+  );

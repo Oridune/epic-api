@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { parseArgs as parse } from "flags/parse-args";
 import { dirname, join } from "path";
 import { exists, expandGlob } from "dfs";
@@ -8,10 +7,11 @@ import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import { APIController } from "@Core/controller.ts";
 import { exec } from "@Core/scripts/lib/run.ts";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
+import { writeJSONFile } from "@Core/scripts/lib/utility.ts";
 
 export interface IPackageJSON {
-  name?: string;
-  version?: string;
+  name: string;
+  version: string;
   private?: boolean;
   main?: string;
   scripts?: Record<string, string>;
@@ -21,7 +21,9 @@ export interface IPackageJSON {
   [K: string]: unknown;
 }
 
-export const createPackageJSON = (opts?: IPackageJSON): IPackageJSON => ({
+export const createPackageJSON = (
+  opts?: Partial<IPackageJSON>,
+): IPackageJSON => ({
   name: "epic-api-sdk",
   version: "0.0.0",
   private: true,
@@ -51,16 +53,6 @@ export const createTsConfigJSON = () => ({
   include: ["./src/"],
   exclude: ["./test/"],
 });
-
-export const writeJSONFile = (path: string, data: any) =>
-  Deno.writeTextFile(
-    path,
-    JSON.stringify(
-      data,
-      undefined,
-      2,
-    ),
-  );
 
 export const serializeApiRoutes = (routes: IRoute[]) =>
   routes.reduce((routeGroups, route) => {
@@ -423,7 +415,7 @@ export const generateSDK = async (options: {
     await Loader.getSequence("public")?.set((_) => _.add(SDKName));
 
     console.info(
-      `${PackageJSON.name}@${Options.version} has been generated!`,
+      `${SDKName} has been generated!`,
     );
   } catch (error) {
     if (error instanceof ValidationException) {
