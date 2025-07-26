@@ -29,6 +29,7 @@ import { join } from "path";
 import Logger from "oak:logger";
 import { CORS } from "oak:cors";
 import { PORT } from "@Core/constants.ts";
+import { Confirm } from "cliffy:prompt";
 
 import { responseTime } from "@Core/middlewares/responseTime.ts";
 import { useTranslator } from "@Core/middlewares/useTranslator.ts";
@@ -400,10 +401,33 @@ export const createAppServer = () => {
 
         Context.app.addEventListener("listen", listenHandler);
 
-        Context.app.listen({
-          port: PORT,
-          signal: Context.abortController.signal,
-        });
+        let incrPort = false;
+        let incr = 0;
+
+        do {
+          try {
+            if (incrPort) {
+              incr++;
+              incrPort = false;
+            }
+
+            await Context.app.listen({
+              port: PORT + incr,
+              signal: Context.abortController.signal,
+            });
+          } catch (err) {
+            if (
+              err instanceof Error && err.message.includes("os error 10048")
+            ) {
+              if (
+                await Confirm.prompt(
+                  `Port ${PORT} is not available! Would you like to try another one?`,
+                )
+              ) incrPort = true;
+              else throw err;
+            } else throw err;
+          }
+        } while (incrPort);
       })();
     });
 
