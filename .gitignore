@@ -83,3 +83,4 @@ _temp/
 env/
 deno.lock
 postman_collection-*.json
+!public/sdk@*/www/package.tgz
