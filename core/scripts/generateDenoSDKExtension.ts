@@ -9,7 +9,6 @@ import { exec } from "@Core/scripts/lib/run.ts";
 import { writeJSONFile } from "@Core/scripts/lib/utility.ts";
 
 import { createDenoJSON, generateSDK } from "@Core/scripts/generateDenoSDK.ts";
-import { denoConfig } from "../common/denoConfig.ts";
 
 export const generateSDKExtension = async (options: {
   name: string;
@@ -58,7 +57,7 @@ export const generateSDKExtension = async (options: {
           ".": "./entry.ts",
         },
         imports: {
-          [denoConfig.id]: `../../public/${SDKName}/www/index.ts`,
+          "epic-api-sdk": `../../public/${SDKName}/www/index.ts`,
         },
       });
 
@@ -77,7 +76,7 @@ export const generateSDKExtension = async (options: {
            * 
            */
 
-          import { EpicSDK } from "${denoConfig.id}";
+          import { EpicSDK } from "epic-api-sdk";
 
           export class ${Options.name}Entry {}
         `).trim().split("\n").map(($) => $.trim()).join("\n"),

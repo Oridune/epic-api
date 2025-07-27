@@ -1,6 +1,6 @@
 import { parseArgs as parse } from "flags/parse-args";
 import { APIController } from "@Core/controller.ts";
-import { dirname, join } from "path";
+import { dirname, join, relative } from "path";
 import { exists, expandGlob } from "dfs";
 import e, { ValidationException } from "validator";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
@@ -45,7 +45,7 @@ export const syncSDKExtensions = async (opts: {
     ),
   ];
 
-  return (await Promise.all(ExtensionsDirs.map(async (extensionDir) => {
+  await Promise.all(ExtensionsDirs.map(async (extensionDir) => {
     const Files = expandGlob("**/**/*", {
       root: extensionDir,
       globstar: true,
@@ -85,43 +85,49 @@ export const syncSDKExtensions = async (opts: {
 
         await Deno.writeTextFile(
           TargetPath,
-          sourceContent,
+          sourceContent.replace(
+            /from\s*"epic-api-sdk"/g,
+            `from "${
+              relative(dirname(TargetPath), join(opts.sdkDir, "index.ts"))
+                .replace(/\\/g, "/")
+            }"`,
+          ),
         );
       }
     }
+  }));
 
-    if (!await exists(SDKExtensionsDir)) return [];
+  if (!await exists(SDKExtensionsDir)) return [];
 
-    const Extensions: Array<{
-      name: string;
-      denoConfig: IDenoJSON;
-      entry: string;
-    }> = [];
+  const Extensions: Array<{
+    name: string;
+    denoConfig: IDenoJSON;
+    entry: string;
+  }> = [];
 
-    for await (const Entry of Deno.readDir(SDKExtensionsDir)) {
-      if (Entry.isDirectory) {
-        const denoConfigPath = join(SDKExtensionsDir, Entry.name, "deno.json");
+  for await (const Entry of Deno.readDir(SDKExtensionsDir)) {
+    if (Entry.isDirectory) {
+      const denoConfigPath = join(SDKExtensionsDir, Entry.name, "deno.json");
 
-        const denoConfig = JSON.parse(
-          await Deno.readTextFile(denoConfigPath),
-        ) as IDenoJSON;
+      const denoConfig = JSON.parse(
+        await Deno.readTextFile(denoConfigPath),
+      ) as IDenoJSON;
 
-        const imports = denoConfig.imports ??= {};
+      const imports = denoConfig.imports ??= {};
 
-        imports["epic-api-sdk"] = "../../index.ts";
+      imports["epic-api-sdk"] = "../../index.ts";
 
-        await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig));
+      await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig));
 
-        Extensions.push({
-          name: Entry.name,
-          denoConfig: denoConfig,
-          entry: `./extensions/${Entry.name}/entry`,
-        });
-      }
+      Extensions.push({
+        name: Entry.name,
+        denoConfig: denoConfig,
+        entry: `./extensions/${Entry.name}/entry`,
+      });
     }
+  }
 
-    return Extensions;
-  }))).flat();
+  return Extensions;
 };
 
 export const generateNpmModule = async (opts: {
