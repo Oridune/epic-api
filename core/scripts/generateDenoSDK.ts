@@ -5,7 +5,7 @@ import { exists, expandGlob } from "dfs";
 import e, { ValidationException } from "validator";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
 import { writeJSONFile } from "@Core/scripts/lib/utility.ts";
-import { IRoute, Loader, Server } from "@Core/common/mod.ts";
+import { denoConfig, IRoute, Loader, Server } from "@Core/common/mod.ts";
 import {
   createPackageJSON,
   schemaToTsType,
@@ -23,7 +23,7 @@ export interface IDenoJSON {
 }
 
 export const createDenoJSON = (opts?: IDenoJSON): IDenoJSON => ({
-  name: "epic-api-sdk",
+  name: denoConfig.id,
   version: "0.0.0",
   ...opts,
 });

@@ -24,7 +24,7 @@ export interface IPackageJSON {
 export const createPackageJSON = (
   opts?: Partial<IPackageJSON>,
 ): IPackageJSON => ({
-  name: "epic-api-sdk",
+  name: denoConfig.id,
   version: "0.0.0",
   private: true,
   main: "./dist/index.js",
