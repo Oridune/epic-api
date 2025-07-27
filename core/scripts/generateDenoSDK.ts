@@ -143,7 +143,11 @@ export const generateNpmModule = async (opts: {
     },
   );
 
-  const packageJSON = createPackageJSON();
+  const packageJSON = createPackageJSON({
+    private: undefined,
+    main: undefined,
+    scripts: undefined,
+  });
 
   await Deno.writeTextFile(
     scriptPath,
