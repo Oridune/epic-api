@@ -79,16 +79,16 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
     app.use(serveStatic(details.name, Root));
   };
 
+  for (const [, UI] of Loader.getSequence("public")?.listDetailed() ?? []) {
+    if (UI.enabled) ServeStatic(UI);
+  }
+
   for (const [, SubLoader] of Loader.getLoaders() ?? []) {
     for (
       const [, UI] of SubLoader.tree
         .get("public")
         ?.sequence.listDetailed() ?? []
     ) if (UI.enabled) ServeStatic(UI);
-  }
-
-  for (const [, UI] of Loader.getSequence("public")?.listDetailed() ?? []) {
-    if (UI.enabled) ServeStatic(UI);
   }
 
   // Log UI list

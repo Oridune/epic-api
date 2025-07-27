@@ -33,17 +33,16 @@ export const serveStatic = (prefix: string, root: string) => {
       const SendOptions = { root, index: IndexFile };
       const FilePath = ctx.request.url.pathname.replace(Prefix, "/");
 
-      await send(ctx, FilePath, SendOptions).catch(() =>
-        send(ctx, "/", SendOptions).catch(() => {
-          const IsNotFound = !["/", IndexFile].includes(FilePath);
-          ctx.throw(
-            IsNotFound ? Status.NotFound : Status.Forbidden,
-            IsNotFound
-              ? `File not found! Invalid path '${FilePath}'.`
-              : undefined,
-          );
-        })
-      );
+      await send(ctx, FilePath, SendOptions).catch(() => {
+        const IsNotFound = !["/", IndexFile].includes(FilePath);
+
+        ctx.throw(
+          IsNotFound ? Status.NotFound : Status.Forbidden,
+          IsNotFound
+            ? `File not found! Invalid path '${FilePath}'.`
+            : undefined,
+        );
+      });
     } else await next();
   };
 };
