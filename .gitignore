@@ -80,7 +80,6 @@ _temp/
 .coverage/
 .terraform/
 *.tfvars
-env/
 deno.lock
 postman_collection-*.json
 terraform.tfstate*
