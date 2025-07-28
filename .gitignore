@@ -83,4 +83,7 @@ _temp/
 env/
 deno.lock
 postman_collection-*.json
+terraform.tfstate*
+env.tar.gz
+age.key
 !public/sdk@*/www/package.tgz
