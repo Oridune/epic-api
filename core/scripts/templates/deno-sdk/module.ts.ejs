@@ -42,30 +42,38 @@ export interface IController$<%- scope %> {
 <% } -%>
 }
 
-export const <%- scope %>Module = (sdk: any): IController$<%- scope %> => ({
+export const <%- scope %>Module = (sdk: any) => {
+    const methods = {
 <% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
-    <%- Name %>(data?: any) {
-        return sdk.resolveAxiosResponse(async () => {
-            if (!sdk._axios) throw new Error("Axios not initialized!");
+        <%- Name %>(data?: any) {
+            return sdk.resolveAxiosResponse(async () => {
+                if (!sdk._axios) throw new Error("Axios not initialized!");
 
-            sdk.checkPermission("<%- scope %>", "<%- Name %>");
+                sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
-            const url = Object.entries<string>(data?.params ?? {}).reduce(
-                (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value),
-                "<%- Routes[0].endpoint %>"
-            ).replace(/:\w+\?\/?/g, "");
+                const url = Object.entries<string>(data?.params ?? {}).reduce(
+                    (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value),
+                    "<%- Routes[0].endpoint %>"
+                ).replace(/:\w+\?\/?/g, "");
 
-            const res = await sdk._axios.request({
-                method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
-                url,
-                params: data?.query,
-                data: data?.body,
-                signal: data?.signal,
-                ...data?.axiosConfig,
-            });
+                const res = await sdk._axios.request({
+                    method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
+                    url,
+                    params: data?.query,
+                    data: data?.body,
+                    signal: data?.signal,
+                    ...data?.axiosConfig,
+                });
 
-            return res;
-        }, data);
-    },
+                return res;
+            }, data);
+        },
 <% } %>
-});
+    } as IController$<%- scope %>;
+
+<% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
+    (methods.<%- Name %> as any).__permission = "<%- scope %>.<%- Name %>";
+<% } %>
+
+    return methods;
+};
