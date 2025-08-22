@@ -52,7 +52,12 @@ async (
     if (!Env.is(EnvType.PRODUCTION)) {
       console.error(
         `${ctx.request.method.toUpperCase()}: ${ctx.request.url.pathname}`,
-        inspect(error, true, Infinity, true),
+        inspect(error, {
+          depth: 3,
+          maxArrayLength: 100,
+          breakLength: 120,
+          colors: true,
+        }),
       );
 
       if (error.cause !== undefined) {
