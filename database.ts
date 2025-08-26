@@ -1,4 +1,4 @@
-import { Mongo } from "mongo";
+import { Mongo, MongoTransaction } from "mongo";
 import { Env, EnvType } from "@Core/common/env.ts";
 import { Store } from "@Core/common/store.ts";
 
@@ -76,5 +76,5 @@ export class Database {
    * @param session Optionally pass an external (parent) session
    * @returns
    */
-  static transaction = Mongo.transaction.bind(Mongo);
+  static transaction = MongoTransaction.transaction;
 }
