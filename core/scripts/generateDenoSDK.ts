@@ -1,7 +1,7 @@
 import { parseArgs as parse } from "flags/parse-args";
 import { APIController } from "@Core/controller.ts";
 import { dirname, join, relative } from "path";
-import { exists, expandGlob } from "dfs";
+import { exists, existsSync, expandGlob } from "dfs";
 import e, { ValidationException } from "validator";
 import { ejsRender } from "@Core/scripts/lib/ejsRender.ts";
 import { writeJSONFile } from "@Core/scripts/lib/utility.ts";
@@ -182,16 +182,24 @@ export const generateNpmModule = async (opts: {
 
 export const generateSDK = async (options: {
   version?: string;
+  apiVersion?: string;
 }) => {
   try {
     const Options = await e
       .object({
-        version: e.optional(e.string()).default("latest"),
+        version: e.string(),
+        apiVersion: e.optional(e.string()).default("latest"),
       })
       .validate(options);
 
     const SDKName = `sdk@${Options.version}`;
     const SDKDir = join(Deno.cwd(), `public/${SDKName}/www`);
+
+    if (existsSync(SDKDir)) {
+      throw new Error(
+        "SDK version already exists! Please specify a different version!",
+      );
+    }
 
     await Deno.mkdir(join(SDKDir, "modules"), { recursive: true }).catch(
       () => {
@@ -243,7 +251,7 @@ export const generateSDK = async (options: {
     });
 
     const EJSContext = {
-      apiVersion: Options.version,
+      apiVersion: Options.apiVersion,
       scopeGroups: serializeApiRoutes(Routes),
       getTypeStr: async (
         route: IRoute,
@@ -251,7 +259,7 @@ export const generateSDK = async (options: {
       ) => {
         const { object: RequestHandler } =
           (await route.options.buildRequestHandler(route, {
-            version: Options.version,
+            version: Options.apiVersion,
           })) ?? {};
 
         const RawShape = RequestHandler?.shape ?? RequestHandler?.postman ?? {};
@@ -328,12 +336,13 @@ export const generateSDK = async (options: {
 };
 
 if (import.meta.main) {
-  const { version, v } = parse(Deno.args);
+  const { version, v, apiVersion } = parse(Deno.args);
 
   await Loader.load({ includeTypes: ["controllers", "plugins", "public"] });
 
   await generateSDK({
     version: version ?? v,
+    apiVersion,
   });
 
   Deno.exit();
