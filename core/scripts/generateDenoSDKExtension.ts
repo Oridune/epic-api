@@ -12,7 +12,8 @@ import { createDenoJSON, generateSDK } from "@Core/scripts/generateDenoSDK.ts";
 
 export const generateSDKExtension = async (options: {
   name: string;
-  version?: string;
+  version: string;
+  apiVersion?: string;
   prompt?: boolean;
 }) => {
   try {
@@ -29,7 +30,8 @@ export const generateSDKExtension = async (options: {
               })
               : undefined
           ),
-          version: e.optional(e.string()).default("latest"),
+          version: e.string(),
+          apiVersion: e.optional(e.string()).default("latest"),
         },
         { allowUnexpectedProps: true },
       )
@@ -98,19 +100,21 @@ export const generateSDKExtension = async (options: {
 };
 
 if (import.meta.main) {
-  const { name, n, version, v, skipGenerateSDK } = parse(Deno.args);
+  const { name, n, version, v, skipGenerateSDK, apiVersion } = parse(Deno.args);
 
   if (!skipGenerateSDK) {
     await Loader.load({ includeTypes: ["controllers", "plugins", "public"] });
 
     await generateSDK({
       version: version ?? v,
+      apiVersion,
     });
   }
 
   await generateSDKExtension({
     name: name ?? n,
     version: version ?? v,
+    apiVersion,
     prompt: true,
   });
 
