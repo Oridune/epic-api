@@ -153,7 +153,7 @@ Deno.test({
     await t.step(
       "GET /api/test/ Should return 200 ok for x-api-version ^1.0.0",
       async () => {
-        const Response = await fetch(new URL("/api/test/", APIHost), {
+        const Response = await fetch(new URL("/api/test/?foo=bar", APIHost), {
           headers: {
             "x-Api-version": "^1.0.0",
           },

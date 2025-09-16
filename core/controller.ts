@@ -86,7 +86,14 @@ export class APIController extends BaseController {
   }
 
   @Get("/test/")
-  public async test() {
+  public async test(route: IRoute) {
+    // Define Query Schema
+    const QuerySchema = e.deepCast(
+      e.object({
+        foo: e.optional(e.in(["bar"])),
+      }, { allowUnexpectedProps: true }),
+    );
+
     // Simulate some slow task...
     await new Promise((_) => setTimeout(_, 3000));
 
@@ -99,9 +106,19 @@ export class APIController extends BaseController {
         },
       })
       .add(["1.0.2", "1.0.5"], {
-        handler: ({ version }: { version: string }) => {
+        handler: async (ctx: IRequestContext<RouterContext<string>>) => {
+          // Query Validation
+          const Query = await QuerySchema.validate(
+            parseQueryParams(ctx.router.request.url.search),
+            { name: `${route.scope}.query` },
+          );
+
+          if (Query.foo && Query.foo !== "bar") {
+            throw new Error("Oops! foo is not bar!");
+          }
+
           return Response.message(
-            `Latest test was successful from API version ${version}!`,
+            `Latest test was successful from API version ${ctx.version}!`,
           );
         },
       });
