@@ -1,9 +1,33 @@
 import e, { BaseValidator } from "validator";
 
+export const valueSchema = e.or([e.number(), e.boolean(), e.string()]);
+
+export const basicFilterSchema = e.record(
+  e.partial(
+    e.object({
+      $eq: valueSchema,
+      $ne: valueSchema,
+      $in: e.array(valueSchema),
+      $nin: e.array(valueSchema),
+      $all: e.array(valueSchema),
+      $lt: valueSchema,
+      $lte: valueSchema,
+      $gt: valueSchema,
+      $gte: valueSchema,
+    }),
+  ),
+);
+
+export const multiFilterSchema = e.partial(e.object({
+  $and: e.array(basicFilterSchema),
+  $or: e.array(basicFilterSchema),
+}));
+
 export const queryValidator = () =>
   e.deepCast(e.object(
     {
       search: e.optional(e.string()).describe("Enter your search term"),
+      filters: e.optional(e.or([basicFilterSchema, multiFilterSchema])),
       range: e.optional(
         e.tuple([e.date(), e.date()]),
       ).describe(

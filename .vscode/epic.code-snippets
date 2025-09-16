@@ -38,7 +38,7 @@
       "\t\thandler: async (ctx: IRequestContext<RouterContext<string>>) => {",
       "\t\t\t// Query Validation",
       "\t\t\tconst Query = await QuerySchema.validate(",
-      "\t\t\t\tObject.fromEntries(ctx.router.request.url.searchParams),",
+      "\t\t\t\tparseQueryParams(ctx.router.request.url.search),",
       "\t\t\t\t{ name: `${route.scope}.query` }",
       "\t\t\t);\n",
       "\t\t\t// Params Validation",

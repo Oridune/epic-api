@@ -87,6 +87,7 @@ import {
   Response,
   type IRoute,
   type IRequestContext,
+  parseQueryParams,
 } from "@Core/common/mod.ts";
 import { Status, type RouterContext } from "oak";
 import e from "validator";
@@ -124,8 +125,8 @@ export default class UsersController extends BaseController {
         // Query Validation
         // The following code validates the query params based on the schema defined above
         const Query = await QuerySchema.validate(
-          // Extract search params (query params) from the request URL (ctx.router.request.url.searchParams) and pass it to validator as a normal object
-          Object.fromEntries(ctx.router.request.url.searchParams),
+          // Extract search params (query params) from the request URL (ctx.router.request.url.search) and pass it to validator as a normal object
+          parseQueryParams(ctx.router.request.url.search),
           // Pass a name of the validation (Used to identify the location/source of the validation error)
           { name: `${route.scope}.query` }
         );
@@ -170,7 +171,7 @@ export default class UsersController extends BaseController {
       }),
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
+          parseQueryParams(ctx.router.request.url.search),
           { name: `${route.scope}.query` }
         );
 

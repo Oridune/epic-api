@@ -7,6 +7,7 @@ import {
   Response,
   type IRoute,
   type IRequestContext,
+  parseQueryParams,
 } from "@Core/common/mod.ts";
 import { responseValidator } from "@Core/common/validators.ts";
 import { Status, type RouterContext } from "oak";
@@ -37,7 +38,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
         const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
+          parseQueryParams(ctx.router.request.url.search),
           { name: `${route.scope}.query` }
         );
 
@@ -86,7 +87,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
       handler: async (ctx: IRequestContext<RouterContext<string>>) => {
         // Query Validation
         const Query = await QuerySchema.validate(
-          Object.fromEntries(ctx.router.request.url.searchParams),
+          parseQueryParams(ctx.router.request.url.search),
           { name: `${route.scope}.query` }
         );
 
