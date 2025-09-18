@@ -131,7 +131,7 @@ import {
   Response,
   Versioned,
 } from "@Core/common/mod.ts";
-import { responseValidator } from "@Core/common/validators.ts";
+import { responseValidator, normalizeFilters } from "@Core/common/validators.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
 import { queryValidator } from "@Core/common/validators.ts";
@@ -243,7 +243,7 @@ export default class PostsController extends BaseController {
         });
 
         const PostsBaseFilters = {
-          ...Query.filters,
+          ...normalizeFilters(Query.filters),
           ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
           ...(Query.range instanceof Array
             ? {

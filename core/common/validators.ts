@@ -1,21 +1,36 @@
-import e, { BaseValidator } from "validator";
+import { ObjectId } from "mongo";
+import e, { BaseValidator, inferOutput } from "validator";
 
-export const valueSchema = e.or([e.number(), e.boolean(), e.string()]);
+export const valueSchema = e.or([
+  e.object({
+    type: e.in(
+      ["string", "number", "boolean", "objectId", "date", "regex"] as const,
+    ),
+    value: e.string(),
+    options: e.optional(e.object({
+      regexFlags: e.optional(e.string()),
+    })),
+  }),
+  e.string(),
+]);
+
+export const expressionSchema = e.partial(
+  e.object({
+    $eq: valueSchema,
+    $ne: valueSchema,
+    $in: e.array(valueSchema),
+    $nin: e.array(valueSchema),
+    $all: e.array(valueSchema),
+    $lt: valueSchema,
+    $lte: valueSchema,
+    $gt: valueSchema,
+    $gte: valueSchema,
+    $regex: valueSchema,
+  }),
+);
 
 export const basicFilterSchema = e.record(
-  e.partial(
-    e.object({
-      $eq: valueSchema,
-      $ne: valueSchema,
-      $in: e.array(valueSchema),
-      $nin: e.array(valueSchema),
-      $all: e.array(valueSchema),
-      $lt: valueSchema,
-      $lte: valueSchema,
-      $gt: valueSchema,
-      $gte: valueSchema,
-    }),
-  ),
+  expressionSchema,
 );
 
 export const multiFilterSchema = e.partial(e.object({
@@ -23,11 +38,13 @@ export const multiFilterSchema = e.partial(e.object({
   $or: e.array(basicFilterSchema),
 }));
 
+export const filtersSchema = e.or([basicFilterSchema, multiFilterSchema]);
+
 export const queryValidator = () =>
   e.deepCast(e.object(
     {
       search: e.optional(e.string()).describe("Enter your search term"),
-      filters: e.optional(e.or([basicFilterSchema, multiFilterSchema])),
+      filters: e.optional(filtersSchema),
       range: e.optional(
         e.tuple([e.date(), e.date()]),
       ).describe(
@@ -80,3 +97,59 @@ export const responseValidator = <T extends (BaseValidator)>(data?: T, opts?: {
     ),
     metadata: e.optional(e.record(e.any())),
   });
+
+export const normalizeFilters = (
+  filters?: inferOutput<typeof filtersSchema>,
+) => {
+  if (typeof filters !== "object" || !filters) return {};
+
+  const normalize = (value?: string | inferOutput<typeof valueSchema>) => {
+    if (!value || typeof value === "string") return value;
+
+    switch (value.type) {
+      case "boolean":
+        return ["true", "1"].includes(value.value);
+
+      case "date":
+        return new Date(value.value);
+
+      case "number":
+        return Number(value.value);
+
+      case "objectId":
+        return new ObjectId(value.value);
+
+      case "regex":
+        return new RegExp(value.value, value.options?.regexFlags);
+
+      default:
+        return value.value;
+    }
+  };
+
+  const transform = (expr: inferOutput<typeof expressionSchema>) => {
+    // deno-lint-ignore no-explicit-any
+    const newExpr: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(expr)) {
+      newExpr[key] = value instanceof Array
+        ? value.map(normalize)
+        : normalize(value);
+    }
+
+    return newExpr;
+  };
+
+  // deno-lint-ignore no-explicit-any
+  const newFilters: Record<string, any> = {};
+
+  for (const [key, expr] of Object.entries(filters)) {
+    if (["$and", "$or"].includes(key)) {
+      newFilters[key] = expr.map(normalizeFilters);
+    }
+
+    newFilters[key] = transform(expr);
+  }
+
+  return newFilters;
+};

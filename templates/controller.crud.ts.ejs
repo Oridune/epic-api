@@ -14,7 +14,7 @@ import {
 import { responseValidator } from "@Core/common/validators.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
-import { queryValidator } from "@Core/common/validators.ts";
+import { queryValidator, normalizeFilters } from "@Core/common/validators.ts";
 import { ObjectId } from "mongo";
 
 import { 
@@ -123,7 +123,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
         });
 
         const <%- utils.pascalCase(name) %>BaseFilters = {
-          ...Query.filters,
+          ...normalizeFilters(Query.filters),
           ...(Params.id ? { _id: new ObjectId(Params.id) } : {}),
           ...(Query.range instanceof Array
             ? {
