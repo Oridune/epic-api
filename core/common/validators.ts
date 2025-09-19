@@ -25,6 +25,7 @@ export const expressionSchema = e.partial(
     $lte: valueSchema,
     $gt: valueSchema,
     $gte: valueSchema,
+    $mod: e.tuple([e.number(), e.number()]),
     $regex: valueSchema,
   }),
 );
@@ -103,8 +104,12 @@ export const normalizeFilters = (
 ) => {
   if (typeof filters !== "object" || !filters) return {};
 
-  const normalize = (value?: string | inferOutput<typeof valueSchema>) => {
-    if (!value || typeof value === "string") return value;
+  const normalize = (
+    value?: string | number | inferOutput<typeof valueSchema>,
+  ) => {
+    if (!value || typeof value === "string" || typeof value === "number") {
+      return value;
+    }
 
     switch (value.type) {
       case "boolean":
