@@ -149,7 +149,7 @@ export class EpicSDK {
             const deleted = await del();
 
             if(!deleted) {
-                const keys = await this.cacheKeys(cacheKey);
+                const keys = await this.cacheKeys(resolvedCacheKey);
 
                 for (const key of keys) this.delCache(key);
             }
