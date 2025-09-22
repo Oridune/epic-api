@@ -73,6 +73,13 @@ export class EpicSDK {
         return await this._options.cache.delete(this.resolveCacheKey(keys));
     }
 
+    static async cacheKeys(startsWith?: string) {
+        if(typeof this._options?.cache?.keys !== "function")
+            throw new Error("A cache keys function is not defined!");
+
+        return (await this._options.cache.keys()).filter(key => key.startsWith(startsWith ?? this.resolveCacheKey("")));
+    }
+
     static async useCache<T>(callback: () => T | Promise<T>, options?: TCacheOptions<T>) {
         const Cached = options?.cacheKey ? await this.getCache<T>(options.cacheKey) : null;
 
@@ -139,7 +146,13 @@ export class EpicSDK {
         }
 
         const invalidate = async () => {
-            await del();
+            const deleted = await del();
+
+            if(!deleted) {
+                const keys = await this.cacheKeys(cacheKey);
+
+                for (const key of keys) this.delCache(key);
+            }
             
             const data = await get();
 

@@ -5,6 +5,7 @@ export type ObjectId = string;
 export type TCacheSetter = (key: string, value: string) => boolean | Promise<boolean>;
 export type TCacheGetter = (key: string) => string | undefined | Promise<string | undefined>;
 export type TCacheDelete = (key: string) => boolean | Promise<boolean>;
+export type TCacheKeys = () => string[] | Promise<string[]>;
 
 export type TSDKOptions = {
     axiosConfig?: CreateAxiosDefaults,
@@ -12,6 +13,7 @@ export type TSDKOptions = {
         setter: TCacheSetter,
         getter: TCacheGetter,
         delete: TCacheDelete,
+        keys?: TCacheKeys
     },
 };
 
