@@ -124,15 +124,23 @@ export const schemaToTsType = (schema?: IValidatorJSONSchema, content = "") => {
       schemaToTsType(schema).content
     ).join(" | ");
 
-    return { optional: schema.optional ?? false, content };
+    return {
+      optional: schema.optional ?? schema.anyOf?.some((p) => p.optional) ??
+        false,
+      content,
+    };
   }
 
   if (schema.type === "and") {
-    content = (schema.anyOf ?? []).map((schema) =>
+    content = (schema.allOf ?? []).map((schema) =>
       schemaToTsType(schema).content
     ).join(" & ");
 
-    return { optional: schema.optional ?? false, content };
+    return {
+      optional: schema.optional ?? schema.anyOf?.every((p) => p.optional) ??
+        false,
+      content,
+    };
   }
 
   if (schema.type === "enum") {
