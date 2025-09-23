@@ -52,7 +52,7 @@ export const <%- scope %>Module = (sdk: any) => {
                 sdk.checkPermission("<%- scope %>", "<%- Name %>");
 
                 const url = Object.entries<string>(data?.params ?? {}).reduce(
-                    (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value),
+                    (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value ?? ""),
                     "<%- Routes[0].endpoint %>"
                 ).replace(/:\w+\?\/?/g, "");
 
