@@ -17,7 +17,7 @@ export type TSDKOptions = {
     },
 };
 
-export type TCacheKey = string | string[];
+export type TCacheKey = string | [string, ...(string | undefined)[]];
 
 export type TCacheOptions<T> = {
     cacheKey?: TCacheKey;

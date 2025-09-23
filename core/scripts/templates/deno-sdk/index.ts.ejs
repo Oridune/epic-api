@@ -39,7 +39,7 @@ export class EpicSDK {
     }
 
     static resolveCacheKey(keys: TCacheKey, namespace = "__epic-sdk:cache") {
-        return `${namespace}:${(keys instanceof Array ? keys : [keys]).join(":")}`;
+        return `${namespace}:${(keys instanceof Array ? keys : [keys]).filter(Boolean).join(":")}`;
     }
 
     static async setCache(keys: TCacheKey, value: any) {
@@ -63,7 +63,25 @@ export class EpicSDK {
         return JSON.parse(value) as {
             value: T;
             timestamp: number;
+            expired?: boolean;
         };
+    }
+
+    static async expireCache(keys: TCacheKey) {
+        if(typeof this._options?.cache?.getter !== "function")
+            throw new Error("A cache getter is not defined!");
+            
+        if(typeof this._options?.cache?.setter !== "function")
+            throw new Error("A cache setter is not defined!");
+
+        const value = await this._options.cache.getter(this.resolveCacheKey(keys));
+
+        if(!value) return false;
+
+        return await this._options.cache.setter(
+            this.resolveCacheKey(keys),
+            `{"expired": true,` + value.substring(1)
+        );
     }
 
     static async delCache(keys: TCacheKey) {
@@ -85,6 +103,7 @@ export class EpicSDK {
 
         returnCache: if (Cached !== null) {
             if(
+                !Cached.expired &&
                 options?.cacheTTL && (
                     Cached.timestamp + (
                         typeof options.cacheTTL === "function"
@@ -93,7 +112,7 @@ export class EpicSDK {
                     )
                 ) < (Date.now() / 1000)
             ) {
-                await this.delCache(options.cacheKey!);
+                await this.expireCache(options.cacheKey!);
 
                 break returnCache;
             }
@@ -101,14 +120,19 @@ export class EpicSDK {
             return Cached.value;
         }
 
-        const Results = await callback();
+        try {
+            const Results = await callback();
 
-        // deno-lint-ignore no-explicit-any
-        if (options?.cacheKey && ![null, undefined].includes(Results as any)) {
-            await this.setCache(options.cacheKey, Results);
+            if (options?.cacheKey && ![null, undefined].includes(Results as any)) {
+                await this.setCache(options.cacheKey, Results);
+            }
+
+            return Results as T;
+        } catch(error) {
+            if(Cached) return Cached.value;
+
+            throw error;
         }
-
-        return Results as T;
     }
 
     static useCaching<T>(cacheKey: TCacheKey, callback: (opts: { signal: AbortSignal }) => T | Promise<T>, options?: Omit<TCacheOptions<T>, "cacheKey">, freshMethods = false) {
@@ -133,6 +157,8 @@ export class EpicSDK {
             })
         };
 
+        const expire = () => this.expireCache(cacheKey);
+
         const del = () => this.delCache(cacheKey);
 
         const invalidateCallbacks = new Set<(data: T) => void>();
@@ -146,13 +172,13 @@ export class EpicSDK {
         }
 
         const invalidate = async () => {
-            const deleted = await del();
+            const baseKey = cacheKey instanceof Array ? cacheKey[0] : cacheKey;
 
-            if(!deleted) {
-                const keys = await this.cacheKeys(resolvedCacheKey);
-
-                for (const key of keys) this.delCache(key);
-            }
+            if(baseKey) {
+                await Promise.all(Array.from(this._useCachingMethods.keys()).map(async (key) => {
+                    if(key.startsWith(baseKey)) await this._useCachingMethods.get(key).expire();
+                }));
+            } else await expire();
             
             const data = await get();
 
@@ -163,7 +189,7 @@ export class EpicSDK {
             return data;
         }
 
-        const methods = { get, del, invalidate, onInvalidate, offInvalidate };
+        const methods = { get, expire, del, invalidate, onInvalidate, offInvalidate };
 
         this._useCachingMethods.set(resolvedCacheKey, methods);
 
