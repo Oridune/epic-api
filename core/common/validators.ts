@@ -31,7 +31,7 @@ export const expressionSchema = e.partial(
 );
 
 export const basicFilterSchema = e.record(
-  expressionSchema,
+  e.or([e.object({ $not: expressionSchema }), expressionSchema]),
 );
 
 export const multiFilterSchema = e.partial(e.object({
