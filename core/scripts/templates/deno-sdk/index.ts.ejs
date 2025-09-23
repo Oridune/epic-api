@@ -176,7 +176,7 @@ export class EpicSDK {
 
             if(baseKey) {
                 await Promise.all(Array.from(this._useCachingMethods.keys()).map(async (key) => {
-                    if(key.startsWith(baseKey)) await this._useCachingMethods.get(key).expire();
+                    if(key.startsWith(baseKey)) (await this._useCachingMethods.get(key) as typeof methods).expire();
                 }));
             } else await expire();
             
