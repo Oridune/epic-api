@@ -174,9 +174,15 @@ export class EpicSDK {
         const invalidate = async () => {
             const baseKey = cacheKey instanceof Array ? cacheKey[0] : cacheKey;
 
+            console.log("BaseKey:", baseKey);
+
             if(baseKey) {
                 await Promise.all(Array.from(this._useCachingMethods.keys()).map(async (key) => {
-                    if(key.startsWith(baseKey)) (await this._useCachingMethods.get(key) as typeof methods).expire();
+                    if(key.startsWith(baseKey)) {
+                        await (this._useCachingMethods.get(key) as typeof methods).expire();
+
+                        console.log("Matching Key:", key);
+                    }
                 }));
             } else await expire();
             
