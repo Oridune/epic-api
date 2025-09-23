@@ -132,14 +132,21 @@ export const normalizeFilters = (
     }
   };
 
-  const transform = (expr: inferOutput<typeof expressionSchema>) => {
+  const transform = (
+    expr:
+      | { $not: inferOutput<typeof expressionSchema> }
+      | inferOutput<typeof expressionSchema>,
+  ) => {
     // deno-lint-ignore no-explicit-any
     const newExpr: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(expr)) {
-      newExpr[key] = value instanceof Array
-        ? value.map(normalize)
-        : normalize(value);
+      if (key === "$not") newExpr[key] = transform(value);
+      else {
+        newExpr[key] = value instanceof Array
+          ? value.map(normalize)
+          : normalize(value);
+      }
     }
 
     return newExpr;
