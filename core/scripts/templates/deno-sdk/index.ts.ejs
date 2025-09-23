@@ -102,8 +102,9 @@ export class EpicSDK {
         const Cached = options?.cacheKey ? await this.getCache<T>(options.cacheKey) : null;
 
         returnCache: if (Cached !== null) {
+            if(Cached.expired) break returnCache;
+            
             if(
-                !Cached.expired &&
                 options?.cacheTTL && (
                     Cached.timestamp + (
                         typeof options.cacheTTL === "function"
