@@ -26,7 +26,7 @@ export const serveStatic = (prefix: string, root: string) => {
     }
   }
 
-  const Prefix = new RegExp(`^/${prefix}/?`);
+  const Prefix = new RegExp(`^/${prefix}(/|$)`);
 
   return async (
     ctx: Context<Record<string, any>, Record<string, any>>,
