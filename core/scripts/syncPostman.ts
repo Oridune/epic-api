@@ -166,118 +166,125 @@ export const generatePostmanCollection = async (
       return $;
     };
 
-    const { object: RequestHandler } =
-      (await Route.options.buildRequestHandler(Route, {
-        version: Version,
-      })) ?? {};
+    try {
+      const { object: RequestHandler } =
+        (await Route.options.buildRequestHandler(Route, {
+          version: Version,
+        })) ?? {};
 
-    if (typeof RequestHandler === "object") {
-      const Host = "{{host}}";
-      const Endpoint = join(Host, Route.endpoint)
-        .replace(/\\/g, "/")
-        .replace("?", "");
+      if (typeof RequestHandler === "object") {
+        const Host = "{{host}}";
+        const Endpoint = join(Host, Route.endpoint)
+          .replace(/\\/g, "/")
+          .replace("?", "");
 
-      const RawShape = RequestHandler.shape;
+        const RawShape = RequestHandler.shape;
 
-      const Shape = typeof RawShape === "function" ? RawShape() : RawShape;
+        const Shape = typeof RawShape === "function" ? RawShape() : RawShape;
 
-      const Headers = Shape?.headers?.data?.toJSON?.();
-      const HeadersSchema = Shape?.headers?.schema;
+        const Headers = Shape?.headers?.data?.toJSON?.();
+        const HeadersSchema = Shape?.headers?.schema;
 
-      const Query = Shape?.query?.data?.toJSON?.();
-      const QuerySchema = Shape?.query?.schema;
+        const Query = Shape?.query?.data?.toJSON?.();
+        const QuerySchema = Shape?.query?.schema;
 
-      const Params = Shape?.params?.data?.toJSON?.();
-      const ParamsSchema = Shape?.params?.schema;
+        const Params = Shape?.params?.data?.toJSON?.();
+        const ParamsSchema = Shape?.params?.schema;
 
-      const Body = Shape?.body?.data;
-      const Return = Shape?.return?.data;
+        const Body = Shape?.body?.data;
+        const Return = Shape?.return?.data;
 
-      const QueryParams = Object.entries<string>(
-        Query ?? {},
-      );
+        const QueryParams = Object.entries<string>(
+          Query ?? {},
+        );
 
-      const Request = {
-        url: {
-          raw: Endpoint +
-            (QueryParams.length
-              ? `?${
-                QueryParams.map(
-                  ([key, value]) => key + "=" + normalizeParamValue(value),
-                ).join("&")
-              }`
-              : ""),
-          host: [Host],
-          path: Route.endpoint
-            .split("/")
-            .filter(Boolean)
-            .map((path) => path.replace(/\?$/, "")),
-          query: QueryParams.map(([key, value]) => ({
-            key,
-            value: normalizeParamValue(value),
-            description: QuerySchema?.properties?.[key]?.description,
-          })),
-          variable: Object.entries<string>(
-            Params ?? {},
+        const Request = {
+          url: {
+            raw: Endpoint +
+              (QueryParams.length
+                ? `?${
+                  QueryParams.map(
+                    ([key, value]) => key + "=" + normalizeParamValue(value),
+                  ).join("&")
+                }`
+                : ""),
+            host: [Host],
+            path: Route.endpoint
+              .split("/")
+              .filter(Boolean)
+              .map((path) => path.replace(/\?$/, "")),
+            query: QueryParams.map(([key, value]) => ({
+              key,
+              value: normalizeParamValue(value),
+              description: QuerySchema?.properties?.[key]?.description,
+            })),
+            variable: Object.entries<string>(
+              Params ?? {},
+            ).map(([key, value]) => ({
+              key,
+              value: normalizeParamValue(value),
+              description: ParamsSchema?.properties?.[key]?.description,
+            })),
+          },
+          method: Route.options.method
+            .toUpperCase() as PostmanRequestMethods,
+          header: Object.entries<string>(
+            Headers ?? {},
           ).map(([key, value]) => ({
             key,
             value: normalizeParamValue(value),
-            description: ParamsSchema?.properties?.[key]?.description,
+            type: "text",
+            description: HeadersSchema?.properties?.[key]?.description,
           })),
-        },
-        method: Route.options.method
-          .toUpperCase() as PostmanRequestMethods,
-        header: Object.entries<string>(
-          Headers ?? {},
-        ).map(([key, value]) => ({
-          key,
-          value: normalizeParamValue(value),
-          type: "text",
-          description: HeadersSchema?.properties?.[key]?.description,
-        })),
-        body: Body
-          ? {
-            mode: "raw" as const,
-            raw: Value.stringify(
-              Body,
-              null,
-              2,
-            ) as string,
-            options: {
-              raw: {
-                language: "json" as const,
-              },
-            },
-          }
-          : undefined,
-      };
-
-      normalizeRequest(
-        Groups,
-        Route.scope,
-        {
-          name: Route.options.name,
-          request: Request,
-          response: (Return
-            ? [{
-              name: "Success Response",
-              code: 200,
-              status: "ok",
-              _postman_previewlanguage: "json",
-              originalRequest: {
-                method: Request.method,
-                url: Request.url,
-                body: Request.body,
-              },
-              body: Value.stringify(
-                Return,
+          body: Body
+            ? {
+              mode: "raw" as const,
+              raw: Value.stringify(
+                Body,
                 null,
                 2,
-              ),
-            }]
-            : undefined),
-        },
-        RequestGroups,
+              ) as string,
+              options: {
+                raw: {
+                  language: "json" as const,
+                },
+              },
+            }
+            : undefined,
+        };
+
+        normalizeRequest(
+          Groups,
+          Route.scope,
+          {
+            name: Route.options.name,
+            request: Request,
+            response: (Return
+              ? [{
+                name: "Success Response",
+                code: 200,
+                status: "ok",
+                _postman_previewlanguage: "json",
+                originalRequest: {
+                  method: Request.method,
+                  url: Request.url,
+                  body: Request.body,
+                },
+                body: Value.stringify(
+                  Return,
+                  null,
+                  2,
+                ),
+              }]
+              : undefined),
+          },
+          RequestGroups,
+        );
+      }
+    } catch (cause) {
+      throw new Error(
+        `Postman generation failed on route ${Route.scope}.${Route.options.name}`,
+        { cause },
       );
     }
   }
