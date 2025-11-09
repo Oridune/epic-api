@@ -176,8 +176,6 @@ export class EpicSDK {
             if(!options?.stopPropagation) {
                 const baseKey = cacheKey instanceof Array ? cacheKey[0] : cacheKey;
                 const cacheKeys = Array.from(this._useCachingMethods.keys());
-
-                console.log("Invalidation Targets:", cacheKeys);
             
                 await Promise.all(cacheKeys.map(async (key) => {
                     if(resolvedCacheKey !== key && new RegExp(`^${this.resolveCacheKey(baseKey)}($|:.*)`).test(key)) {
@@ -187,8 +185,6 @@ export class EpicSDK {
                     }
                 }));
             }
-
-            console.log("Invalidating:", resolvedCacheKey);
 
             await expire();
             
