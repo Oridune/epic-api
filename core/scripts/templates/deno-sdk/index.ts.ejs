@@ -204,6 +204,15 @@ export class EpicSDK {
         return methods;
     }
 
+    static async withCaching(callback: (methods: ReturnType<typeof EpicSDK.useCaching>, key: string) => void | Promise<void>, options?: { matcher?: RegExp }) {
+        for (const [key, methods] of this._useCachingMethods) {
+            if(options && options.matcher instanceof RegExp && !options.matcher.test(key))
+                continue;
+
+            await callback(methods as any, key);
+        }
+    }
+
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
         const verifyResponseShape = (res: AxiosResponse) => {
             // Check if the data object exists
