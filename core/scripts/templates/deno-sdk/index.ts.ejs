@@ -17,7 +17,10 @@ import { <%- name %>Entry } from "<%- entry %>.ts";
 <% } -%>
 
 export class EpicSDK {
-    protected static _cachingAborts = new Map<string, AbortController>();
+    protected static _cachingActivity = new Map<string, {
+        controller: AbortController,
+        promise: Promise<unknown>
+    }>();
 
     static _apiVersion = "<%- apiVersion %>";
     static _options?: TSDKOptions;
@@ -145,13 +148,30 @@ export class EpicSDK {
 
         const get = () => {
             return this.useCache<T>(() => {
-                this._cachingAborts.get(resolvedCacheKey)?.abort();
+                const activity = this._cachingActivity.get(resolvedCacheKey);
+
+                if(activity) {
+                    if(Date.now() - activity.timestamp > 1000) {
+                        activity.controller.abort("Repeated request!");
+                    } else {
+                        return activity.promise as Promise<T>;
+                    }
+                }
 
                 const controller = new AbortController();
+                const promise = callback({ signal: controller.signal });
 
-                this._cachingAborts.set(resolvedCacheKey, controller);
+                this._cachingActivity.set(resolvedCacheKey, {
+                    controller,
+                    promise,
+                    timestamp: Date.now(),
+                });
 
-                return callback({ signal: controller.signal })
+                const result = await promise;
+
+                this._cachingActivity.remove(resolvedCacheKey);
+
+                return result;
             }, {
                 cacheKey,
                 ...options,
