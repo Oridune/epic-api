@@ -19,7 +19,7 @@ import { <%- name %>Entry } from "<%- entry %>.ts";
 export class EpicSDK {
     protected static _cachingActivity = new Map<string, {
         controller: AbortController,
-        promise: any,
+        resultPromise: unknown,
         timestamp: number,
     }>();
 
@@ -148,27 +148,27 @@ export class EpicSDK {
         if(_methods && !freshMethods) return _methods;
 
         const get = () => {
-            return this.useCache<T>(() => {
+            return this.useCache<T>(async () => {
                 const activity = this._cachingActivity.get(resolvedCacheKey);
 
                 if(activity) {
                     if(Date.now() - activity.timestamp > 1000) {
                         activity.controller.abort("Repeated request!");
                     } else {
-                        return activity.promise as Promise<T>;
+                        return activity.resultPromise as Promise<T>;
                     }
                 }
 
                 const controller = new AbortController();
-                const promise = callback({ signal: controller.signal });
+                const resultPromise = callback({ signal: controller.signal });
 
                 this._cachingActivity.set(resolvedCacheKey, {
                     controller,
-                    promise,
+                    resultPromise,
                     timestamp: Date.now(),
                 });
 
-                const result = await promise;
+                const result = await resultPromise;
 
                 this._cachingActivity.delete(resolvedCacheKey);
 
