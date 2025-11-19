@@ -19,7 +19,8 @@ import { <%- name %>Entry } from "<%- entry %>.ts";
 export class EpicSDK {
     protected static _cachingActivity = new Map<string, {
         controller: AbortController,
-        promise: Promise<unknown>
+        promise: any,
+        timestamp: number,
     }>();
 
     static _apiVersion = "<%- apiVersion %>";
@@ -169,7 +170,7 @@ export class EpicSDK {
 
                 const result = await promise;
 
-                this._cachingActivity.remove(resolvedCacheKey);
+                this._cachingActivity.delete(resolvedCacheKey);
 
                 return result;
             }, {
