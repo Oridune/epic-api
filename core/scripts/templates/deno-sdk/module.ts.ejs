@@ -1,17 +1,24 @@
 import type { ObjectId, TRequestOptions, TRequestExecutors, TResponseShape } from "../types.ts";
 
 <% const TypeMap = new Map(); -%>
+<% const RouteGroups = Object.entries(routeGroups); -%>
 
-<% for (const [Name, [Route]] of Object.entries(routeGroups)) { -%>
+<% for (const [_, Routes] of RouteGroups) { -%>
+    
+<% const sortedRoutes = Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1)); -%>
+
+<% for (let i = 0; i < sortedRoutes.length; i++) { -%>
+<% const Route = sortedRoutes[i]; -%>
+<% const RouteName = !i ? Route.options.name : Route.options.name + Route.options.method.toUpperCase(); -%>
 
 <% const QueryShape = await getTypeStr(Route, "query"); -%>
 <% const ParamsShape = await getTypeStr(Route, "params"); -%>
 <% const BodyShape = await getTypeStr(Route, "body"); -%>
 <% const ReturnShape = await getTypeStr(Route, "return"); -%>
 
-<% TypeMap.set(Route.options.name, { query: QueryShape, params: ParamsShape, body: BodyShape, return: ReturnShape }) -%>
+<% TypeMap.set(RouteName, { query: QueryShape, params: ParamsShape, body: BodyShape, return: ReturnShape }) -%>
 
-export type TRoute$<%- scope %>$<%- Route.options.name %> = {
+export type TRoute$<%- scope %>$<%- RouteName %> = {
     query: <%- QueryShape.content %>,
     params: <%- ParamsShape.content %>,
     body: <%- BodyShape.content %>,
@@ -19,24 +26,30 @@ export type TRoute$<%- scope %>$<%- Route.options.name %> = {
 };
 
 <% } -%>
+<% } -%>
 
 export interface IController$<%- scope %> {
-<% for (const [Name, Routes] of Object.entries(routeGroups)) { -%>
-<% for (const Route of Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1))) { -%>
+<% for (const [_, Routes] of RouteGroups) { -%>
+
+<% const sortedRoutes = Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1)); -%>
+
+<% for (let i = 0; i < sortedRoutes.length; i++) { -%>
+<% const Route = sortedRoutes[i]; -%>
+<% const RouteName = !i ? Route.options.name : Route.options.name + Route.options.method.toUpperCase(); -%>
 <% if (Route.options.method.toLowerCase() === "get") { -%>
-    <%- Route.options.name %>(): TRequestExecutors<TRoute$<%- scope %>$<%- Route.options.name %>["return"]>;
+    <%- RouteName %>(): TRequestExecutors<TRoute$<%- scope %>$<%- RouteName %>["return"]>;
 <% } -%>
-    <%- Route.options.name %><
+    <%- RouteName %><
         Method extends "<%- Route.options.method %>",
-        QueryShape extends TRoute$<%- scope %>$<%- Route.options.name %>["query"],
-        ParamsShape extends TRoute$<%- scope %>$<%- Route.options.name %>["params"],
-        BodyShape extends TRoute$<%- scope %>$<%- Route.options.name %>["body"],
-        ReturnShape extends TResponseShape<any> = TRoute$<%- scope %>$<%- Route.options.name %>["return"],
+        QueryShape extends TRoute$<%- scope %>$<%- RouteName %>["query"],
+        ParamsShape extends TRoute$<%- scope %>$<%- RouteName %>["params"],
+        BodyShape extends TRoute$<%- scope %>$<%- RouteName %>["body"],
+        ReturnShape extends TResponseShape<any> = TRoute$<%- scope %>$<%- RouteName %>["return"],
     >(data: {
         method?: Method;
-        query<%- TypeMap.get(Route.options.name).query.optional ? "?" : "" %>: QueryShape;
-        params<%- TypeMap.get(Route.options.name).params.optional ? "?" : "" %>: ParamsShape;
-        body<%- TypeMap.get(Route.options.name).body.optional ? "?" : "" %>: BodyShape;
+        query<%- TypeMap.get(RouteName)?.query?.optional ? "?" : "" %>: QueryShape;
+        params<%- TypeMap.get(RouteName)?.params?.optional ? "?" : "" %>: ParamsShape;
+        body<%- TypeMap.get(RouteName)?.body?.optional ? "?" : "" %>: BodyShape;
     } & TRequestOptions<ReturnShape>): TRequestExecutors<ReturnShape, BodyShape>;
 <% } -%>
 <% } -%>
@@ -44,20 +57,26 @@ export interface IController$<%- scope %> {
 
 export const <%- scope %>Module = (sdk: any) => {
     const methods = {
-<% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
-        <%- Name %>(data?: any) {
+<% for (const [_, Routes] of RouteGroups) { %>
+    
+<% const sortedRoutes = Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1)); -%>
+
+<% for (let i = 0; i < sortedRoutes.length; i++) { -%>
+<% const Route = sortedRoutes[i]; -%>
+<% const RouteName = !i ? Route.options.name : Route.options.name + Route.options.method.toUpperCase(); -%>
+        <%- RouteName %>(data?: any) {
             return sdk.resolveAxiosResponse(async () => {
                 if (!sdk._axios) throw new Error("Axios not initialized!");
 
-                sdk.checkPermission("<%- scope %>", "<%- Name %>");
+                sdk.checkPermission("<%- scope %>", "<%- RouteName %>");
 
                 const url = Object.entries<string>(data?.params ?? {}).reduce(
                     (endpoint, [key, value]) => endpoint.replace(new RegExp(`:${key}\\??`, "g"), value ?? ""),
-                    "<%- Routes[0].endpoint %>"
+                    "<%- Route.endpoint %>"
                 ).replace(/:\w+\?\/?/g, "");
 
                 const res = await sdk._axios.request({
-                    method: data?.method ?? "<%- Routes[0].options.method %>" ?? "get",
+                    method: data?.method ?? "<%- Route.options.method %>" ?? "get",
                     url,
                     params: data?.query,
                     data: data?.body,
@@ -69,10 +88,19 @@ export const <%- scope %>Module = (sdk: any) => {
             }, data);
         },
 <% } %>
+<% } %>
     } as IController$<%- scope %>;
 
-<% for (const [Name, Routes] of Object.entries(routeGroups)) { %>
-    (methods.<%- Name %> as any).__permission = "<%- scope %>.<%- Name %>";
+<% for (const [Name, Routes] of RouteGroups) { %>
+    
+<% const sortedRoutes = Routes.sort((a) => (a.options.method.toLowerCase() === "get" ? -1 : 1)); -%>
+
+<% for (let i = 0; i < sortedRoutes.length; i++) { -%>
+<% const Route = sortedRoutes[i]; -%>
+<% const RouteName = !i ? Route.options.name : Route.options.name + Route.options.method.toUpperCase(); -%>
+
+    (methods.<%- RouteName %> as any).__permission = "<%- scope %>.<%- RouteName %>";
+<% } %>
 <% } %>
 
     return methods;
