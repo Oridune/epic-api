@@ -56,6 +56,18 @@ export interface IController$<%- scope %> {
 }
 
 export const <%- scope %>Module = (sdk: any) => {
+    const resolveAxiosConfig = (config: any) => {
+        if(config.headers && Object.keys(config.headers).length) {
+            config.headers = Object.entries(config.headers).reduce((headers, [key, value]) => {
+                headers[key.toLowerCase()] = value;
+
+                return headers;
+            }, {} as Record<string, string>);
+        }
+
+        return config;
+    }
+
     const methods = {
 <% for (const [_, Routes] of RouteGroups) { %>
     
@@ -81,7 +93,7 @@ export const <%- scope %>Module = (sdk: any) => {
                     params: data?.query,
                     data: data?.body,
                     signal: data?.signal,
-                    ...data?.axiosConfig,
+                    ...resolveAxiosConfig(data?.axiosConfig),
                 });
 
                 return res;
