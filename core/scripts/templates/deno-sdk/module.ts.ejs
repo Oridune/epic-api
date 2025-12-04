@@ -57,12 +57,16 @@ export interface IController$<%- scope %> {
 
 export const <%- scope %>Module = (sdk: any) => {
     const resolveAxiosConfig = (config: any) => {
-        if(config.headers && Object.keys(config.headers).length) {
-            config.headers = Object.entries<string>(config.headers).reduce((headers, [key, value]) => {
-                headers[key.toLowerCase()] = value;
+        if(config?.headers) {
+            const headerKeys = Object.keys(config.headers);
+        
+            if(headerKeys.length) {
+                config.headers = headerKeys.reduce((headers, key) => {
+                    headers[key.toLowerCase()] = config.headers[key];
 
-                return headers;
-            }, {} as Record<string, string>);
+                    return headers;
+                }, {} as Record<string, string>);
+            }
         }
 
         return config;
