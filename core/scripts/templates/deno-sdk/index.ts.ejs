@@ -179,7 +179,25 @@ export class EpicSDK {
             })
         };
 
-        const expire = () => this.expireCache(cacheKey);
+        const expireCallbacks = new Set<() => void>();
+
+        const onExpire = (callback: () => void) => {
+            expireCallbacks.add(callback);
+        }
+
+        const offExpire = (callback: () => void) => {
+            expireCallbacks.delete(callback);
+        }
+
+        const expire = async () => {
+            const expired = await this.expireCache(cacheKey);
+
+            for (const callback of expireCallbacks) {
+                callback();
+            }
+
+            return expired;
+        }
 
         const del = () => this.delCache(cacheKey);
 
@@ -218,7 +236,7 @@ export class EpicSDK {
             return data;
         }
 
-        const methods = { get, expire, del, invalidate, onInvalidate, offInvalidate };
+        const methods = { key: resolvedCacheKey, get, expire, del, invalidate, onInvalidate, offInvalidate, onExpire, offExpire };
 
         this._useCachingMethods.set(resolvedCacheKey, methods);
 
