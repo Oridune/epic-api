@@ -298,6 +298,15 @@ export class EpicSDK {
                     );
                 })();
             },
+            then(resolve: any, reject: any) {
+                return executors.data.then(resolve, reject);
+            },
+            catch(reject: any) {
+                return executors.data.catch(reject);
+            },
+            finally(result: any) {
+                return executors.data.finally(result);
+            },
         };
 
         return executors;

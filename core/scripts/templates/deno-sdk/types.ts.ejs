@@ -44,4 +44,7 @@ export type TRequestExecutors<R extends TResponseShape<any>, B = any> = {
     raw: Promise<AxiosResponse<R, B>>;
     res: Promise<R>;
     data: Promise<R["data"]>;
+    then: Promise<R["data"]>["then"];
+    catch: Promise<R["data"]>["catch"];
+    finally: Promise<R["data"]>["finally"];
 }
