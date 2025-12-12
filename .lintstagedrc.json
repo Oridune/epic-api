@@ -2,6 +2,6 @@
   "!((public|plugins|templates|sdk-extensions)/**/*)*.ts": [
     "deno fmt",
     "deno lint",
-    "deno check index.d.ts"
+    "deno check --unstable-tsgo index.d.ts"
   ]
 }
