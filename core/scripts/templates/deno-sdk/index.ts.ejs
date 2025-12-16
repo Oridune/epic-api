@@ -254,7 +254,10 @@ export class EpicSDK {
 
     static resolveAxiosResponse<T>(executor: () => Promise<AxiosResponse<T>>, options?: TCacheOptions<T>) {
         const verifyResponseShape = (res: AxiosResponse) => {
-            if (!res.data.status) {
+            // Check if the data object exists
+            if (!res.data || typeof res.data !== "object") {
+                throw new Error("Response data is missing or invalid!");
+            } else if (!res.data.status) {
                 throw new Error(res.data.messages?.[0]?.message ?? "failure");
             }
 
@@ -290,9 +293,7 @@ export class EpicSDK {
                         typeof res === "object" && res !== null && "data" in res
                     ) return res.data;
 
-                    throw new Error(
-                        "Unexpected response! Data is not available or valid!",
-                    );
+                    return;
                 })();
             },
             then(resolve: any, reject: any) {
