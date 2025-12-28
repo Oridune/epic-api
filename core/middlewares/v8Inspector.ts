@@ -105,6 +105,8 @@ async (
       for (const msg of messageStack) {
         ws.send(msg.data);
       }
+      
+      messageStack.length = 0;
     };
 
     clientSocket.onclose = () => {

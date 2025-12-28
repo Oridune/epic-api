@@ -35,7 +35,7 @@ export class Events {
     listeners.add(callback);
   }
 
-  protected static _dispatch(
+  protected static async _dispatch(
     channel: EventChannel,
     type: string,
     payload?: Omit<IEventPayload<any>, "type">,
@@ -45,16 +45,14 @@ export class Events {
 
     if (!listeners) return false;
 
-    listeners.forEach(async (listener) => {
-      try {
+    await Promise.allSettled(
+      Array.from(listeners).map(async (listener) => {
         await listener({
           type,
           detail: payload?.detail ?? null,
         });
-      } catch (error) {
-        console.error(error);
-      }
-    });
+      }),
+    );
 
     return true;
   }
