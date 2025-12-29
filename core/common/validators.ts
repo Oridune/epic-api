@@ -6,7 +6,7 @@ export const valueSchema = e.or([
     type: e.in(
       ["string", "number", "boolean", "objectId", "date", "regex"] as const,
     ),
-    value: e.string(),
+    value: e.array(e.string()),
     options: e.optional(e.object({
       regexFlags: e.optional(e.string()),
     })),
@@ -113,22 +113,35 @@ export const normalizeFilters = (
 
     switch (value.type) {
       case "boolean":
-        return ["true", "1"].includes(value.value);
+        return value.value.map((v) => ["true", "1"].includes(v));
 
       case "date":
-        return new Date(value.value);
+        return value.value.map((v) => new Date(v));
 
       case "number":
-        return Number(value.value);
+        return value.value.map((v) => Number(v));
 
       case "objectId":
-        return new ObjectId(value.value);
+        return value.value.map((v) => new ObjectId(v));
 
       case "regex":
-        return new RegExp(value.value, value.options?.regexFlags);
+        return value.value.map((v) => new RegExp(v));
 
       default:
         return value.value;
+    }
+  };
+
+  const unwrap = (experssion: string, values: unknown) => {
+    const resolvedValues = values instanceof Array ? values : [values];
+
+    switch (experssion) {
+      case "$in":
+      case "$nin":
+      case "$all":
+        return resolvedValues;
+      default:
+        return resolvedValues[0];
     }
   };
 
@@ -143,9 +156,10 @@ export const normalizeFilters = (
     for (const [key, value] of Object.entries(expr)) {
       if (key === "$not") newExpr[key] = transform(value);
       else {
-        newExpr[key] = value instanceof Array
-          ? value.map(normalize)
-          : normalize(value);
+        newExpr[key] = unwrap(
+          key,
+          value instanceof Array ? value.map(normalize) : normalize(value),
+        );
       }
     }
 
