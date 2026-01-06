@@ -1,10 +1,19 @@
+// deno-lint-ignore-file ban-ts-comment
 import { ObjectId } from "mongo";
 import e, { BaseValidator, inferOutput } from "validator";
 
 export const valueSchema = e.or([
   e.object({
     type: e.in(
-      ["string", "number", "boolean", "objectId", "date", "regex"] as const,
+      [
+        "string",
+        "number",
+        "boolean",
+        "objectId",
+        "date",
+        "regex",
+        "null",
+      ] as const,
     ),
     value: e.string(),
     options: e.optional(e.object({
@@ -16,17 +25,18 @@ export const valueSchema = e.or([
 
 export const expressionSchema = e.partial(
   e.object({
+    $exists: valueSchema,
     $eq: valueSchema,
     $ne: valueSchema,
+    $gt: valueSchema,
+    $gte: valueSchema,
+    $lt: valueSchema,
+    $lte: valueSchema,
+    $mod: e.tuple([e.number(), e.number()]),
+    $regex: valueSchema,
     $in: e.array(valueSchema),
     $nin: e.array(valueSchema),
     $all: e.array(valueSchema),
-    $lt: valueSchema,
-    $lte: valueSchema,
-    $gt: valueSchema,
-    $gte: valueSchema,
-    $mod: e.tuple([e.number(), e.number()]),
-    $regex: valueSchema,
   }),
 );
 
@@ -40,6 +50,151 @@ export const multiFilterSchema = e.partial(e.object({
 }));
 
 export const filtersSchema = e.or([basicFilterSchema, multiFilterSchema]);
+
+export const testFilters = async <T extends Record<string, unknown>>(
+  filters: inferOutput<typeof filtersSchema> | string,
+  data: T,
+) => {
+  const validatedFilters = typeof filters === "string"
+    ? JSON.parse(filters) as inferOutput<typeof filtersSchema>
+    : filters;
+
+  const testExpression = (
+    expressions: inferOutput<typeof expressionSchema>,
+    key: string,
+  ) => {
+    let success = true;
+
+    for (const [operator, expression] of Object.entries(expressions)) {
+      if (!success) break;
+
+      const exists = key in data;
+      const value = data[key];
+
+      try {
+        if (Array.isArray(expression)) {
+          const targets = expression.map(normalizeFilterExpression).map(String);
+
+          switch (operator) {
+            case "$in":
+              success = targets.includes(String(value));
+              break;
+            case "$nin":
+              success = !targets.includes(String(value));
+              break;
+            case "$all":
+              success = !targets.every((target) => target === String(value));
+              break;
+
+            default:
+              success = false;
+              break;
+          }
+        } else {
+          const target = normalizeFilterExpression(expression);
+
+          switch (operator) {
+            case "$exists":
+              success = exists === Boolean(target);
+              break;
+            case "$eq":
+              success = String(value) === String(target);
+              break;
+            case "$ne":
+              success = String(value) !== String(target);
+              break;
+            case "$gt":
+              // @ts-ignore
+              success = value > target;
+              break;
+            case "$gte":
+              // @ts-ignore
+              success = value >= target;
+              break;
+            case "$lt":
+              // @ts-ignore
+              success = value < target;
+              break;
+            case "$lte":
+              // @ts-ignore
+              success = value <= target;
+              break;
+            case "$mod":
+              // @ts-ignore
+              success = value % target[0] === target[1];
+              break;
+            case "$regex":
+              // @ts-ignore
+              success = RegExp(target).test(value);
+              break;
+
+            default:
+              success = false;
+              break;
+          }
+        }
+      } catch {
+        success = false;
+      }
+    }
+
+    return success;
+  };
+
+  const testBasicFilters = (
+    basicFilters: inferOutput<typeof basicFilterSchema>,
+  ) => {
+    let success = true;
+
+    for (const [key, expression] of Object.entries(basicFilters)) {
+      if (!success) break;
+
+      if ("$not" in expression) {
+        success = !testExpression(expression["$not"], key);
+
+        continue;
+      }
+
+      success = testExpression(expression, key);
+    }
+
+    return success;
+  };
+
+  let pass = true;
+
+  if ("$and" in validatedFilters && Array.isArray(validatedFilters["$and"])) {
+    for (const filters of validatedFilters["$and"]) {
+      const success = await testFilters(filters, data);
+
+      if (!success) {
+        pass = false;
+
+        break;
+      }
+    }
+  }
+
+  if (!pass) return false;
+
+  if ("$or" in validatedFilters && Array.isArray(validatedFilters["$or"])) {
+    for (const filters of validatedFilters["$or"]) {
+      const success = await testFilters(filters, data);
+
+      if (success) return true;
+    }
+
+    return false;
+  }
+
+  if (!("$and" in validatedFilters) && !("$or" in validatedFilters)) {
+    return testBasicFilters(
+      validatedFilters as inferOutput<typeof basicFilterSchema>,
+    );
+  }
+
+  return false;
+};
 
 export const queryValidator = () =>
   e.deepCast(e.object(
@@ -99,24 +254,16 @@ export const responseValidator = <T extends (BaseValidator)>(data?: T, opts?: {
     metadata: e.optional(e.record(e.any())),
   });
 
-export const normalizeFilters = (
-  filters?: inferOutput<typeof filtersSchema>,
+export const normalizeFilterExpression = (
+  value?: string | number | boolean | inferOutput<typeof valueSchema>,
 ) => {
-  if (typeof filters !== "object" || !filters) return {};
-
-  const normalize = (
-    value?: string | number | inferOutput<typeof valueSchema>,
-  ) => {
-    if (!value || typeof value === "string" || typeof value === "number") {
-      return value;
-    }
-
+  if (typeof value === "object" && typeof value.type === "string") {
     switch (value.type) {
       case "boolean":
         return ["true", "1"].includes(value.value);
 
       case "date":
-        return new Date(value.value);
+        return value.value === "now" ? new Date() : new Date(value.value);
 
       case "number":
         return Number(value.value);
@@ -127,10 +274,21 @@ export const normalizeFilters = (
       case "regex":
         return new RegExp(value.value, value.options?.regexFlags);
 
+      case "null":
+        return null;
+
       default:
         return value.value;
     }
-  };
+  }
+
+  return value;
+};
+
+export const normalizeFilters = (
+  filters?: inferOutput<typeof filtersSchema>,
+) => {
+  if (typeof filters !== "object" || !filters) return {};
 
   const transform = (
     expr:
@@ -144,8 +302,8 @@ export const normalizeFilters = (
       if (key === "$not") newExpr[key] = transform(value);
       else {
         newExpr[key] = value instanceof Array
-          ? value.map(normalize)
-          : normalize(value);
+          ? value.map(normalizeFilterExpression)
+          : normalizeFilterExpression(value);
       }
     }
 
