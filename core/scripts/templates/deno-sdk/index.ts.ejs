@@ -189,7 +189,20 @@ export class EpicSDK {
             expireCallbacks.delete(callback);
         }
 
-        const expire = async () => {
+        const expire = async (options?: { stopPropagation?: boolean }) => {
+            if(!options?.stopPropagation) {
+                const baseKey = cacheKey instanceof Array ? cacheKey[0] : cacheKey;
+                const cacheKeys = Array.from(this._useCachingMethods.keys());
+            
+                await Promise.all(cacheKeys.map(async (key) => {
+                    if(resolvedCacheKey !== key && new RegExp(`^${this.resolveCacheKey(baseKey)}($|:.*)`).test(key)) {
+                        const cachingMethods = this._useCachingMethods.get(key) as typeof methods;
+
+                        await cachingMethods.expire({ stopPropagation: true });
+                    }
+                }));
+            }
+
             const expired = await this.expireCache(cacheKey);
 
             for (const callback of expireCallbacks) {
