@@ -206,7 +206,7 @@ export const _queryValidator = e.deepCast(e.object(
       "Provide a date range as an array of date object. E.g: [date1, date2]",
     ),
     offset: e.optional(e.number().min(0)).default(0),
-    limit: e.optional(e.number().max(500)).default(100), // Reduced for stability
+    limit: e.optional(e.number().max(2000)).default(2000),
     sort: e.optional(
       e.record(e.number().min(-1).max(1)),
     ).default({ _id: -1 }).describe(
