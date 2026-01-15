@@ -222,11 +222,26 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
               });
             }
 
+            // Clear large references to help garbage collection
+            (RequestContext as any).routes = undefined;
+            (RequestContext as any).router = undefined;
+
             Events.dispatchRequestEvent(
               `${Route.scope}.${Route.options.name}`,
               {
                 detail: {
-                  ctx: RequestContext,
+                  ctx: {
+                    ...RequestContext,
+                    router: {
+                      params: ctx.params,
+                      state: ctx.state,
+                      t: ctx.t,
+                      tvar: ctx.tvar,
+                      i18n: ctx.i18n,
+                      lang: ctx.lang,
+                      request: ctx.request,
+                    },
+                  },
                   res: ReturnedResponse,
                 },
               },
