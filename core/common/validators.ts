@@ -367,6 +367,7 @@ export const normalizeFilters = (
   for (const [key, expr] of Object.entries(filters)) {
     if (["$and", "$or"].includes(key)) {
       newFilters[key] = expr.map(normalizeFilters);
+      continue;
     }
 
     newFilters[key] = transform(expr);
