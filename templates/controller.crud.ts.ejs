@@ -156,7 +156,7 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
                   hash(<%- utils.pascalCase(name) %>BaseFilters),
                 ],
                 () => await <%- utils.pascalCase(utils.singular(name)) %>Model.count(<%- utils.pascalCase(name) %>BaseFilters),
-                (await Env.number("GLOBAL_PAGINATION_TTL")) * 1000,
+                (await Env.number("GLOBAL_PAGINATION_COUNT_TTL")) * 1000,
               )
             : undefined,
           results: await <%- utils.pascalCase(name) %>ListQuery,
