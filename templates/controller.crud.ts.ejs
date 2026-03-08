@@ -2,6 +2,7 @@ import {
   BaseController,
   Controller,
   Delete,
+  Env,
   Get,
   type IRequestContext,
   type IRoute,
@@ -9,11 +10,13 @@ import {
   Patch,
   Post,
   Response,
+  Store,
   Versioned,
 } from "@Core/common/mod.ts";
 import { responseValidator } from "@Core/common/validators.ts";
 import { type RouterContext, Status } from "oak";
 import e from "validator";
+import { hash } from "ohash";
 import { queryValidator, normalizeFilters } from "@Core/common/validators.ts";
 import { ObjectId } from "mongo";
 
@@ -146,8 +149,15 @@ export default class <%- utils.pascalCase(name) %>Controller extends BaseControl
 
         return Response.data({
           totalCount: Query.includeTotalCount
-            //? Make sure to pass any limiting conditions for count if needed.
-            ? await <%- utils.pascalCase(utils.singular(name)) %>Model.count(<%- utils.pascalCase(name) %>BaseFilters)
+            ? await Store.cache(
+                [
+                  "totalCount",
+                  "<%- utils.camelCase(name) %>",
+                  hash(<%- utils.pascalCase(name) %>BaseFilters),
+                ],
+                () => await <%- utils.pascalCase(utils.singular(name)) %>Model.count(<%- utils.pascalCase(name) %>BaseFilters),
+                (await Env.number("GLOBAL_PAGINATION_TTL")) * 1000,
+              )
             : undefined,
           results: await <%- utils.pascalCase(name) %>ListQuery,
         });
