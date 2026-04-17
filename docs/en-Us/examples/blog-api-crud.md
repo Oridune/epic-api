@@ -267,7 +267,7 @@ export default class PostsController extends BaseController {
         return Response.data({
           totalCount: Query.includeTotalCount
             //? Make sure to pass any limiting conditions for count if needed.
-            ? await PostModel.count(PostsBaseFilters)
+            ? await PostModel.countDocuments(PostsBaseFilters)
             : undefined,
           results: await PostsListQuery,
         });
