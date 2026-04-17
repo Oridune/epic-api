@@ -220,7 +220,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
                   Route.endpoint,
                   String(ctx.response.status),
                 )
-                .observe(handledInMs * 1000);
+                .observe(handledInMs / 1000);
 
               ReturnedResponse.metrics({
                 handledInMs,
