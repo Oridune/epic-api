@@ -1,11 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 import {
-  apiRequestDuration,
-  apiRequestsTotal,
   denoConfig,
   Env,
   EnvType,
   Events,
+  httpRequestDuration,
+  httpRequestInFlight,
+  httpRequestSizeBytes,
+  httpRequestsTotal,
+  httpResponseSizeBytes,
   IRequestContext,
   Loader,
   prepareFetch,
@@ -181,6 +184,11 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
         },
         ...Middlewares,
         async (ctx) => {
+          httpRequestSizeBytes.labels(
+            Route.options.method,
+            Route.endpoint,
+          ).observe(Number(ctx.request.headers.get("content-length") ?? 0));
+
           const TargetVersion = ctx.request.headers.get("x-api-version") ??
             "latest";
 
@@ -207,14 +215,18 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
           const handle = async () => {
             ctx.state._handleStartedAt = Date.now();
 
+            httpRequestInFlight.inc();
+
             const ReturnedResponse = await RequestHandler?.handler.bind(
               RequestHandler,
             )(RequestContext);
 
+            httpRequestInFlight.dec();
+
             if (ReturnedResponse instanceof Response) {
               const handledInMs = Date.now() - ctx.state._handleStartedAt;
 
-              apiRequestDuration
+              httpRequestDuration
                 .labels(
                   Route.options.method,
                   Route.endpoint,
@@ -261,12 +273,11 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
             if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
 
-            apiRequestsTotal.labels(
+            httpRequestsTotal.labels(
               Route.options.method,
               Route.endpoint,
               String(ctx.response.status),
-            )
-              .inc();
+            ).inc();
           };
 
           const IdempotencyKey =
@@ -313,6 +324,12 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
               );
             });
           } else await handle();
+
+          httpResponseSizeBytes.labels(
+            Route.options.method,
+            Route.endpoint,
+            String(ctx.response.status),
+          ).observe(Number(ctx.response.headers.get("content-length") ?? 0));
         },
       );
     }
