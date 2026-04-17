@@ -16,4 +16,5 @@ export * from "./hash.ts";
 export * from "./flags.ts";
 export * from "./memoryUtils.ts";
 export * from "./parseQueryParams.ts";
+export * from "./calculateBodySize.ts";
 export * from "./prometheus.ts";

@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  calculateBodySize,
   denoConfig,
   Env,
   EnvType,
@@ -16,6 +17,7 @@ import {
   Response,
   Server,
   Store,
+  TResponse,
 } from "@Core/common/mod.ts";
 import { Database } from "@Database";
 import { I18next } from "@I18n";
@@ -217,25 +219,19 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
             httpRequestInFlight.inc();
 
-            const ReturnedResponse = await RequestHandler?.handler.bind(
-              RequestHandler,
-            )(RequestContext);
+            let ReturnedResponse: TResponse | undefined;
 
-            httpRequestInFlight.dec();
+            try {
+              ReturnedResponse = await RequestHandler?.handler.bind(
+                RequestHandler,
+              )(RequestContext);
+            } finally {
+              httpRequestInFlight.dec();
+            }
 
             if (ReturnedResponse instanceof Response) {
-              const handledInMs = Date.now() - ctx.state._handleStartedAt;
-
-              httpRequestDuration
-                .labels(
-                  Route.options.method,
-                  Route.endpoint,
-                  String(ctx.response.status),
-                )
-                .observe(handledInMs / 1000);
-
               ReturnedResponse.metrics({
-                handledInMs,
+                handledInMs: Date.now() - ctx.state._handleStartedAt,
               });
             }
 
@@ -272,6 +268,14 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             );
 
             if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
+
+            httpRequestDuration
+              .labels(
+                Route.options.method,
+                Route.endpoint,
+                String(ctx.response.status),
+              )
+              .observe((Date.now() - ctx.state._handleStartedAt) / 1000);
 
             httpRequestsTotal.labels(
               Route.options.method,
@@ -325,11 +329,13 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             });
           } else await handle();
 
+          const contentLength = calculateBodySize(ctx.response.body).size ?? 0;
+
           httpResponseSizeBytes.labels(
             Route.options.method,
             Route.endpoint,
             String(ctx.response.status),
-          ).observe(Number(ctx.response.headers.get("content-length") ?? 0));
+          ).observe(contentLength);
         },
       );
     }
