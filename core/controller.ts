@@ -22,6 +22,8 @@ import { denoConfig } from "@Core/common/denoConfig.ts";
 import { I18next } from "@I18n";
 import { StoreType } from "@Core/common/store.ts";
 import { responseValidator } from "@Core/common/validators.ts";
+import { RawResponse } from "./common/response.ts";
+import { prometheusRegister } from "./common/prometheus.ts";
 
 @Controller("/api/", {
   name: "api",
@@ -194,6 +196,13 @@ export class APIController extends BaseController {
 
         return Response.data(getMemoryUsageDetails(Query));
       },
+    };
+  }
+
+  @Get("/prometheus/metrics/")
+  public prometheusMetrics(_: IRoute) {
+    return async (_: IRequestContext<RouterContext<string>>) => {
+      return RawResponse.body(await prometheusRegister.metrics(), "text/plain");
     };
   }
 }
