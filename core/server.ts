@@ -1,5 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  apiRequestDuration,
+  apiRequestsTotal,
   denoConfig,
   Env,
   EnvType,
@@ -210,8 +212,18 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             )(RequestContext);
 
             if (ReturnedResponse instanceof Response) {
+              const handledInMs = Date.now() - ctx.state._handleStartedAt;
+
+              apiRequestDuration
+                .labels(
+                  Route.options.method,
+                  Route.endpoint,
+                  String(ctx.response.status),
+                )
+                .observe(handledInMs * 1000);
+
               ReturnedResponse.metrics({
-                handledInMs: Date.now() - ctx.state._handleStartedAt,
+                handledInMs,
               });
             }
 
@@ -248,6 +260,13 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             );
 
             if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
+
+            apiRequestsTotal.labels(
+              Route.options.method,
+              Route.endpoint,
+              String(ctx.response.status),
+            )
+              .inc();
           };
 
           const IdempotencyKey =
