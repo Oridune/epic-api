@@ -20,7 +20,7 @@ export const httpRequestDuration = new Histogram({
   name: "http_request_duration_seconds",
   help: "API request duration",
   labelNames: ["method", "route", "status"],
-  buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5],
+  buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 20, 30, 60],
 });
 
 export const httpRequestInFlight = new Gauge({
@@ -42,6 +42,12 @@ export const httpRequestSizeBytes = new Histogram({
     100_000,
     500_000,
     1_000_000,
+    5_000_000,
+    10_000_000,
+    20_000_000,
+    30_000_000,
+    50_000_000,
+    100_000_000,
   ],
 });
 
@@ -59,7 +65,31 @@ export const httpResponseSizeBytes = new Histogram({
     100_000,
     500_000,
     1_000_000,
+    5_000_000,
+    10_000_000,
+    20_000_000,
+    30_000_000,
+    50_000_000,
+    100_000_000,
   ],
+});
+
+export const bgEventsTotal = new Counter({
+  name: "bg_events_total",
+  help: "Total Background Events",
+  labelNames: ["event"],
+});
+
+export const bgEventInFlight = new Gauge({
+  name: "bg_event_in_flight",
+  help: "Number of in-flight Background events",
+});
+
+export const bgEventDuration = new Histogram({
+  name: "bg_event_duration_seconds",
+  help: "Background event duration",
+  labelNames: ["event"],
+  buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 20, 30, 60],
 });
 
 prometheusRegister.registerMetric(httpRequestsTotal);
@@ -67,3 +97,6 @@ prometheusRegister.registerMetric(httpRequestDuration);
 prometheusRegister.registerMetric(httpRequestInFlight);
 prometheusRegister.registerMetric(httpRequestSizeBytes);
 prometheusRegister.registerMetric(httpResponseSizeBytes);
+prometheusRegister.registerMetric(bgEventsTotal);
+prometheusRegister.registerMetric(bgEventInFlight);
+prometheusRegister.registerMetric(bgEventDuration);

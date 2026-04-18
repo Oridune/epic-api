@@ -17,7 +17,6 @@ import {
   Response,
   Server,
   Store,
-  TResponse,
 } from "@Core/common/mod.ts";
 import { Database } from "@Database";
 import { I18next } from "@I18n";
@@ -191,6 +190,8 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
             Route.endpoint,
           ).observe(Number(ctx.request.headers.get("content-length") ?? 0));
 
+          ctx.state._handleStartedAt = Date.now();
+
           const TargetVersion = ctx.request.headers.get("x-api-version") ??
             "latest";
 
@@ -215,73 +216,68 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
           RequestContext.version = version ?? RequestContext.version;
 
           const handle = async () => {
-            ctx.state._handleStartedAt = Date.now();
-
             httpRequestInFlight.inc();
-
-            let ReturnedResponse: TResponse | undefined;
-
-            try {
-              ReturnedResponse = await RequestHandler?.handler.bind(
-                RequestHandler,
-              )(RequestContext);
-            } finally {
-              httpRequestInFlight.dec();
-            }
-
-            if (ReturnedResponse instanceof Response) {
-              ReturnedResponse.metrics({
-                handledInMs: Date.now() - ctx.state._handleStartedAt,
-              });
-            }
-
-            for (const Hook of Hooks) {
-              await Hook?.post?.(Route.scope, Route.options.name, {
-                ctx: RequestContext,
-                res: ReturnedResponse,
-              });
-            }
-
-            // Clear large references to help garbage collection
-            (RequestContext as any).routes = undefined;
-            (RequestContext as any).router = undefined;
-
-            Events.dispatchRequestEvent(
-              `${Route.scope}.${Route.options.name}`,
-              {
-                detail: {
-                  ctx: {
-                    ...RequestContext,
-                    router: {
-                      params: ctx.params,
-                      state: ctx.state,
-                      t: ctx.t,
-                      tvar: ctx.tvar,
-                      i18n: ctx.i18n,
-                      lang: ctx.lang,
-                      request: ctx.request,
-                    },
-                  },
-                  res: ReturnedResponse,
-                },
-              },
-            );
-
-            if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
-
-            httpRequestDuration
-              .labels(
-                Route.options.method,
-                Route.endpoint,
-                String(ctx.response.status),
-              )
-              .observe((Date.now() - ctx.state._handleStartedAt) / 1000);
-
             httpRequestsTotal.labels(
               Route.options.method,
               Route.endpoint,
               String(ctx.response.status),
             ).inc();
+
+            try {
+              const ReturnedResponse = await RequestHandler?.handler.bind(
+                RequestHandler,
+              )(RequestContext);
+
+              if (ReturnedResponse instanceof Response) {
+                ReturnedResponse.metrics({
+                  handledInMs: Date.now() - ctx.state._handleStartedAt,
+                });
+              }
+
+              for (const Hook of Hooks) {
+                await Hook?.post?.(Route.scope, Route.options.name, {
+                  ctx: RequestContext,
+                  res: ReturnedResponse,
+                });
+              }
+
+              if (ReturnedResponse) await respondWith(ctx, ReturnedResponse);
+
+              httpRequestDuration
+                .labels(
+                  Route.options.method,
+                  Route.endpoint,
+                  String(ctx.response.status),
+                )
+                .observe((Date.now() - ctx.state._handleStartedAt) / 1000);
+
+              // Clear large references to help garbage collection
+              (RequestContext as any).routes = undefined;
+              (RequestContext as any).router = undefined;
+
+              Events.dispatchRequestEvent(
+                `${Route.scope}.${Route.options.name}`,
+                {
+                  detail: {
+                    ctx: {
+                      ...RequestContext,
+                      router: {
+                        params: ctx.params,
+                        state: ctx.state,
+                        t: ctx.t,
+                        tvar: ctx.tvar,
+                        i18n: ctx.i18n,
+                        lang: ctx.lang,
+                        request: ctx.request,
+                      },
+                    },
+                    res: ReturnedResponse,
+                  },
+                },
+              );
+            } finally {
+              httpRequestInFlight.dec();
+            }
           };
 
           const IdempotencyKey =

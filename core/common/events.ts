@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { Context } from "oak";
 import { RawResponse, Response } from "./response.ts";
+import { bgEventDuration, bgEventInFlight, bgEventsTotal } from "./mod.ts";
 
 export enum EventChannel {
   REQUEST = "request",
@@ -45,6 +46,11 @@ export class Events {
 
     if (!listeners) return false;
 
+    bgEventInFlight.inc();
+    bgEventsTotal.labels(event).inc();
+
+    const start = Date.now();
+
     await Promise.allSettled(
       Array.from(listeners).map(async (listener) => {
         await listener({
@@ -53,6 +59,9 @@ export class Events {
         });
       }),
     );
+
+    bgEventDuration.labels(event).observe((Date.now() - start) / 1000);
+    bgEventInFlight.dec();
 
     return true;
   }
