@@ -33,7 +33,6 @@ import {
 import { ApplicationListenEvent } from "oak/application";
 import { join } from "path";
 import Logger from "oak:logger";
-import { CORS } from "oak:cors";
 import { PORT } from "@Core/constants.ts";
 import { Confirm } from "cliffy:prompt";
 
@@ -43,6 +42,7 @@ import { errorHandler } from "@Core/middlewares/errorHandler.ts";
 import { serveStatic } from "@Core/middlewares/serveStatic.ts";
 import { requestId } from "@Core/middlewares/requestId.ts";
 import { rateLimiter } from "@Core/middlewares/rateLimiter.ts";
+import { cors } from "@Core/middlewares/cors.ts";
 import { useV8Inspector } from "@Core/middlewares/v8Inspector.ts";
 
 export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
@@ -52,7 +52,7 @@ export const prepareAppServer = async (app: AppServer, router: AppRouter) => {
 
   app.use(await useTranslator());
   app.use(errorHandler());
-  app.use(CORS());
+  app.use(cors());
 
   if (await Env.enabled("RATE_LIMITER_ENABLED")) {
     app.use(
